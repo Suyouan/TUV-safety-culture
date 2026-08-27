@@ -140,7 +140,9 @@ class App {
             if (firstSign) {
                 const qrContainer = document.getElementById(`qr-cat-${firstSign.ID}`);
                 if (qrContainer && qrContainer.childElementCount === 0) {
-                    const targetUrl = `${window.location.origin}${window.location.pathname}?signId=${firstSign.ID}`;
+                    // 確保 QR Code 產生的網址絕對正確且帶有正確的 GitHub Pages 根目錄
+const basePath = window.location.origin + window.location.pathname;
+const targetUrl = `${basePath}?signId=${sign.ID}`;
                     new QRCode(qrContainer, { text: targetUrl, width: 64, height: 64 });
                 }
             }
@@ -206,7 +208,9 @@ class App {
         signsList.forEach(sign => {
             const qrContainer = document.getElementById(`qr-sign-${sign.ID}`);
             if (qrContainer && qrContainer.childElementCount === 0) {
-                const targetUrl = `${window.location.origin}${window.location.pathname}?signId=${sign.ID}`;
+                // 確保 QR Code 產生的網址絕對正確且帶有正確的 GitHub Pages 根目錄
+const basePath = window.location.origin + window.location.pathname;
+const targetUrl = `${basePath}?signId=${sign.ID}`;
                 new QRCode(qrContainer, { text: targetUrl, width: 72, height: 72 });
             }
         });
@@ -275,7 +279,9 @@ class App {
 
         const qrContainer = document.getElementById(`qr-detail-${sign.ID}`);
         if (qrContainer && qrContainer.childElementCount === 0) {
-            const targetUrl = `${window.location.origin}${window.location.pathname}?signId=${sign.ID}`;
+           // 確保 QR Code 產生的網址絕對正確且帶有正確的 GitHub Pages 根目錄
+const basePath = window.location.origin + window.location.pathname;
+const targetUrl = `${basePath}?signId=${sign.ID}`;
             new QRCode(qrContainer, { text: targetUrl, width: 90, height: 90 });
         }
     }
