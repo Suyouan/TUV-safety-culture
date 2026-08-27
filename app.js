@@ -224,7 +224,7 @@ class App {
 
         let measuresHtml = "";
         // 假設分類為「注意」才顯示 5 大危害控制措施
-        if (sign.Category.includes("Warning sign") || sign.Category.includes("Warning sign") || sign.Measures !== undefined) {
+        if (sign.Category === "Warning sign") {
             const measures = sign.Measures ? sign.Measures.split("||") : ["", "", "", "", ""];
             const titles = ["1. 工程控制", "2. 行政管理", "3. 個人防護具", "4. 教育訓練", "5. 應變處置"];
             
@@ -431,7 +431,7 @@ class App {
         if (!description) return;
 
         let measures = "";
-        if (category.includes("Warning sign") || category.includes("Warning sign")) {
+        if (sign.Category === "Warning sign") {
             measures = prompt("此為警告/注意分類，請輸入 5 大危害控制措施 (各措施請用 || 隔開，可留空)：") || "";
         }
 
