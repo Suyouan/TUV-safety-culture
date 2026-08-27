@@ -17,9 +17,7 @@ class App {
     }
 
     async init() {
-        await this.fetchData(true); // 先在背景抓取最新資料，不急著渲染第一層
-
-        // 同時支援 ?signId=S001 參數或 #signId=S001 的 Hash 路由解析
+        // 1. 優先取得網址帶有的 signId
         const urlParams = new URLSearchParams(window.location.search);
         let targetSignId = urlParams.get("signId");
 
@@ -27,12 +25,24 @@ class App {
             targetSignId = window.location.hash.replace("#", "");
         }
 
+        // 2. 開始從 GAS 抓取資料
+        await this.fetchData(true); 
+
+        // 3. 【防呆關鍵】如果遠端資料剛好還沒回來（陣列為空），最多等待 3 秒鐘讓它抓完
+        let retryCount = 0;
+        while (this.signs.length === 0 && retryCount < 30) {
+            await new Promise(resolve => setTimeout(resolve, 100)); // 每 100ms 檢查一次
+            retryCount++;
+        }
+
+        // 4. 資料到齊後，正式進行導向或渲染
         if (targetSignId) {
-            // 確保資料抓完後才尋找對應 ID
             const found = this.signs.find(s => String(s.ID).trim() === String(targetSignId).trim());
             if (found) {
                 this.goToLayer3(found.ID, false);
                 return;
+            } else {
+                console.warn(`找不到指定的標誌 ID: ${targetSignId}`);
             }
         }
 
