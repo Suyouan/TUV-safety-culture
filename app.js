@@ -222,7 +222,7 @@ const targetUrl = `${basePath}?signId=${sign.ID}`;
             this.historyStack.push({ layer: this.currentLayer, category: this.currentCategory, signId: this.currentSignId });
         }
         this.currentSignId = signId;
-        this.switchLayer(3);
+        this.switchLayer(2);
 
         const sign = this.signs.find(s => s.ID === signId);
         const container = document.getElementById("detail-content");
