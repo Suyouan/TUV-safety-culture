@@ -1,5 +1,5 @@
 // 請替換為您的 Google Apps Script 部署後的 Web App URL
-const GAS_API_URL = "YOUR_GAS_WEB_APP_URL_HERE";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzJ1NShDRiL1wG2yYvLL4Jf7cHi7qAniHX8qCAUGn3YZ-7cbGUtZiarWvB6381yH1po/exec";
 
 class App {
     constructor() {
