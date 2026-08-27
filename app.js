@@ -17,16 +17,21 @@ class App {
     }
 
     async init() {
-        // 檢查網址是否有帶 signId 參數 (支援手機掃描 QRcode 直達第三層)
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetSignId = urlParams.get("signId");
+        await this.fetchData(true); // 先在背景抓取最新資料，不急著渲染第一層
 
-        await this.fetchData(false); // 初始載入
+        // 同時支援 ?signId=S001 參數或 #signId=S001 的 Hash 路由解析
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetSignId = urlParams.get("signId");
+
+        if (!targetSignId && window.location.hash) {
+            targetSignId = window.location.hash.replace("#", "");
+        }
 
         if (targetSignId) {
-            const found = this.signs.find(s => s.ID === targetSignId);
+            // 確保資料抓完後才尋找對應 ID
+            const found = this.signs.find(s => String(s.ID).trim() === String(targetSignId).trim());
             if (found) {
-                this.goToLayer3(targetSignId, false);
+                this.goToLayer3(found.ID, false);
                 return;
             }
         }
