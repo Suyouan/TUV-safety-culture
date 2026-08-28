@@ -17,35 +17,33 @@ class App {
     }
 
     async init() {
-        // 1. 優先取得網址帶有的 signId
+        console.log("網址完整參數：", window.location.search);
+        
+        // 1. 抓取網址參數
         const urlParams = new URLSearchParams(window.location.search);
-        let targetSignId = urlParams.get("signId");
+        const targetSignId = urlParams.get("signId");
+        console.log("解析到的 targetSignId:", targetSignId);
 
-        if (!targetSignId && window.location.hash) {
-            targetSignId = window.location.hash.replace("#", "");
-        }
+        // 2. 抓取遠端資料
+        await this.fetchData(true);
+        console.log("目前快取的 signs 總筆數:", this.signs.length);
 
-        // 2. 開始從 GAS 抓取資料
-        await this.fetchData(true); 
-
-        // 3. 【防呆關鍵】如果遠端資料剛好還沒回來（陣列為空），最多等待 3 秒鐘讓它抓完
-        let retryCount = 0;
-        while (this.signs.length === 0 && retryCount < 30) {
-            await new Promise(resolve => setTimeout(resolve, 100)); // 每 100ms 檢查一次
-            retryCount++;
-        }
-
-        // 4. 資料到齊後，正式進行導向或渲染
+        // 3. 如果有抓到 ID，進行尋找
         if (targetSignId) {
             const found = this.signs.find(s => String(s.ID).trim() === String(targetSignId).trim());
+            console.log("尋找結果 found:", found);
+            
             if (found) {
+                console.log("成功找到！準備跳轉第三層...");
                 this.goToLayer3(found.ID, false);
                 return;
             } else {
-                console.warn(`找不到指定的標誌 ID: ${targetSignId}`);
+                console.warn("找不到對應的標誌 ID！");
             }
         }
 
+        // 4. 如果沒帶 ID 或是找不到，才跑回首頁
+        console.log("未帶 ID 或找不到，渲染首頁第一層。");
         this.renderLayer1();
     }
 
