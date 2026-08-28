@@ -150,7 +150,7 @@ class App {
                 if (qrContainer && qrContainer.childElementCount === 0) {
                     // 確保 QR Code 產生的網址絕對正確且帶有正確的 GitHub Pages 根目錄
 const basePath = window.location.origin + window.location.pathname;
-const targetUrl = `${basePath}?signId=${sign.ID}`;
+const targetUrl = `${basePath}?signId=${firstSign.ID}`;
                     new QRCode(qrContainer, { text: targetUrl, width: 64, height: 64 });
                 }
             }
