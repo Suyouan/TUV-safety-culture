@@ -397,16 +397,14 @@ class App {
         }
     }
 
-    // 共用列印建構函式（動態渲染 QR Code 並確保列印版面簡約、整齊）
+    // 共用列印建構函式（左右並排：圖示 + QR Code，下方放名稱與說明）
     async triggerPrintView(titleText, containerList) {
         if (containerList.length === 0) {
-            alert("沒有找到符合的容器資料可供匯出");
+            alert("目前畫面上沒有可供匯出的容器資料");
             return;
         }
 
         let printWindow = window.open('', '_blank');
-        
-        // 預先在暫時的 DOM 中產生每個容器的 QR Code Base64 圖片
         const containerHtmls = [];
         const baseUrl = window.location.origin + window.location.pathname;
 
@@ -424,25 +422,25 @@ class App {
                 height: 100
             });
             
-            // 抓取產生的 canvas 或 img
             const qrCanvas = tempDiv.querySelector('canvas');
             const qrDataUrl = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
             document.body.removeChild(tempDiv);
 
             containerHtmls.push(`
                 <div class="print-card">
+                    <!-- 上方：圖示與 QR Code 左右並排 -->
                     <div class="print-top">
                         <div class="print-icon-box">
                             <img src="${c.iconUrl}" alt="${c.name}">
-                            <div class="print-name">${c.name}</div>
                         </div>
                         <div class="print-qr-box">
                             ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code">` : ''}
-                            <div class="print-qr-text">掃描進入第三層</div>
                         </div>
                     </div>
-                    <div class="print-desc">
-                        <strong>說明：</strong>${c.description || '無詳細說明'}
+                    <!-- 下方：名稱與說明 -->
+                    <div class="print-bottom">
+                        <div class="print-name">${c.name}</div>
+                        <div class="print-desc">${c.description || '無詳細說明'}</div>
                     </div>
                 </div>
             `);
@@ -456,17 +454,15 @@ class App {
                 <title>${titleText}</title>
                 <style>
                     body { font-family: sans-serif; padding: 15px; color: #1e293b; background: #fff; }
-                    h1 { font-size: 1.25rem; margin-bottom: 15px; border-bottom: 2px solid #2563eb; padding-bottom: 6px; }
-                    .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-                    .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; page-break-inside: avoid; background: #fff; }
-                    .print-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; }
-                    .print-icon-box { text-align: center; flex: 1; }
-                    .print-icon-box img { width: 70px; height: 70px; object-fit: contain; margin-bottom: 4px; display: block; margin-left: auto; margin-right: auto; }
-                    .print-name { font-size: 0.95rem; font-weight: bold; }
-                    .print-qr-box { text-align: center; }
-                    .print-qr-box img { width: 75px; height: 75px; object-fit: contain; display: block; margin: 0 auto; }
-                    .print-qr-text { font-size: 0.65rem; color: #64748b; margin-top: 2px; }
-                    .print-desc { font-size: 0.8rem; color: #334155; line-height: 1.4; }
+                    h1 { font-size: 1.2rem; margin-bottom: 12px; border-bottom: 2px solid #2563eb; padding-bottom: 4px; }
+                    .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+                    .print-card { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; page-break-inside: avoid; background: #fff; }
+                    .print-top { display: flex; align-items: center; justify-content: space-around; gap: 12px; margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; }
+                    .print-icon-box img { width: 75px; height: 75px; object-fit: contain; display: block; }
+                    .print-qr-box img { width: 75px; height: 75px; object-fit: contain; display: block; }
+                    .print-bottom { text-align: center; }
+                    .print-name { font-size: 0.95rem; font-weight: bold; margin-bottom: 4px; }
+                    .print-desc { font-size: 0.75rem; color: #475569; line-height: 1.3; }
                     @media print {
                         body { padding: 0; }
                     }
@@ -493,26 +489,43 @@ class App {
         printWindow.document.close();
     }
     
-    // 匯出所有標誌 (PDF)：列印所有容器的詳細區塊 (圖示 + QR Code + 說明)
+   // 匯出目前畫面出現的所有標誌 (PDF)
     async exportAllPDF() {
-        const containers = this.data.containers;
-        await this.triggerPrintView("所有容器標誌清單 (QR Code 總覽)", containers);
+        const containers = this.getCurrentVisibleContainers();
+        await this.triggerPrintView("目前顯示標誌清單 (QR Code 總覽)", containers);
     }
 
-    // 匯出搜尋標誌 (PDF)：列印搜尋結果的容器詳細區塊 (圖示 + QR Code + 說明)
+    // 匯出搜尋得到的標誌 (PDF)：匯出搜尋結果目前畫面上出現的容器
     async exportSearchPDF() {
-        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
-        let containers = this.data.containers;
+        const containers = this.getCurrentVisibleContainers();
+        await this.triggerPrintView("搜尋結果標誌清單 (QR Code 總覽)", containers);
+    }
+
+    // 取得當前畫面上正要呈現的容器陣列
+    getCurrentVisibleContainers() {
+        // 檢查當前顯示的是哪一個 Layer 或搜尋狀態
+        const layer1Active = document.getElementById('view-layer-1').classList.contains('active');
+        const layer2Active = document.getElementById('view-layer-2').classList.contains('active');
         
+        const searchInput = document.getElementById('search-input');
+        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+        // 如果有輸入搜尋關鍵字，以搜尋過濾結果為優先
         if (keyword !== "") {
-            containers = containers.filter(c => 
+            return this.data.containers.filter(c => 
                 c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword)
             );
         }
-        
-        await this.triggerPrintView(`搜尋結果標誌清單 (關鍵字: ${keyword || '全部'})`, containers);
-    }
 
+        // 如果在第二層，只抓取當前分類底下的容器
+        if (layer2Active && this.currentCategory) {
+            return this.data.containers.filter(c => c.category === this.currentCategory);
+        }
+
+        // 預設（首頁未搜尋時）回傳全部容器
+        return this.data.containers;
+    }
+    
     async loadFromCache() {
         const cached = localStorage.getItem('cached_system_data');
         if (cached) {
