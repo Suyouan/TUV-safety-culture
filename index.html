@@ -4,15 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>容器與安全標誌管理系統</title>
-    <!-- 引入 QR Code 生成套件 qrcodejs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="stylesheet" href="style.css">
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <!-- 頂部導覽列 -->
     <header class="app-header">
         <div class="header-left">
             <button id="backBtn" class="nav-btn" style="display: none;" onclick="goBack()">返回上一步</button>
@@ -27,12 +23,11 @@
         </div>
     </header>
 
-    <!-- 主容器 -->
     <main id="appMain" class="container">
-        <!-- 內容將由 JavaScript 動態渲染，避免載入空白或閃頻 -->
+        <!-- 動態渲染區域 -->
     </main>
 
-    <!-- 管理者登入 / 控制中心 Modal -->
+    <!-- 管理者 Modal -->
     <div id="adminModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close" onclick="closeAdminModal()">&times;</span>
@@ -48,17 +43,16 @@
                     <button onclick="openChangePwdModal()">更改密碼</button>
                     <button onclick="openApprovalListModal()">查看待審批清單</button>
                 </div>
-                <div id="approvalContainerSection"></div>
             </div>
         </div>
     </div>
 
-    <!-- 新增號誌 Modal -->
+    <!-- 新增標誌 Modal -->
     <div id="addSignModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close" onclick="closeAddSignModal()">&times;</span>
             <h2>新增容器與標誌</h2>
-            <form id="addSignForm" onsubmit="submitNewSign(event)">
+            <form onsubmit="submitNewSign(event)">
                 <label>分類代號 (categoryId):</label>
                 <input type="text" id="newCategoryId" required placeholder="例如 cat_01">
                 <label>容器名稱 (containerName):</label>
@@ -88,7 +82,7 @@
         </div>
     </div>
 
-    <!-- 審批清單彈窗 Modal -->
+    <!-- 審批清單 Modal -->
     <div id="approvalListModal" class="modal" style="display: none;">
         <div class="modal-content large-modal">
             <span class="close" onclick="closeApprovalListModal()">&times;</span>
