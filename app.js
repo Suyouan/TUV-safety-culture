@@ -56,6 +56,10 @@ async function fetchLatestData() {
 
 function updatePendingBadge() {
     const badge = document.getElementById("pendingBadge");
+    
+    // 【關鍵防呆】如果畫面還沒長出來、找不到這個元素，就直接返回，不執行後面動作
+    if (!badge) return; 
+    
     if (appData.pendingCount > 0) {
         badge.style.display = "inline-block";
         badge.innerText = appData.pendingCount;
