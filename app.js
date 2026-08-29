@@ -91,25 +91,43 @@ class App {
         window.location.hash = `#/category/${encodeURIComponent(cat)}`;
     }
 
-    // 第二層渲染：該分類所有容器
+    // 第二層渲染：該分類所有容器（顯示圖示 + QR Code 左右並排，下方放名稱與說明）
     renderLayer2() {
         document.getElementById('layer2-title').innerText = `分類：${this.currentCategory}`;
         const grid = document.getElementById('container-grid');
         const filtered = this.data.containers.filter(c => c.category === this.currentCategory);
 
         grid.innerHTML = filtered.map(c => `
-            <div class="card" onclick="app.navigateToDetail('${c.id}')">
-                <img src="${c.iconUrl}" alt="${c.name}">
-                <h3>${c.name}</h3>
+            <div class="card" style="text-align: left; cursor: default;" id="card-${c.id}">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
+                    <img src="${c.iconUrl}" alt="${c.name}" style="width: 50px; height: 50px; object-fit: contain; cursor: pointer;" onclick="app.navigateToDetail('${c.id}')">
+                    <div class="card-qrcode-${c.id}" style="width: 50px; height: 50px;"></div>
+                </div>
+                <h3 style="font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; cursor: pointer; color: var(--primary);" onclick="app.navigateToDetail('${c.id}')">${c.name}</h3>
+                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.description || '無說明'}</p>
             </div>
         `).join('');
+
+        // 批次為每個容器動態產生專屬 QR Code (連結至第三層)
+        const baseUrl = window.location.origin + window.location.pathname;
+        filtered.forEach(c => {
+            const qrEl = document.querySelector(`.card-qrcode-${c.id}`);
+            if (qrEl) {
+                qrEl.innerHTML = "";
+                new QRCode(qrEl, {
+                    text: `${baseUrl}#/detail/${c.id}`,
+                    width: 50,
+                    height: 50
+                });
+            }
+        });
     }
 
     navigateToDetail(id) {
         window.location.hash = `#/detail/${id}`;
     }
 
-    // 第三層渲染：容器詳情、圖示、QRcode 與 5大危害控制
+    // 第三層渲染：容器詳情、圖示、專屬 QRcode 與 5大危害控制
     renderLayer3() {
         const container = this.data.containers.find(c => c.id === this.currentContainerId);
         const detailBox = document.getElementById('detail-content');
@@ -124,22 +142,21 @@ class App {
         const hazards = this.data.hazards[container.id] || ["", "", "", "", ""];
 
         detailBox.innerHTML = `
-            <!-- 上方：標誌圖示與 QR Code 左右並排，保持適當間距 -->
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+            <!-- 上方：圖示與專屬 QR Code 左右並排 -->
+            <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
                 <div style="text-align: center;">
-                    <img src="${container.iconUrl}" alt="${container.name}" style="width: 90px; height: 90px; object-fit: contain; display: block; margin: 0 auto 8px auto;">
-                    <h2 style="font-size: 1rem; font-weight: 600;">${container.name}</h2>
+                    <img src="${container.iconUrl}" alt="${container.name}" style="width: 80px; height: 80px; object-fit: contain; display: block; margin: 0 auto 4px auto;">
                 </div>
                 <div style="text-align: center;">
-                    <div id="qrcode-box" style="display: inline-block; margin-bottom: 4px;"></div>
-                    <div style="font-size: 0.75rem; color: #64748b;">掃描進入此容器</div>
+                    <div id="qrcode-box" style="display: inline-block; margin-bottom: 2px;"></div>
+                    <div style="font-size: 0.65rem; color: #64748b;">掃描進入此容器</div>
                 </div>
             </div>
 
-            <!-- 下方：標誌說明 -->
-            <div style="margin-bottom: 20px;">
-                <h4 style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">標誌說明</h4>
-                <p style="font-size: 0.95rem; line-height: 1.5;">${container.description || '無詳細說明'}</p>
+            <!-- 下方：名稱與說明 -->
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 6px;">${container.name}</h2>
+                <p style="font-size: 0.9rem; color: #475569; line-height: 1.4;">${container.description || '無詳細說明'}</p>
             </div>
 
             ${isWarning ? `
@@ -155,13 +172,13 @@ class App {
             ` : ''}
         `;
 
-        // 清空舊的 QR Code 並重新產生
+        // 清空舊的 QR Code 並重新產生專屬 QR Code
         const qrContainer = document.getElementById("qrcode-box");
         qrContainer.innerHTML = "";
         new QRCode(qrContainer, {
             text: currentUrl,
-            width: 80,
-            height: 80
+            width: 75,
+            height: 75
         });
     }
 
@@ -489,24 +506,20 @@ class App {
         printWindow.document.close();
     }
     
-   // 匯出目前畫面出現的所有標誌 (PDF)
+   // 匯出所有標誌 (PDF)：僅匯出第二層畫面上出現的容器
     async exportAllPDF() {
         const containers = this.getCurrentVisibleContainers();
-        await this.triggerPrintView("目前顯示標誌清單 (QR Code 總覽)", containers);
+        await this.triggerPrintView("所有容器標誌清單 (第二層總覽)", containers);
     }
 
-    // 匯出搜尋得到的標誌 (PDF)：匯出搜尋結果目前畫面上出現的容器
+    // 匯出搜尋得到的標誌 (PDF)：僅匯出搜尋結果在第二層畫面上出現的容器
     async exportSearchPDF() {
         const containers = this.getCurrentVisibleContainers();
-        await this.triggerPrintView("搜尋結果標誌清單 (QR Code 總覽)", containers);
+        await this.triggerPrintView("搜尋結果標誌清單 (第二層總覽)", containers);
     }
 
-    // 取得當前畫面上正要呈現的容器陣列
+    // 取得當前畫面上正要呈現的第二層容器陣列
     getCurrentVisibleContainers() {
-        // 檢查當前顯示的是哪一個 Layer 或搜尋狀態
-        const layer1Active = document.getElementById('view-layer-1').classList.contains('active');
-        const layer2Active = document.getElementById('view-layer-2').classList.contains('active');
-        
         const searchInput = document.getElementById('search-input');
         const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
 
@@ -517,12 +530,12 @@ class App {
             );
         }
 
-        // 如果在第二層，只抓取當前分類底下的容器
-        if (layer2Active && this.currentCategory) {
+        // 如果在第二層分類中，只抓取該分類容器
+        if (this.currentCategory) {
             return this.data.containers.filter(c => c.category === this.currentCategory);
         }
 
-        // 預設（首頁未搜尋時）回傳全部容器
+        // 預設回傳全部容器
         return this.data.containers;
     }
     
