@@ -1,4 +1,4 @@
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwPAcqImmlY9q52rv5pZI5BEIlxN-k0tn1BqIrSz6C2ruvZ65j9evNnY5E9k_Y0ANRc/exec";
+const GAS_API_URL = "YOUR_GAS_WEB_APP_URL";
 
 let appData = {
     categories: [],
@@ -9,7 +9,7 @@ let appData = {
 };
 
 let currentView = {
-    level: 1, // 1: 四大分類, 2: 該分類容器列表, 3: 容器詳細資訊
+    level: 1,
     categoryId: null,
     containerId: null
 };
@@ -17,17 +17,17 @@ let currentView = {
 let isAdminLoggedIn = false;
 let debounceTimer = null;
 
-// 確保 DOM 載入完成後才執行初始同步
+// 確保 DOM 載入後才初始化，杜絕所有找不到元素的報錯
 document.addEventListener("DOMContentLoaded", () => {
     const cached = localStorage.getItem("app_data_cache");
     if (cached) {
         try {
             appData = JSON.parse(cached);
+            updatePendingBadge();
             renderCurrentView();
         } catch(e) {}
     }
     
-    // 檢查網址是否帶有 containerId 參數（QR Code 掃描直接導向第三層）
     const urlParams = new URLSearchParams(window.location.search);
     const targetContainerId = urlParams.get("containerId");
     if (targetContainerId) {
@@ -36,9 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     fetchLatestData();
-}););
+});
 
-// 非同步取得最新資料（跨裝置同步，無閃頻）
 async function fetchLatestData() {
     try {
         const res = await fetch(`${GAS_API_URL}?action=getData`);
@@ -56,9 +55,7 @@ async function fetchLatestData() {
 
 function updatePendingBadge() {
     const badge = document.getElementById("pendingBadge");
-    
-    // 【關鍵防呆】如果畫面還沒長出來、找不到這個元素，就直接返回，不執行後面動作
-    if (!badge) return; 
+    if (!badge) return; // 嚴格防呆，確保元素存在才操作
     
     if (appData.pendingCount > 0) {
         badge.style.display = "inline-block";
@@ -68,15 +65,14 @@ function updatePendingBadge() {
     }
 }
 
-// 根據目前層級渲染畫面
 function renderCurrentView() {
     const main = document.getElementById("appMain");
     const backBtn = document.getElementById("backBtn");
     
-    if (currentView.level > 1) {
-        backBtn.style.display = "inline-block";
-    } else {
-        backBtn.style.display = "none";
+    if (!main) return;
+
+    if (backBtn) {
+        backBtn.style.display = currentView.level > 1 ? "inline-block" : "none";
     }
 
     if (currentView.level === 1) {
@@ -88,7 +84,6 @@ function renderCurrentView() {
     }
 }
 
-// 第一層：顯示四大分類（以該分類第一個容器做代表）
 function renderLevel1(container) {
     let html = `
         <input type="text" id="searchInput" class="search-bar" placeholder="搜尋容器關鍵字..." oninput="handleSearchInput(this.value)">
@@ -100,7 +95,6 @@ function renderLevel1(container) {
     `;
 
     appData.categories.forEach(cat => {
-        // 找出該分類的第一個容器作為代表
         const firstContainer = appData.containers.find(c => c.categoryId === cat.categoryId);
         const iconUrl = firstContainer ? firstContainer.iconUrl : (cat.representativeIconUrl || "");
         
@@ -108,7 +102,7 @@ function renderLevel1(container) {
             <div class="card" onclick="enterLevel2('${cat.categoryId}')">
                 <div class="card-top-row">
                     <img class="card-icon" src="${iconUrl}" alt="分類代表圖示">
-                    <div class="card-qrcode"><span>分類封面</span></div>
+                    <div class="card-qrcode"><span>封面</span></div>
                 </div>
                 <h3>${cat.categoryName}</h3>
                 <div class="card-desc">點擊進入瀏覽該分類所有容器</div>
@@ -120,7 +114,6 @@ function renderLevel1(container) {
     container.innerHTML = html;
 }
 
-// 300ms 防抖搜尋處理
 function handleSearchInput(keyword) {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
@@ -140,7 +133,6 @@ function handleSearchInput(keyword) {
 
         let html = "";
         matchedContainers.forEach(c => {
-            const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
             html += `
                 <div class="card" onclick="enterLevel3('${c.containerId}')">
                     <div class="card-top-row">
@@ -154,7 +146,6 @@ function handleSearchInput(keyword) {
         });
         contentArea.innerHTML = html || "<p>查無符合關鍵字的容器。</p>";
 
-        // 生成 QR Code
         matchedContainers.forEach(c => {
             const el = document.getElementById(`qr_search_${c.containerId}`);
             if (el && el.childElementCount === 0) {
@@ -165,7 +156,6 @@ function handleSearchInput(keyword) {
     }, 300);
 }
 
-// 第二層：顯示該分類所有容器
 function enterLevel2(categoryId) {
     currentView.level = 2;
     currentView.categoryId = categoryId;
@@ -199,7 +189,6 @@ function renderLevel2(container, categoryId) {
     html += `</div>`;
     container.innerHTML = html;
 
-    // 渲染 QR Code
     list.forEach(c => {
         const el = document.getElementById(`qr_l2_${c.containerId}`);
         if (el && el.childElementCount === 0) {
@@ -209,7 +198,6 @@ function renderLevel2(container, categoryId) {
     });
 }
 
-// 第三層：顯示容器詳細資訊與五大危害控制
 function enterLevel3(containerId) {
     currentView.level = 3;
     currentView.containerId = containerId;
@@ -254,7 +242,7 @@ function renderLevel3(container, containerId) {
                 <div class="hazard-box">
                     <div class="hazard-info" style="flex-grow: 1;">
                         <h4>${hType}</h4>
-                        <div class="hazard-content" id="content_${c.containerId}_${hType}">${content || "(尚無內容)"}</div>
+                        <div class="hazard-content">${content || "(尚無內容)"}</div>
                     </div>
             `;
 
@@ -271,7 +259,6 @@ function renderLevel3(container, containerId) {
 
     container.innerHTML = html;
 
-    // 渲染專屬 QR Code (永久固定不變)
     const qrEl = document.getElementById(`qr_l3_${c.containerId}`);
     if (qrEl && qrEl.childElementCount === 0) {
         const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
@@ -279,7 +266,6 @@ function renderLevel3(container, containerId) {
     }
 }
 
-// 返回上一步
 function goBack() {
     if (currentView.level === 3) {
         currentView.level = 2;
@@ -295,22 +281,11 @@ function refreshApp() {
     window.location.href = window.location.pathname;
 }
 
-// 匯出 PDF 功能（透過瀏覽器列印機制結合 CSS 媒體查詢）
-function exportAllSigns() {
-    window.print();
-}
+function exportAllSigns() { window.print(); }
+function exportSearchedSigns() { window.print(); }
 
-function exportSearchedSigns() {
-    window.print();
-}
-
-// --- 管理員與互動審批邏輯 ---
-function openAdminModal() {
-    document.getElementById("adminModal").style.display = "flex";
-}
-function closeAdminModal() {
-    document.getElementById("adminModal").style.display = "none";
-}
+function openAdminModal() { document.getElementById("adminModal").style.display = "flex"; }
+function closeAdminModal() { document.getElementById("adminModal").style.display = "none"; }
 
 async function loginAdmin() {
     const pwd = document.getElementById("adminPwdInput").value;
@@ -373,12 +348,9 @@ async function submitNewSign(e) {
         alert("新增標誌成功！");
         closeAddSignModal();
         fetchLatestData();
-    } else {
-        alert("新增失敗: " + json.message);
     }
 }
 
-// 管理員直接編輯五大危害
 async function adminEditHazard(containerId, hazardType) {
     const currentObj = appData.hazards.find(h => h.containerId === containerId && h.hazardType === hazardType);
     const val = prompt(`直接編輯 [${hazardType}] 內容:`, currentObj ? currentObj.controlContent : "");
@@ -395,7 +367,6 @@ async function adminEditHazard(containerId, hazardType) {
     }
 }
 
-// 非管理員提出審批請求
 async function requestAddHazard(containerId, hazardType) {
     const val = prompt(`請輸入您想為 [${hazardType}] 新增的內容（送審後需管理員核准）：`);
     if (!val) return;
@@ -410,7 +381,6 @@ async function requestAddHazard(containerId, hazardType) {
     }
 }
 
-// 查看待審批清單
 async function openApprovalListModal() {
     const res = await fetch(`${GAS_API_URL}?action=getPending`);
     const json = await res.json();
