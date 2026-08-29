@@ -17,8 +17,8 @@ let currentView = {
 let isAdminLoggedIn = false;
 let debounceTimer = null;
 
-// 初始化載入：優先使用 localStorage 快照避免閃頻
-window.addEventListener("DOMContentLoaded", () => {
+// 確保 DOM 載入完成後才執行初始同步
+document.addEventListener("DOMContentLoaded", () => {
     const cached = localStorage.getItem("app_data_cache");
     if (cached) {
         try {
@@ -36,7 +36,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     fetchLatestData();
-});
+}););
 
 // 非同步取得最新資料（跨裝置同步，無閃頻）
 async function fetchLatestData() {
@@ -454,7 +454,3 @@ async function handleApproval(id, decision) {
         fetchLatestData();
     }
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    window.app = new App();
-});
