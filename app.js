@@ -454,3 +454,7 @@ async function handleApproval(id, decision) {
         fetchLatestData();
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    window.app = new App();
+});
