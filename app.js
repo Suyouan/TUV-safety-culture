@@ -124,14 +124,24 @@ class App {
         const hazards = this.data.hazards[container.id] || ["", "", "", "", ""];
 
         detailBox.innerHTML = `
-            <div class="flex-row">
-                <img src="${container.iconUrl}" alt="${container.name}">
-                <div style="flex-grow: 1; margin-left: 16px;">
-                    <h2>${container.name}</h2>
-                    <p style="color: #64748b; font-size: 0.9rem; margin-top: 4px;">${container.description || ''}</p>
+            <!-- 上方：標誌圖示與 QR Code 左右並排，保持適當間距 -->
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+                <div style="text-align: center;">
+                    <img src="${container.iconUrl}" alt="${container.name}" style="width: 90px; height: 90px; object-fit: contain; display: block; margin: 0 auto 8px auto;">
+                    <h2 style="font-size: 1rem; font-weight: 600;">${container.name}</h2>
                 </div>
-                <div id="qrcode-box"></div>
+                <div style="text-align: center;">
+                    <div id="qrcode-box" style="display: inline-block; margin-bottom: 4px;"></div>
+                    <div style="font-size: 0.75rem; color: #64748b;">掃描進入此容器</div>
+                </div>
             </div>
+
+            <!-- 下方：標誌說明 -->
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 0.85rem; color: #64748b; margin-bottom: 4px;">標誌說明</h4>
+                <p style="font-size: 0.95rem; line-height: 1.5;">${container.description || '無詳細說明'}</p>
+            </div>
+
             ${isWarning ? `
                 <div class="hazard-container">
                     <h3 style="margin-bottom: 12px; font-size: 1rem;">職業安全衛生：五大危害控制措施</h3>
@@ -145,8 +155,10 @@ class App {
             ` : ''}
         `;
 
-        // 產生獨立的 QR Code 連結至此第三層
-        new QRCode(document.getElementById("qrcode-box"), {
+        // 清空舊的 QR Code 並重新產生
+        const qrContainer = document.getElementById("qrcode-box");
+        qrContainer.innerHTML = "";
+        new QRCode(qrContainer, {
             text: currentUrl,
             width: 80,
             height: 80
@@ -160,11 +172,16 @@ class App {
 
         this.searchTimer = setTimeout(() => {
             const grid = document.getElementById('category-grid');
+            // 若搜尋框沒有任何資訊，回到第一層分類狀態
+            if (keyword === "") {
+                this.renderLayer1();
+                return;
+            }
             const filtered = this.data.containers.filter(c => 
                 c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword)
             );
 
-            // 僅局部更新圖片與容器呈現，頂部標題與搜尋框完全不動
+            // 搜尋結果呈現
             grid.innerHTML = filtered.map(c => `
                 <div class="card" onclick="app.navigateToDetail('${c.id}')">
                     <img src="${c.iconUrl}" alt="${c.name}">
@@ -380,14 +397,120 @@ class App {
         }
     }
 
-    // 匯出所有標誌 PDF (利用前端列印機制結合 CSS 媒體查詢)
-    exportAllPDF() {
-        window.print();
+    // 共用列印建構函式（動態渲染 QR Code 並確保列印版面簡約、整齊）
+    async triggerPrintView(titleText, containerList) {
+        if (containerList.length === 0) {
+            alert("沒有找到符合的容器資料可供匯出");
+            return;
+        }
+
+        let printWindow = window.open('', '_blank');
+        
+        // 預先在暫時的 DOM 中產生每個容器的 QR Code Base64 圖片
+        const containerHtmls = [];
+        const baseUrl = window.location.origin + window.location.pathname;
+
+        for (let c of containerList) {
+            const targetUrl = `${baseUrl}#/detail/${c.id}`;
+            
+            // 利用暫時 div 產生 QR Code
+            const tempDiv = document.createElement('div');
+            tempDiv.style.display = 'none';
+            document.body.appendChild(tempDiv);
+            
+            new QRCode(tempDiv, {
+                text: targetUrl,
+                width: 100,
+                height: 100
+            });
+            
+            // 抓取產生的 canvas 或 img
+            const qrCanvas = tempDiv.querySelector('canvas');
+            const qrDataUrl = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
+            document.body.removeChild(tempDiv);
+
+            containerHtmls.push(`
+                <div class="print-card">
+                    <div class="print-top">
+                        <div class="print-icon-box">
+                            <img src="${c.iconUrl}" alt="${c.name}">
+                            <div class="print-name">${c.name}</div>
+                        </div>
+                        <div class="print-qr-box">
+                            ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code">` : ''}
+                            <div class="print-qr-text">掃描進入第三層</div>
+                        </div>
+                    </div>
+                    <div class="print-desc">
+                        <strong>說明：</strong>${c.description || '無詳細說明'}
+                    </div>
+                </div>
+            `);
+        }
+
+        let html = `
+            <!DOCTYPE html>
+            <html lang="zh-TW">
+            <head>
+                <meta charset="UTF-8">
+                <title>${titleText}</title>
+                <style>
+                    body { font-family: sans-serif; padding: 15px; color: #1e293b; background: #fff; }
+                    h1 { font-size: 1.25rem; margin-bottom: 15px; border-bottom: 2px solid #2563eb; padding-bottom: 6px; }
+                    .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+                    .print-card { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; page-break-inside: avoid; background: #fff; }
+                    .print-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; }
+                    .print-icon-box { text-align: center; flex: 1; }
+                    .print-icon-box img { width: 70px; height: 70px; object-fit: contain; margin-bottom: 4px; display: block; margin-left: auto; margin-right: auto; }
+                    .print-name { font-size: 0.95rem; font-weight: bold; }
+                    .print-qr-box { text-align: center; }
+                    .print-qr-box img { width: 75px; height: 75px; object-fit: contain; display: block; margin: 0 auto; }
+                    .print-qr-text { font-size: 0.65rem; color: #64748b; margin-top: 2px; }
+                    .print-desc { font-size: 0.8rem; color: #334155; line-height: 1.4; }
+                    @media print {
+                        body { padding: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>${titleText}</h1>
+                <div class="grid-container">
+                    ${containerHtmls.join('')}
+                </div>
+                <script>
+                    window.onload = function() {
+                        setTimeout(() => {
+                            window.print();
+                            window.close();
+                        }, 500);
+                    }
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+    }
+    
+    // 匯出所有標誌 (PDF)：列印所有容器的詳細區塊 (圖示 + QR Code + 說明)
+    async exportAllPDF() {
+        const containers = this.data.containers;
+        await this.triggerPrintView("所有容器標誌清單 (QR Code 總覽)", containers);
     }
 
-    // 匯出搜尋得到的標誌 PDF
-    exportSearchPDF() {
-        window.print();
+    // 匯出搜尋標誌 (PDF)：列印搜尋結果的容器詳細區塊 (圖示 + QR Code + 說明)
+    async exportSearchPDF() {
+        const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+        let containers = this.data.containers;
+        
+        if (keyword !== "") {
+            containers = containers.filter(c => 
+                c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword)
+            );
+        }
+        
+        await this.triggerPrintView(`搜尋結果標誌清單 (關鍵字: ${keyword || '全部'})`, containers);
     }
 
     async loadFromCache() {
