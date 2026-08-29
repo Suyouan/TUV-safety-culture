@@ -1,4 +1,4 @@
-const GAS_API_URL = "YOUR_GAS_WEB_APP_URL";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwPAcqImmlY9q52rv5pZI5BEIlxN-k0tn1BqIrSz6C2ruvZ65j9evNnY5E9k_Y0ANRc/exec";
 
 let appData = {
     categories: [],
