@@ -1,551 +1,452 @@
-// GAS 部署網址（請填入您在 Module 1 部署的 Web App 網址）
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwPAcqImmlY9q52rv5pZI5BEIlxN-k0tn1BqIrSz6C2ruvZ65j9evNnY5E9k_Y0ANRc/exec";
 
-class App {
-    constructor() {
-        this.data = { containers: [], hazards: {}, pendingApprovals: [] };
-        this.currentCategory = null;
-        this.currentContainerId = null;
-        this.isAdmin = false;
-        this.searchTimer = null;
-        this.historyStack = [];
+let appData = {
+    categories: [],
+    containers: [],
+    hazards: [],
+    pendingCount: 0,
+    pendingList: []
+};
 
-        this.init();
-    }
+let currentView = {
+    level: 1, // 1: 四大分類, 2: 該分類容器列表, 3: 容器詳細資訊
+    categoryId: null,
+    containerId: null
+};
 
-    async init() {
-        // 1. 先從 IndexedDB 載入快取渲染（零閃頻）
-        await this.loadFromCache();
+let isAdminLoggedIn = false;
+let debounceTimer = null;
 
-        // 2. 路由監聽 (Hash Router 確保 QR Code 掃描直接進入第三層)
-        window.addEventListener('hashchange', () => this.handleRoute());
-        this.handleRoute();
-
-        // 3. 背景非同步向 GAS 抓取最新資料
-        this.fetchLatestData();
-    }
-
-    async fetchLatestData() {
+// 初始化載入：優先使用 localStorage 快照避免閃頻
+window.addEventListener("DOMContentLoaded", () => {
+    const cached = localStorage.getItem("app_data_cache");
+    if (cached) {
         try {
-            const res = await fetch(GAS_API_URL + "?action=getData");
-            const json = await res.json();
-            if (json.status === "success") {
-                this.data = json;
-                await this.saveToCache(json);
-                this.updatePendingBadge();
-                this.handleRoute();
-            }
-        } catch (err) {
-            console.warn("網路連線離線，使用本地快取資料", err);
-        }
-    }
-
-    // Hash Router 解析
-    handleRoute() {
-        const hash = window.location.hash;
-        if (hash.startsWith("#/detail/")) {
-            const containerId = hash.replace("#/detail/", "");
-            this.currentContainerId = containerId;
-            this.showLayer(3);
-        } else if (hash.startsWith("#/category/")) {
-            const category = decodeURIComponent(hash.replace("#/category/", ""));
-            this.currentCategory = category;
-            this.showLayer(2);
-        } else {
-            this.showLayer(1);
-        }
-    }
-
-    showLayer(layerNum) {
-        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-        document.getElementById(`view-layer-${layerNum}`).classList.add('active');
-        document.getElementById('global-toolbar').style.display = layerNum === 1 ? 'none' : 'flex';
-        document.getElementById('home-toolbar').style.display = layerNum === 1 ? 'flex' : 'none'; // 只有首頁才顯示匯出按鈕
-        
-        if (layerNum === 1) {
-            this.renderLayer1();
-        } else if (layerNum === 2) {
-            this.renderLayer2();
-        } else if (layerNum === 3) {
-            this.renderLayer3();
-        }
-    }
-
-    // 第一層渲染：四大分類
-    renderLayer1() {
-        const grid = document.getElementById('category-grid');
-        const categories = [...new Set(this.data.containers.map(c => c.category))];
-        
-        grid.innerHTML = categories.map(cat => {
-            const firstContainer = this.data.containers.find(c => c.category === cat);
-            return `
-                <div class="card" onclick="app.navigateToCategory('${cat}')">
-                    <img src="${firstContainer ? firstContainer.iconUrl : ''}" alt="${cat}">
-                    <h3>${cat}</h3>
-                </div>
-            `;
-        }).join('');
-    }
-
-    navigateToCategory(cat) {
-        window.location.hash = `#/category/${encodeURIComponent(cat)}`;
-    }
-
-    // 第二層渲染：該分類所有容器（顯示圖示 + QR Code 左右並排，下方放名稱與說明）
-    renderLayer2() {
-        document.getElementById('layer2-title').innerText = `分類：${this.currentCategory}`;
-        const grid = document.getElementById('container-grid');
-        const filtered = this.data.containers.filter(c => c.category === this.currentCategory);
-
-        grid.innerHTML = filtered.map(c => `
-            <div class="card" style="text-align: left; cursor: default;" id="card-${c.id}">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; border-bottom: 1px dashed var(--border); padding-bottom: 8px;">
-                    <img src="${c.iconUrl}" alt="${c.name}" style="width: 50px; height: 50px; object-fit: contain; cursor: pointer;" onclick="app.navigateToDetail('${c.id}')">
-                    <div class="card-qrcode-${c.id}" style="width: 50px; height: 50px;"></div>
-                </div>
-                <h3 style="font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; cursor: pointer; color: var(--primary);" onclick="app.navigateToDetail('${c.id}')">${c.name}</h3>
-                <p style="font-size: 0.75rem; color: #64748b; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${c.description || '無說明'}</p>
-            </div>
-        `).join('');
-
-        // 批次為每個容器動態產生專屬 QR Code (連結至第三層)
-        const baseUrl = window.location.origin + window.location.pathname;
-        filtered.forEach(c => {
-            const qrEl = document.querySelector(`.card-qrcode-${c.id}`);
-            if (qrEl) {
-                qrEl.innerHTML = "";
-                new QRCode(qrEl, {
-                    text: `${baseUrl}#/detail/${c.id}`,
-                    width: 50,
-                    height: 50
-                });
-            }
-        });
-    }
-
-    navigateToDetail(id) {
-        window.location.hash = `#/detail/${id}`;
-    }
-
-    // 第三層渲染：容器詳情、圖示、專屬 QRcode 與 5大危害控制
-    renderLayer3() {
-        const container = this.data.containers.find(c => c.id === this.currentContainerId);
-        const detailBox = document.getElementById('detail-content');
-        
-        if (!container) {
-            detailBox.innerHTML = `<p>找不到該容器資料</p>`;
-            return;
-        }
-
-        const currentUrl = window.location.href;
-        const isWarning = container.category.toLowerCase().includes("warning sign");
-        const hazards = this.data.hazards[container.id] || ["", "", "", "", ""];
-
-        detailBox.innerHTML = `
-            <!-- 上方：圖示與專屬 QR Code 左右並排 -->
-            <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);">
-                <div style="text-align: center;">
-                    <img src="${container.iconUrl}" alt="${container.name}" style="width: 80px; height: 80px; object-fit: contain; display: block; margin: 0 auto 4px auto;">
-                </div>
-                <div style="text-align: center;">
-                    <div id="qrcode-box" style="display: inline-block; margin-bottom: 2px;"></div>
-                    <div style="font-size: 0.65rem; color: #64748b;">掃描進入此容器</div>
-                </div>
-            </div>
-
-            <!-- 下方：名稱與說明 -->
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 6px;">${container.name}</h2>
-                <p style="font-size: 0.9rem; color: #475569; line-height: 1.4;">${container.description || '無詳細說明'}</p>
-            </div>
-
-            ${isWarning ? `
-                <div class="hazard-container">
-                    <h3 style="margin-bottom: 12px; font-size: 1rem;">職業安全衛生：五大危害控制措施</h3>
-                    ${hazards.map((h, i) => `
-                        <div class="hazard-card">
-                            <div class="hazard-content"><strong>控制 ${i+1}:</strong> <span id="hazard-text-${i}">${h || '無資料'}</span></div>
-                            <button onclick="app.handleHazardAction(${i}, '${container.id}')">${this.isAdmin ? '編輯' : '新增'}</button>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-        `;
-
-        // 清空舊的 QR Code 並重新產生專屬 QR Code
-        const qrContainer = document.getElementById("qrcode-box");
-        qrContainer.innerHTML = "";
-        new QRCode(qrContainer, {
-            text: currentUrl,
-            width: 75,
-            height: 75
-        });
-    }
-
-    // 搜尋防抖機制（300ms）與局部容器列表更新（不閃頻）
-    handleSearchInput(event) {
-        clearTimeout(this.searchTimer);
-        const keyword = event.target.value.toLowerCase();
-
-        this.searchTimer = setTimeout(() => {
-            const grid = document.getElementById('category-grid');
-            // 若搜尋框沒有任何資訊，回到第一層分類狀態
-            if (keyword === "") {
-                this.renderLayer1();
-                return;
-            }
-            const filtered = this.data.containers.filter(c => 
-                c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword)
-            );
-
-            // 搜尋結果呈現
-            grid.innerHTML = filtered.map(c => `
-                <div class="card" onclick="app.navigateToDetail('${c.id}')">
-                    <img src="${c.iconUrl}" alt="${c.name}">
-                    <h3>${c.name}</h3>
-                </div>
-            `).join('');
-        }, 300);
-    }
-
-    updatePendingBadge() {
-        const count = this.data.pendingApprovals.length;
-        const badge = document.getElementById('pending-badge');
-        if (count > 0) {
-            badge.innerText = count;
-            badge.style.display = 'inline-block';
-        } else {
-            badge.style.display = 'none';
-        }
-    }
-
-    goBack() {
-        window.history.back();
-    }
-
-    goHome() {
-        window.location.hash = "#/";
-    }
-
-    // 簡易 IndexedDB 本地快取封裝
-    async saveToCache(data) {
-        localStorage.setItem('cached_system_data', JSON.stringify(data));
-    }
-
-    // 開啟管理員登入或控制中心彈窗
-    openAdminModal() {
-        const modal = document.getElementById('admin-modal');
-        const body = document.getElementById('admin-modal-body');
-        modal.style.display = 'flex';
-
-        if (!this.isAdmin) {
-            body.innerHTML = `
-                <h3 style="margin-bottom: 16px;">管理員登入控制中心</h3>
-                <div class="admin-form-group">
-                    <label>請輸入管理員密碼：</label>
-                    <input type="password" id="admin-pwd-input" placeholder="預設密碼 admin123">
-                </div>
-                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
-                    <button onclick="app.closeModal()">取消</button>
-                    <button class="primary" onclick="app.submitAdminLogin()">登入</button>
-                </div>
-            `;
-        } else {
-            this.renderAdminDashboard(body);
-        }
-    }
-
-    closeModal() {
-        document.getElementById('admin-modal').style.display = 'none';
-    }
-
-    async submitAdminLogin() {
-        const pwd = document.getElementById('admin-pwd-input').value;
-        try {
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "adminLogin", password: pwd })
-            });
-            const json = await res.json();
-            if (json.status === "success") {
-                this.isAdmin = true;
-                alert("管理員登入成功！");
-                this.openAdminModal(); // 刷新彈窗顯示控制中心
-                this.handleRoute();; // 重新渲染以更新按鈕文字（新增 -> 編輯）
-            } else {
-                alert(json.message || "密碼錯誤");
-            }
-        } catch (err) {
-            alert("登入連線失敗：" + err);
-        }
-    }
-
-    // 渲染管理員控制中心（含待審批清單與修改密碼）
-    renderAdminDashboard(containerEl) {
-        const approvals = this.data.pendingApprovals;
-        containerEl.innerHTML = `
-            <h3 style="margin-bottom: 16px;">管理員控制中心</h3>
-            
-            <div style="margin-bottom: 20px;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: #ef4444;">待審批清單 (${approvals.length})</h4>
-                <div style="max-height: 200px; overflow-y: auto;">
-                    ${approvals.length === 0 ? '<p style="font-size: 0.85rem; color: #64748b;">目前沒有待審批的項目</p>' : 
-                        approvals.map(item => `
-                            <div class="approval-item">
-                                <div style="font-size: 0.85rem;">
-                                    <strong>容器:</strong> ${item.containerId}<br>
-                                    <strong>提出內容:</strong> ${item.proposedContent}
-                                </div>
-                                <div>
-                                    <button onclick="app.processApproval('${item.id}', 'Approve')" class="primary" style="padding: 4px 8px; font-size: 0.8rem;">核准</button>
-                                    <button onclick="app.processApproval('${item.id}', 'Reject')" style="padding: 4px 8px; font-size: 0.8rem;">拒絕</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                </div>
-            </div>
-
-            <div style="border-top: 1px solid var(--border); padding-top: 16px;">
-                <h4 style="font-size: 0.95rem; margin-bottom: 8px;">更改管理員密碼</h4>
-                <div class="admin-form-group">
-                    <label>原密碼：</label>
-                    <input type="password" id="old-pwd">
-                </div>
-                <div class="admin-form-group">
-                    <label>新密碼：</label>
-                    <input type="password" id="new-pwd">
-                </div>
-                <button class="primary" onclick="app.changePassword()">確認更改密碼</button>
-            </div>
-
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button onclick="app.isAdmin = false; app.closeModal(); app.handleRoute();">登出管理員</button>
-                <button onclick="app.closeModal()">關閉視窗</button>
-            </div>
-        `;
-    }
-
-    async processApproval(approvalId, decision) {
-        try {
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "processApproval", approvalId: approvalId, decision: decision, operator: "Admin" })
-            });
-            const json = await res.json();
-            if (json.status === "success") {
-                alert(json.message);
-                this.fetchLatestData(); // 重新取得最新資料與清單
-                this.closeModal();
-            } else {
-                alert(json.message);
-            }
-        } catch (err) {
-            alert("操作失敗：" + err);
-        }
-    }
-
-    async changePassword() {
-        const oldPassword = document.getElementById('old-pwd').value;
-        const newPassword = document.getElementById('new-pwd').value;
-        if (!oldPassword || !newPassword) {
-            alert("請填寫完整密碼資訊");
-            return;
-        }
-
-        try {
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: "changePassword", oldPassword, newPassword, operator: "Admin" })
-            });
-            const json = await res.json();
-            if (json.status === "success") {
-                alert(json.message);
-                this.closeModal();
-            } else {
-                alert(json.message);
-            }
-        } catch (err) {
-            alert("變更密碼失敗：" + err);
-        }
-    }
-
-    // 處理 5 大危害控制措施的按鈕點擊（一般人送審批 / 管理員直接編輯）
-    async handleHazardAction(hazardIndex, containerId) {
-        const currentText = this.data.hazards[containerId]?.[hazardIndex] || "";
-        
-        if (this.isAdmin) {
-            const newText = prompt(`管理員模式：編輯第 ${hazardIndex + 1} 項危害控制措施內容 (若有多項請以 ; 隔開)`, currentText);
-            if (newText !== null) {
-                let hazards = [...(this.data.hazards[containerId] || ["","","","",""])];
-                hazards[hazardIndex] = newText;
-                
-                try {
-                    const res = await fetch(GAS_API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: "updateHazard", containerId, hazards, operator: "Admin" })
-                    });
-                    const json = await res.json();
-                    if (json.status === "success") {
-                        this.data.hazards[containerId] = hazards;
-                        this.renderLayer3();
-                        alert("更新成功");
-                    }
-                } catch (err) {
-                    alert("更新失敗：" + err);
-                }
-            }
-        } else {
-            const proposed = prompt(`請輸入您想新增至第 ${hazardIndex + 1} 項危害控制措施的內容：`);
-            if (proposed && proposed.trim() !== "") {
-                try {
-                    const res = await fetch(GAS_API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: "submitApproval", containerId, hazardIndex: hazardIndex + 1, proposedContent: proposed })
-                    });
-                    const json = await res.json();
-                    if (json.status === "success") {
-                        alert(json.message);
-                        this.fetchLatestData();
-                    }
-                } catch (err) {
-                    alert("送出審批失敗：" + err);
-                }
-            }
-        }
-    }
-
-    // 共用列印建構函式（左右並排：圖示 + QR Code，下方放名稱與說明）
-    async triggerPrintView(titleText, containerList) {
-        if (containerList.length === 0) {
-            alert("目前畫面上沒有可供匯出的容器資料");
-            return;
-        }
-
-        let printWindow = window.open('', '_blank');
-        const containerHtmls = [];
-        const baseUrl = window.location.origin + window.location.pathname;
-
-        for (let c of containerList) {
-            const targetUrl = `${baseUrl}#/detail/${c.id}`;
-            
-            // 利用暫時 div 產生 QR Code
-            const tempDiv = document.createElement('div');
-            tempDiv.style.display = 'none';
-            document.body.appendChild(tempDiv);
-            
-            new QRCode(tempDiv, {
-                text: targetUrl,
-                width: 100,
-                height: 100
-            });
-            
-            const qrCanvas = tempDiv.querySelector('canvas');
-            const qrDataUrl = qrCanvas ? qrCanvas.toDataURL("image/png") : "";
-            document.body.removeChild(tempDiv);
-
-            containerHtmls.push(`
-                <div class="print-card">
-                    <!-- 上方：圖示與 QR Code 左右並排 -->
-                    <div class="print-top">
-                        <div class="print-icon-box">
-                            <img src="${c.iconUrl}" alt="${c.name}">
-                        </div>
-                        <div class="print-qr-box">
-                            ${qrDataUrl ? `<img src="${qrDataUrl}" alt="QR Code">` : ''}
-                        </div>
-                    </div>
-                    <!-- 下方：名稱與說明 -->
-                    <div class="print-bottom">
-                        <div class="print-name">${c.name}</div>
-                        <div class="print-desc">${c.description || '無詳細說明'}</div>
-                    </div>
-                </div>
-            `);
-        }
-
-        let html = `
-            <!DOCTYPE html>
-            <html lang="zh-TW">
-            <head>
-                <meta charset="UTF-8">
-                <title>${titleText}</title>
-                <style>
-                    body { font-family: sans-serif; padding: 15px; color: #1e293b; background: #fff; }
-                    h1 { font-size: 1.2rem; margin-bottom: 12px; border-bottom: 2px solid #2563eb; padding-bottom: 4px; }
-                    .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-                    .print-card { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; page-break-inside: avoid; background: #fff; }
-                    .print-top { display: flex; align-items: center; justify-content: space-around; gap: 12px; margin-bottom: 8px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 8px; }
-                    .print-icon-box img { width: 75px; height: 75px; object-fit: contain; display: block; }
-                    .print-qr-box img { width: 75px; height: 75px; object-fit: contain; display: block; }
-                    .print-bottom { text-align: center; }
-                    .print-name { font-size: 0.95rem; font-weight: bold; margin-bottom: 4px; }
-                    .print-desc { font-size: 0.75rem; color: #475569; line-height: 1.3; }
-                    @media print {
-                        body { padding: 0; }
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>${titleText}</h1>
-                <div class="grid-container">
-                    ${containerHtmls.join('')}
-                </div>
-                <script>
-                    window.onload = function() {
-                        setTimeout(() => {
-                            window.print();
-                            window.close();
-                        }, 500);
-                    }
-                </script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.write(html);
-        printWindow.document.close();
+            appData = JSON.parse(cached);
+            renderCurrentView();
+        } catch(e) {}
     }
     
-   // 匯出所有標誌 (PDF)：僅匯出第二層畫面上出現的容器
-    async exportAllPDF() {
-        const containers = this.getCurrentVisibleContainers();
-        await this.triggerPrintView("所有容器標誌清單 (第二層總覽)", containers);
+    // 檢查網址是否帶有 containerId 參數（QR Code 掃描直接導向第三層）
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetContainerId = urlParams.get("containerId");
+    if (targetContainerId) {
+        currentView.level = 3;
+        currentView.containerId = targetContainerId;
     }
 
-    // 匯出搜尋得到的標誌 (PDF)：僅匯出搜尋結果在第二層畫面上出現的容器
-    async exportSearchPDF() {
-        const containers = this.getCurrentVisibleContainers();
-        await this.triggerPrintView("搜尋結果標誌清單 (第二層總覽)", containers);
-    }
+    fetchLatestData();
+});
 
-    // 取得當前畫面上正要呈現的第二層容器陣列
-    getCurrentVisibleContainers() {
-        const searchInput = document.getElementById('search-input');
-        const keyword = searchInput ? searchInput.value.trim().toLowerCase() : "";
-
-        // 如果有輸入搜尋關鍵字，以搜尋過濾結果為優先
-        if (keyword !== "") {
-            return this.data.containers.filter(c => 
-                c.name.toLowerCase().includes(keyword) || c.category.toLowerCase().includes(keyword)
-            );
+// 非同步取得最新資料（跨裝置同步，無閃頻）
+async function fetchLatestData() {
+    try {
+        const res = await fetch(`${GAS_API_URL}?action=getData`);
+        const json = await res.json();
+        if (json.status === "success") {
+            appData = json.data;
+            localStorage.setItem("app_data_cache", JSON.stringify(appData));
+            updatePendingBadge();
+            renderCurrentView();
         }
-
-        // 如果在第二層分類中，只抓取該分類容器
-        if (this.currentCategory) {
-            return this.data.containers.filter(c => c.category === this.currentCategory);
-        }
-
-        // 預設回傳全部容器
-        return this.data.containers;
-    }
-    
-    async loadFromCache() {
-        const cached = localStorage.getItem('cached_system_data');
-        if (cached) {
-            this.data = JSON.parse(cached);
-            this.updatePendingBadge();
-        }
+    } catch (err) {
+        console.error("同步資料失敗:", err);
     }
 }
 
-const app = new App();
+function updatePendingBadge() {
+    const badge = document.getElementById("pendingBadge");
+    if (appData.pendingCount > 0) {
+        badge.style.display = "inline-block";
+        badge.innerText = appData.pendingCount;
+    } else {
+        badge.style.display = "none";
+    }
+}
+
+// 根據目前層級渲染畫面
+function renderCurrentView() {
+    const main = document.getElementById("appMain");
+    const backBtn = document.getElementById("backBtn");
+    
+    if (currentView.level > 1) {
+        backBtn.style.display = "inline-block";
+    } else {
+        backBtn.style.display = "none";
+    }
+
+    if (currentView.level === 1) {
+        renderLevel1(main);
+    } else if (currentView.level === 2) {
+        renderLevel2(main, currentView.categoryId);
+    } else if (currentView.level === 3) {
+        renderLevel3(main, currentView.containerId);
+    }
+}
+
+// 第一層：顯示四大分類（以該分類第一個容器做代表）
+function renderLevel1(container) {
+    let html = `
+        <input type="text" id="searchInput" class="search-bar" placeholder="搜尋容器關鍵字..." oninput="handleSearchInput(this.value)">
+        <div class="action-toolbar">
+            <button class="nav-btn" onclick="exportAllSigns()">匯出所有標誌 PDF</button>
+            <button class="nav-btn" onclick="exportSearchedSigns()">匯出搜尋標誌 PDF</button>
+        </div>
+        <div id="contentArea" class="grid-container">
+    `;
+
+    appData.categories.forEach(cat => {
+        // 找出該分類的第一個容器作為代表
+        const firstContainer = appData.containers.find(c => c.categoryId === cat.categoryId);
+        const iconUrl = firstContainer ? firstContainer.iconUrl : (cat.representativeIconUrl || "");
+        
+        html += `
+            <div class="card" onclick="enterLevel2('${cat.categoryId}')">
+                <div class="card-top-row">
+                    <img class="card-icon" src="${iconUrl}" alt="分類代表圖示">
+                    <div class="card-qrcode"><span>分類封面</span></div>
+                </div>
+                <h3>${cat.categoryName}</h3>
+                <div class="card-desc">點擊進入瀏覽該分類所有容器</div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+// 300ms 防抖搜尋處理
+function handleSearchInput(keyword) {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const contentArea = document.getElementById("contentArea");
+        if (!contentArea) return;
+        
+        const trimmed = keyword.trim().toLowerCase();
+        if (!trimmed) {
+            renderLevel1(document.getElementById("appMain"));
+            return;
+        }
+
+        const matchedContainers = appData.containers.filter(c => 
+            c.containerName.toLowerCase().includes(trimmed) || 
+            c.signDescription.toLowerCase().includes(trimmed)
+        );
+
+        let html = "";
+        matchedContainers.forEach(c => {
+            const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
+            html += `
+                <div class="card" onclick="enterLevel3('${c.containerId}')">
+                    <div class="card-top-row">
+                        <img class="card-icon" src="${c.iconUrl}" alt="標誌圖示">
+                        <div class="card-qrcode" id="qr_search_${c.containerId}"></div>
+                    </div>
+                    <h3>${c.containerName}</h3>
+                    <div class="card-desc">${c.signDescription}</div>
+                </div>
+            `;
+        });
+        contentArea.innerHTML = html || "<p>查無符合關鍵字的容器。</p>";
+
+        // 生成 QR Code
+        matchedContainers.forEach(c => {
+            const el = document.getElementById(`qr_search_${c.containerId}`);
+            if (el && el.childElementCount === 0) {
+                const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
+                new QRCode(el, { text: qrTargetUrl, width: 84, height: 84 });
+            }
+        });
+    }, 300);
+}
+
+// 第二層：顯示該分類所有容器
+function enterLevel2(categoryId) {
+    currentView.level = 2;
+    currentView.categoryId = categoryId;
+    renderCurrentView();
+}
+
+function renderLevel2(container, categoryId) {
+    const list = appData.containers.filter(c => c.categoryId === categoryId);
+    
+    let html = `
+        <h2>分類容器清單</h2>
+        <div class="action-toolbar">
+            <button class="nav-btn" onclick="exportSearchedSigns()">匯出當前清單 PDF</button>
+        </div>
+        <div class="grid-container">
+    `;
+
+    list.forEach(c => {
+        html += `
+            <div class="card" onclick="enterLevel3('${c.containerId}')">
+                <div class="card-top-row">
+                    <img class="card-icon" src="${c.iconUrl}" alt="容器圖示">
+                    <div class="card-qrcode" id="qr_l2_${c.containerId}"></div>
+                </div>
+                <h3>${c.containerName}</h3>
+                <div class="card-desc">${c.signDescription}</div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+
+    // 渲染 QR Code
+    list.forEach(c => {
+        const el = document.getElementById(`qr_l2_${c.containerId}`);
+        if (el && el.childElementCount === 0) {
+            const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
+            new QRCode(el, { text: qrTargetUrl, width: 84, height: 84 });
+        }
+    });
+}
+
+// 第三層：顯示容器詳細資訊與五大危害控制
+function enterLevel3(containerId) {
+    currentView.level = 3;
+    currentView.containerId = containerId;
+    renderCurrentView();
+}
+
+function renderLevel3(container, containerId) {
+    const c = appData.containers.find(x => x.containerId === containerId);
+    if (!c) {
+        container.innerHTML = "<p>找不到該容器資訊。</p>";
+        return;
+    }
+
+    const isWarning = String(c.isWarningSign).toUpperCase() === "TRUE";
+
+    let html = `
+        <div class="card" style="cursor: default; margin-bottom: 20px;">
+            <div class="card-top-row">
+                <img class="card-icon" src="${c.iconUrl}" style="width: 120px; height: 120px;" alt="容器圖示">
+                <div class="card-qrcode" id="qr_l3_${c.containerId}" style="width: 120px; height: 120px;"></div>
+            </div>
+            <h2>${c.containerName}</h2>
+            <div class="card-desc" style="font-size: 1rem;">${c.signDescription}</div>
+        </div>
+    `;
+
+    if (isWarning) {
+        html += `<h3>職業安全衛生五大危害控制措施</h3><div id="hazardsListArea">`;
+        const standardHazards = [
+            "消除 (Elimination)",
+            "取代 (Substitution)",
+            "工程控制 (Engineering Controls)",
+            "行政管理 (Administrative Controls)",
+            "個人防護具 (PPE)"
+        ];
+
+        standardHazards.forEach(hType => {
+            const hazardObj = appData.hazards.find(h => h.containerId === c.containerId && h.hazardType === hType);
+            const content = hazardObj ? hazardObj.controlContent : "";
+
+            html += `
+                <div class="hazard-box">
+                    <div class="hazard-info" style="flex-grow: 1;">
+                        <h4>${hType}</h4>
+                        <div class="hazard-content" id="content_${c.containerId}_${hType}">${content || "(尚無內容)"}</div>
+                    </div>
+            `;
+
+            if (isAdminLoggedIn) {
+                html += `<button class="nav-btn" onclick="adminEditHazard('${c.containerId}', '${hType}')">直接編輯</button>`;
+            } else {
+                html += `<button class="nav-btn" onclick="requestAddHazard('${c.containerId}', '${hType}')">新增</button>`;
+            }
+
+            html += `</div>`;
+        });
+        html += `</div>`;
+    }
+
+    container.innerHTML = html;
+
+    // 渲染專屬 QR Code (永久固定不變)
+    const qrEl = document.getElementById(`qr_l3_${c.containerId}`);
+    if (qrEl && qrEl.childElementCount === 0) {
+        const qrTargetUrl = `${window.location.origin}${window.location.pathname}?containerId=${c.containerId}`;
+        new QRCode(qrEl, { text: qrTargetUrl, width: 114, height: 114 });
+    }
+}
+
+// 返回上一步
+function goBack() {
+    if (currentView.level === 3) {
+        currentView.level = 2;
+        currentView.containerId = null;
+    } else if (currentView.level === 2) {
+        currentView.level = 1;
+        currentView.categoryId = null;
+    }
+    renderCurrentView();
+}
+
+function refreshApp() {
+    window.location.href = window.location.pathname;
+}
+
+// 匯出 PDF 功能（透過瀏覽器列印機制結合 CSS 媒體查詢）
+function exportAllSigns() {
+    window.print();
+}
+
+function exportSearchedSigns() {
+    window.print();
+}
+
+// --- 管理員與互動審批邏輯 ---
+function openAdminModal() {
+    document.getElementById("adminModal").style.display = "flex";
+}
+function closeAdminModal() {
+    document.getElementById("adminModal").style.display = "none";
+}
+
+async function loginAdmin() {
+    const pwd = document.getElementById("adminPwdInput").value;
+    try {
+        const res = await fetch(GAS_API_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "loginAdmin", password: pwd })
+        });
+        const json = await res.json();
+        if (json.success) {
+            isAdminLoggedIn = true;
+            document.getElementById("adminAuthSection").style.display = "none";
+            document.getElementById("adminDashboardSection").style.display = "block";
+            alert("管理者登入成功！");
+            renderCurrentView();
+        } else {
+            alert("密碼錯誤！");
+        }
+    } catch(err) {
+        alert("登入請求失敗");
+    }
+}
+
+function openChangePwdModal() { document.getElementById("changePwdModal").style.display = "flex"; }
+function closeChangePwdModal() { document.getElementById("changePwdModal").style.display = "none"; }
+
+async function submitChangePassword() {
+    const oldP = document.getElementById("oldPwdInput").value;
+    const newP = document.getElementById("newPwdInput").value;
+    const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "changePassword", oldPassword: oldP, newPassword: newP })
+    });
+    const json = await res.json();
+    if (json.success) {
+        alert("密碼變更成功！舊密碼已失效。");
+        closeChangePwdModal();
+    } else {
+        alert("舊密碼不正確，變更失敗。");
+    }
+}
+
+function openAddSignModal() { document.getElementById("addSignModal").style.display = "flex"; }
+function closeAddSignModal() { document.getElementById("addSignModal").style.display = "none"; }
+
+async function submitNewSign(e) {
+    e.preventDefault();
+    const data = {
+        action: "addSign",
+        categoryId: document.getElementById("newCategoryId").value,
+        containerName: document.getElementById("newContainerName").value,
+        signDescription: document.getElementById("newSignDesc").value,
+        iconUrl: document.getElementById("newIconUrl").value,
+        isWarningSign: document.getElementById("newIsWarning").value
+    };
+
+    const res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(data) });
+    const json = await res.json();
+    if (json.status === "success") {
+        alert("新增標誌成功！");
+        closeAddSignModal();
+        fetchLatestData();
+    } else {
+        alert("新增失敗: " + json.message);
+    }
+}
+
+// 管理員直接編輯五大危害
+async function adminEditHazard(containerId, hazardType) {
+    const currentObj = appData.hazards.find(h => h.containerId === containerId && h.hazardType === hazardType);
+    const val = prompt(`直接編輯 [${hazardType}] 內容:`, currentObj ? currentObj.controlContent : "");
+    if (val === null) return;
+
+    const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "editHazard", containerId, hazardType, controlContent: val })
+    });
+    const json = await res.json();
+    if (json.status === "success") {
+        alert("更新成功！");
+        fetchLatestData();
+    }
+}
+
+// 非管理員提出審批請求
+async function requestAddHazard(containerId, hazardType) {
+    const val = prompt(`請輸入您想為 [${hazardType}] 新增的內容（送審後需管理員核准）：`);
+    if (!val) return;
+
+    const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "requestApproval", containerId, hazardType, requestedContent: val })
+    });
+    const json = await res.json();
+    if (json.status === "success") {
+        alert("已成功送出審批請求，等待管理員核准。");
+    }
+}
+
+// 查看待審批清單
+async function openApprovalListModal() {
+    const res = await fetch(`${GAS_API_URL}?action=getPending`);
+    const json = await res.json();
+    const container = document.getElementById("approvalListContainer");
+    
+    if (json.status === "success" && json.data.length > 0) {
+        let html = "";
+        json.data.forEach(item => {
+            html += `
+                <div class="hazard-box" style="margin-bottom: 15px;">
+                    <div>
+                        <strong>容器代號:</strong> ${item.containerId}<br>
+                        <strong>危害項目:</strong> ${item.hazardType}<br>
+                        <strong>申請新增內容:</strong> ${item.requestedContent}<br>
+                        <small>時間: ${item.timestamp}</small>
+                    </div>
+                    <div>
+                        <button class="nav-btn" style="background: var(--success-color); color:#fff;" onclick="handleApproval('${item.id}', 'approve')">核准</button>
+                        <button class="nav-btn" style="background: var(--danger-color); color:#fff;" onclick="handleApproval('${item.id}', 'reject')">拒絕</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } else {
+        container.innerHTML = "<p>目前沒有待審批的項目。</p>";
+    }
+    document.getElementById("approvalListModal").style.display = "flex";
+}
+function closeApprovalListModal() { document.getElementById("approvalListModal").style.display = "none"; }
+
+async function handleApproval(id, decision) {
+    const res = await fetch(GAS_API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "handleApproval", id, decision })
+    });
+    const json = await res.json();
+    if (json.status === "success") {
+        alert(decision === "approve" ? "已核准，內容已自動串接合併！" : "已拒絕該申請。");
+        openApprovalListModal();
+        fetchLatestData();
+    }
+}
