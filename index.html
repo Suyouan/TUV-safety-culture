@@ -3,136 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>容器與標誌管理系統</title>
-    <!-- PWA Manifest 設定 -->
-    <meta name="theme-color" content="#2563eb">
-    <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --text: #1e293b;
-            --border: #e2e8f0;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg); color: var(--text); padding-bottom: 40px; }
-        header { background: #fff; padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        h1 { font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-        .badge-count { background: #ef4444; color: #fff; font-size: 0.75rem; padding: 2px 6px; border-radius: 10px; display: none; }
-        .container { max-width: 800px; margin: 0 auto; padding: 16px; }
-        
-        /* 功能按鈕列 */
-        .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-        button, .btn { background: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
-        button:hover, .btn:hover { background: #f1f5f9; }
-        button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
-        button.primary:hover { background: #1d4ed8; }
-
-        /* 搜尋框 */
-        .search-box { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; margin-bottom: 16px; background: #fff; }
-
-        /* 畫面切換區塊 */
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-
-        /* 卡片與列表風格 */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-        .card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: transform 0.1s; }
-        .card:active { transform: scale(0.98); }
-        .card img { width: 64px; height: 64px; object-fit: contain; margin-bottom: 8px; }
-        .card h3 { font-size: 0.95rem; font-weight: 500; }
-
-        /* 第三層結構風格 (簡約風) */
-        .detail-box { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-        .flex-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-        .flex-row img { width: 80px; height: 80px; object-fit: contain; }
-        .flex-row canvas, .flex-row img.qrcode { width: 80px; height: 80px; }
-        
-        /* 5大危害控制措施框格 */
-        .hazard-container { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px; }
-        .hazard-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .hazard-content { font-size: 0.9rem; flex-grow: 1; margin-right: 12px; }
-        
-        /* 彈窗樣式 */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 80vh; overflow-y: auto; }
-
-        .admin-form-group { margin-bottom: 12px; }
-        .admin-form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #64748b; }
-        .admin-form-group input, .admin-form-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; }
-        .approval-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        
-        /* 匯出 PDF 專用 CSS 媒體查詢：列印時隱藏不需要的按鈕與導覽，完美呈現清單與標誌 */
-        @media print {
-            header, .toolbar, .search-box, button, .modal { display: none !important; }
-            body { background: #fff; color: #000; }
-            .container { max-width: 100%; padding: 0; }
-            .view-section { display: block !important; }
-            .card, .detail-box { border: none; box-shadow: none; padding: 0; margin-bottom: 20px; }
-            img { max-width: 100px; height: auto; }
-        }
-    </style>
+    <title>容器與安全標誌管理系統</title>
+    <!-- 引入 QR Code 生成套件 qrcodejs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
-    <header>
-        <h1 id="main-title">容器與標誌管理系統 <span id="pending-badge" class="badge-count">0</span></h1>
-        <div id="header-actions">
-            <button onclick="app.openAdminModal()">管理者登入</button>
+    <!-- 頂部導覽列 -->
+    <header class="app-header">
+        <div class="header-left">
+            <button id="backBtn" class="nav-btn" style="display: none;" onclick="goBack()">返回上一步</button>
+            <button class="nav-btn" onclick="refreshApp()">重新整理</button>
+        </div>
+        <h1 class="app-title">
+            安全標誌管理系統 
+            <span id="pendingBadge" class="badge" style="display: none;">0</span>
+        </h1>
+        <div class="header-right">
+            <button class="nav-btn admin-btn" onclick="openAdminModal()">管理者控制中心</button>
         </div>
     </header>
 
-    <div class="container">
-        <!-- 共同工具列 -->
-        <div class="toolbar" id="global-toolbar" style="display:none;">
-            <button onclick="app.goBack()">返回上一步</button>
-            <button onclick="app.goHome()">重新整理 (首頁)</button>
-        </div>
+    <!-- 主容器 -->
+    <main id="appMain" class="container">
+        <!-- 內容將由 JavaScript 動態渲染，避免載入空白或閃頻 -->
+    </main>
 
-        <!-- 首頁專屬功能列（匯出所有標誌、匯出搜尋標誌） -->
-        <div class="toolbar" id="home-toolbar">
-            <button onclick="app.exportAllPDF()">匯出所有標誌 (PDF)</button>
-            <button onclick="app.exportSearchPDF()">匯出搜尋標誌 (PDF)</button>
-        </div>
-
-        <!-- 第一層：四大分類 -->
-        <div id="view-layer-1" class="view-section active">
-            <input type="text" id="search-input" class="search-box" placeholder="輸入關鍵字搜尋容器（防抖 300ms）..." oninput="app.handleSearchInput(event)">
-            <div id="category-grid" class="grid">
-                <!-- 動態載入四大分類 -->
+    <!-- 管理者登入 / 控制中心 Modal -->
+    <div id="adminModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeAdminModal()">&times;</span>
+            <div id="adminAuthSection">
+                <h2>管理者登入</h2>
+                <input type="password" id="adminPwdInput" placeholder="請輸入管理員密碼">
+                <button onclick="loginAdmin()">登入</button>
             </div>
-        </div>
-
-        <!-- 第二層：該分類所有容器 -->
-        <div id="view-layer-2" class="view-section">
-            <h2 id="layer2-title" style="margin-bottom: 12px; font-size: 1.1rem;">分類列表</h2>
-            <div id="container-grid" class="grid">
-                <!-- 動態載入容器列表 -->
-            </div>
-        </div>
-
-        <!-- 第三層：容器詳情與 5 大危害控制 -->
-        <div id="view-layer-3" class="view-section">
-            <div class="detail-box" id="detail-content">
-                <!-- 動態載入容器細節、圖示、QRcode、說明與危害控制 -->
+            <div id="adminDashboardSection" style="display: none;">
+                <h2>管理者控制面板</h2>
+                <div class="admin-actions-bar">
+                    <button onclick="openAddSignModal()">新增號誌</button>
+                    <button onclick="openChangePwdModal()">更改密碼</button>
+                    <button onclick="openApprovalListModal()">查看待審批清單</button>
+                </div>
+                <div id="approvalContainerSection"></div>
             </div>
         </div>
     </div>
 
-    <!-- 管理員審批與控制彈窗 -->
-    <div id="admin-modal" class="modal">
-        <div class="modal-content" id="admin-modal-body">
-            <!-- 動態載入登入或控制中心畫面 -->
+    <!-- 新增號誌 Modal -->
+    <div id="addSignModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddSignModal()">&times;</span>
+            <h2>新增容器與標誌</h2>
+            <form id="addSignForm" onsubmit="submitNewSign(event)">
+                <label>分類代號 (categoryId):</label>
+                <input type="text" id="newCategoryId" required placeholder="例如 cat_01">
+                <label>容器名稱 (containerName):</label>
+                <input type="text" id="newContainerName" required>
+                <label>標誌說明 (signDescription):</label>
+                <textarea id="newSignDesc" required></textarea>
+                <label>圖示網址 (iconUrl):</label>
+                <input type="text" id="newIconUrl" required placeholder="https://lh3.googleusercontent.com/d/...">
+                <label>是否為警告標誌 (isWarningSign):</label>
+                <select id="newIsWarning">
+                    <option value="FALSE">否 (FALSE)</option>
+                    <option value="TRUE">是 (TRUE - 包含五大危害控制)</option>
+                </select>
+                <button type="submit">確認新增</button>
+            </form>
         </div>
     </div>
 
-    <!-- 載入 QR Code 生成庫 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- 更改密碼 Modal -->
+    <div id="changePwdModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeChangePwdModal()">&times;</span>
+            <h2>更改管理者密碼</h2>
+            <input type="password" id="oldPwdInput" placeholder="請輸入舊密碼">
+            <input type="password" id="newPwdInput" placeholder="請輸入新密碼">
+            <button onclick="submitChangePassword()">送出變更</button>
+        </div>
+    </div>
+
+    <!-- 審批清單彈窗 Modal -->
+    <div id="approvalListModal" class="modal" style="display: none;">
+        <div class="modal-content large-modal">
+            <span class="close" onclick="closeApprovalListModal()">&times;</span>
+            <h2>待審批清單</h2>
+            <div id="approvalListContainer"></div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
-    <script>
-        // 註冊 Service Worker 實現 PWA
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-    </script>
 </body>
 </html>
