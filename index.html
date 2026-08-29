@@ -55,6 +55,21 @@
         /* 彈窗樣式 */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 8px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+
+        .admin-form-group { margin-bottom: 12px; }
+        .admin-form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #64748b; }
+        .admin-form-group input, .admin-form-group textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; }
+        .approval-item { background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 匯出 PDF 專用 CSS 媒體查詢：列印時隱藏不需要的按鈕與導覽，完美呈現清單與標誌 */
+        @media print {
+            header, .toolbar, .search-box, button, .modal { display: none !important; }
+            body { background: #fff; color: #000; }
+            .container { max-width: 100%; padding: 0; }
+            .view-section { display: block !important; }
+            .card, .detail-box { border: none; box-shadow: none; padding: 0; margin-bottom: 20px; }
+            img { max-width: 100px; height: auto; }
+        }
     </style>
 </head>
 <body>
@@ -71,6 +86,12 @@
         <div class="toolbar" id="global-toolbar" style="display:none;">
             <button onclick="app.goBack()">返回上一步</button>
             <button onclick="app.goHome()">重新整理 (首頁)</button>
+        </div>
+
+        <!-- 首頁專屬功能列（匯出所有標誌、匯出搜尋標誌） -->
+        <div class="toolbar" id="home-toolbar">
+            <button onclick="app.exportAllPDF()">匯出所有標誌 (PDF)</button>
+            <button onclick="app.exportSearchPDF()">匯出搜尋標誌 (PDF)</button>
         </div>
 
         <!-- 第一層：四大分類 -->
