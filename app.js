@@ -61,6 +61,7 @@ class App {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-layer-${layerNum}`).classList.add('active');
         document.getElementById('global-toolbar').style.display = layerNum === 1 ? 'none' : 'flex';
+        document.getElementById('home-toolbar').style.display = layerNum === 1 ? 'flex' : 'none'; // 只有首頁才顯示匯出按鈕
         
         if (layerNum === 1) {
             this.renderLayer1();
@@ -196,6 +197,198 @@ class App {
     // 簡易 IndexedDB 本地快取封裝
     async saveToCache(data) {
         localStorage.setItem('cached_system_data', JSON.stringify(data));
+    }
+
+    // 開啟管理員登入或控制中心彈窗
+    openAdminModal() {
+        const modal = document.getElementById('admin-modal');
+        const body = document.getElementById('admin-modal-body');
+        modal.style.display = 'flex';
+
+        if (!this.isAdmin) {
+            body.innerHTML = `
+                <h3 style="margin-bottom: 16px;">管理員登入控制中心</h3>
+                <div class="admin-form-group">
+                    <label>請輸入管理員密碼：</label>
+                    <input type="password" id="admin-pwd-input" placeholder="預設密碼 admin123">
+                </div>
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                    <button onclick="app.closeModal()">取消</button>
+                    <button class="primary" onclick="app.submitAdminLogin()">登入</button>
+                </div>
+            `;
+        } else {
+            this.renderAdminDashboard(body);
+        }
+    }
+
+    closeModal() {
+        document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    async submitAdminLogin() {
+        const pwd = document.getElementById('admin-pwd-input').value;
+        try {
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "adminLogin", password: pwd })
+            });
+            const json = await res.json();
+            if (json.status === "success") {
+                this.isAdmin = true;
+                alert("管理員登入成功！");
+                this.openAdminModal(); // 刷新彈窗顯示控制中心
+                this.renderCurrentView(); // 重新渲染以更新按鈕文字（新增 -> 編輯）
+            } else {
+                alert(json.message || "密碼錯誤");
+            }
+        } catch (err) {
+            alert("登入連線失敗：" + err);
+        }
+    }
+
+    // 渲染管理員控制中心（含待審批清單與修改密碼）
+    renderAdminDashboard(containerEl) {
+        const approvals = this.data.pendingApprovals;
+        containerEl.innerHTML = `
+            <h3 style="margin-bottom: 16px;">管理員控制中心</h3>
+            
+            <div style="margin-bottom: 20px;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: #ef4444;">待審批清單 (${approvals.length})</h4>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    ${approvals.length === 0 ? '<p style="font-size: 0.85rem; color: #64748b;">目前沒有待審批的項目</p>' : 
+                        approvals.map(item => `
+                            <div class="approval-item">
+                                <div style="font-size: 0.85rem;">
+                                    <strong>容器:</strong> ${item.containerId}<br>
+                                    <strong>提出內容:</strong> ${item.proposedContent}
+                                </div>
+                                <div>
+                                    <button onclick="app.processApproval('${item.id}', 'Approve')" class="primary" style="padding: 4px 8px; font-size: 0.8rem;">核准</button>
+                                    <button onclick="app.processApproval('${item.id}', 'Reject')" style="padding: 4px 8px; font-size: 0.8rem;">拒絕</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 16px;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 8px;">更改管理員密碼</h4>
+                <div class="admin-form-group">
+                    <label>原密碼：</label>
+                    <input type="password" id="old-pwd">
+                </div>
+                <div class="admin-form-group">
+                    <label>新密碼：</label>
+                    <input type="password" id="new-pwd">
+                </div>
+                <button class="primary" onclick="app.changePassword()">確認更改密碼</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button onclick="app.isAdmin = false; app.closeModal(); app.renderCurrentView();">登出管理員</button>
+                <button onclick="app.closeModal()">關閉視窗</button>
+            </div>
+        `;
+    }
+
+    async processApproval(approvalId, decision) {
+        try {
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "processApproval", approvalId: approvalId, decision: decision, operator: "Admin" })
+            });
+            const json = await res.json();
+            if (json.status === "success") {
+                alert(json.message);
+                this.fetchLatestData(); // 重新取得最新資料與清單
+                this.closeModal();
+            } else {
+                alert(json.message);
+            }
+        } catch (err) {
+            alert("操作失敗：" + err);
+        }
+    }
+
+    async changePassword() {
+        const oldPassword = document.getElementById('old-pwd').value;
+        const newPassword = document.getElementById('new-pwd').value;
+        if (!oldPassword || !newPassword) {
+            alert("請填寫完整密碼資訊");
+            return;
+        }
+
+        try {
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "changePassword", oldPassword, newPassword, operator: "Admin" })
+            });
+            const json = await res.json();
+            if (json.status === "success") {
+                alert(json.message);
+                this.closeModal();
+            } else {
+                alert(json.message);
+            }
+        } catch (err) {
+            alert("變更密碼失敗：" + err);
+        }
+    }
+
+    // 處理 5 大危害控制措施的按鈕點擊（一般人送審批 / 管理員直接編輯）
+    async handleHazardAction(hazardIndex, containerId) {
+        const currentText = this.data.hazards[containerId]?.[hazardIndex] || "";
+        
+        if (this.isAdmin) {
+            const newText = prompt(`管理員模式：編輯第 ${hazardIndex + 1} 項危害控制措施內容 (若有多項請以 ; 隔開)`, currentText);
+            if (newText !== null) {
+                let hazards = [...(this.data.hazards[containerId] || ["","","","",""])];
+                hazards[hazardIndex] = newText;
+                
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: "updateHazard", containerId, hazards, operator: "Admin" })
+                    });
+                    const json = await res.json();
+                    if (json.status === "success") {
+                        this.data.hazards[containerId] = hazards;
+                        this.renderLayer3();
+                        alert("更新成功");
+                    }
+                } catch (err) {
+                    alert("更新失敗：" + err);
+                }
+            }
+        } else {
+            const proposed = prompt(`請輸入您想新增至第 ${hazardIndex + 1} 項危害控制措施的內容：`);
+            if (proposed && proposed.trim() !== "") {
+                try {
+                    const res = await fetch(GAS_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: "submitApproval", containerId, hazardIndex: hazardIndex + 1, proposedContent: proposed })
+                    });
+                    const json = await res.json();
+                    if (json.status === "success") {
+                        alert(json.message);
+                        this.fetchLatestData();
+                    }
+                } catch (err) {
+                    alert("送出審批失敗：" + err);
+                }
+            }
+        }
+    }
+
+    // 匯出所有標誌 PDF (利用前端列印機制結合 CSS 媒體查詢)
+    exportAllPDF() {
+        window.print();
+    }
+
+    // 匯出搜尋得到的標誌 PDF
+    exportSearchPDF() {
+        window.print();
     }
 
     async loadFromCache() {
