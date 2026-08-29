@@ -16,7 +16,6 @@ class App {
     async init() {
         // 1. 先從 IndexedDB 載入快取渲染（零閃頻）
         await this.loadFromCache();
-        this.renderCurrentView();
 
         // 2. 路由監聽 (Hash Router 確保 QR Code 掃描直接進入第三層)
         window.addEventListener('hashchange', () => this.handleRoute());
@@ -34,7 +33,7 @@ class App {
                 this.data = json;
                 await this.saveToCache(json);
                 this.updatePendingBadge();
-                this.renderCurrentView();
+                this.handleRoute();
             }
         } catch (err) {
             console.warn("網路連線離線，使用本地快取資料", err);
@@ -238,7 +237,7 @@ class App {
                 this.isAdmin = true;
                 alert("管理員登入成功！");
                 this.openAdminModal(); // 刷新彈窗顯示控制中心
-                this.renderCurrentView(); // 重新渲染以更新按鈕文字（新增 -> 編輯）
+                this.handleRoute();; // 重新渲染以更新按鈕文字（新增 -> 編輯）
             } else {
                 alert(json.message || "密碼錯誤");
             }
@@ -286,7 +285,7 @@ class App {
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button onclick="app.isAdmin = false; app.closeModal(); app.renderCurrentView();">登出管理員</button>
+                <button onclick="app.isAdmin = false; app.closeModal(); app.handleRoute();">登出管理員</button>
                 <button onclick="app.closeModal()">關閉視窗</button>
             </div>
         `;
