@@ -484,25 +484,24 @@ function calculateCardRisk(selectElement) {
       }
     }
 
-    async function loadAssessmentDetail(id) {
-      try {
-        console.log("正在向後端搜尋 ID:", id);
-        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
-        let json = await res.json();
-        console.log("後端回傳結果:", json);
-        
-        if (json.status === "success" && json.results && json.results.length > 0) {
-          // 精準比對 ID，避免模糊搜尋抓到其他筆
-          let matchedItem = json.results.find(r => r.assessment_id === id) || json.results[0];
-          showDetailModal(matchedItem);
-        } else {
-          console.warn("找不到對應 ID 的評估資料");
-          alert("找不到此評估編號的詳細資料：" + id);
-        }
-      } catch (err) {
-        console.error("載入詳細資料發生異常：", err);
-      }
+   // 【修正後】透過 assessment_id 載入詳細資訊並自動彈窗顯示
+async function loadAssessmentDetail(assessmentId) {
+  try {
+    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(assessmentId)}`);
+    let json = await res.json();
+    if (json.status === "success" && json.results.length > 0) {
+      // 精準找出對應 ID 的項目
+      let item = json.results.find(r => r.assessment_id === assessmentId) || json.results[0];
+      
+      // 直接呼叫我們原本寫好的詳情彈窗函式，完整呈現和截圖一模一樣的內容
+      showAssessmentDetailModal(item);
+    } else {
+      alert("找不到對應的風險評估資料：" + assessmentId);
     }
+  } catch (err) {
+    console.error("無法載入 QR Code 對應的風險評估細節", err);
+  }
+}
     
   </script>
 </body>
