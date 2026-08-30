@@ -1,96 +1,386 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>容器與安全標誌管理系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">職安風險評估與控制平台</title>
+  <!-- Tailwind CSS 確保極速與響應式排版 -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-    <header class="app-header">
-        <div class="header-left">
-            <button id="backBtn" class="nav-btn" style="display: none;" onclick="goBack()">返回上一步</button>
-            <button class="nav-btn" onclick="refreshApp()">重新整理</button>
+  <!-- 頂部導航列 -->
+  <header class="bg-blue-600 text-white shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <h1 id="main-title" class="text-xl font-bold">職安風險評估平台</h1>
+      <div class="flex items-center space-x-2">
+        <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded text-sm transition">
+          管理員模式
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+    <!-- 導航切換頁籤 -->
+    <div class="flex border-b border-gray-200">
+      <button onclick="switchTab('create')" id="tab-create" class="py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none">新增風險評估</button>
+      <button onclick="switchTab('search')" id="tab-search" class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700 focus:outline-none">檢索與查詢</button>
+    </div>
+
+    <!-- 區塊 A：新增風險評估提案表單 -->
+    <section id="section-create" class="bg-white p-6 rounded-lg shadow-sm space-y-4">
+      <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">建立新的風險評估與控制措施</h2>
+      
+      <form id="assessment-form" onsubmit="submitAssessment(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">專屬評估名稱</label>
+          <input type="text" id="assessment_name" required placeholder="例如：A廠區CNC機台捲入風險評估" class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
         </div>
-        <h1 class="app-title">
-            安全標誌管理系統 
-            <span id="pendingBadge" class="badge" style="display: none;">0</span>
-        </h1>
-        <div class="header-right">
-            <button class="nav-btn admin-btn" onclick="openAdminModal()">管理者控制中心</button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">建立者姓名</label>
+            <input type="text" id="creator" required placeholder="請輸入您的名字" class="mt-1 w-full p-2 border border-gray-300 rounded">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">危害種類 (選取或直接輸入新種類)</label>
+            <input type="text" id="hazard_type" list="hazard-list" required placeholder="選擇或輸入危害種類..." class="mt-1 w-full p-2 border border-gray-300 rounded">
+            <datalist id="hazard-list"></datalist>
+          </div>
         </div>
-    </header>
 
-    <main id="appMain" class="container">
-        <!-- 動態渲染區域 -->
-    </main>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">危害情境詳細描述</label>
+          <textarea id="hazard_desc" rows="2" required placeholder="描述具體發生物品、動作或環境..." class="mt-1 w-full p-2 border border-gray-300 rounded"></textarea>
+        </div>
 
-    <!-- 管理者 Modal -->
-    <div id="adminModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeAdminModal()">&times;</span>
-            <div id="adminAuthSection">
-                <h2>管理者登入</h2>
-                <input type="password" id="adminPwdInput" placeholder="請輸入管理員密碼">
-                <button onclick="loginAdmin()">登入</button>
+        <!-- 4x4 風險矩陣 -->
+        <div class="bg-gray-50 p-4 rounded-lg border grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">嚴重性 (1~4)</label>
+            <select id="severity" onchange="calculateRisk()" class="mt-1 w-full p-2 border border-gray-300 rounded bg-white">
+              <option value="1">1 - 輕微</option>
+              <option value="2">2 - 中等</option>
+              <option value="3">3 - 嚴重</option>
+              <option value="4">4 - 災難性</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">頻率 (1~4)</label>
+            <select id="likelihood" onchange="calculateRisk()" class="mt-1 w-full p-2 border border-gray-300 rounded bg-white">
+              <option value="1">1 - 極罕見</option>
+              <option value="2">2 - 偶爾</option>
+              <option value="3">3 - 經常</option>
+              <option value="4">4 - 極頻繁</option>
+            </select>
+          </div>
+          <div class="text-center md:text-left">
+            <span class="block text-xs text-gray-500 uppercase font-bold">計算後風險等級 (1~16)</span>
+            <span id="risk-display" class="text-2xl font-black text-blue-600">1</span>
+          </div>
+        </div>
+
+        <!-- 五大控制階層 -->
+        <div class="space-y-3 pt-2">
+          <h3 class="text-md font-semibold text-gray-700">五大控制措施（可從下方選取或自行輸入自訂項目）</h3>
+          
+          <div>
+            <label class="block text-xs font-semibold text-gray-500">1. 消除 (Elimination)</label>
+            <input type="text" id="control_elimination" list="list-elimination" placeholder="點選或輸入消除作法..." class="mt-1 w-full p-1.5 text-sm border rounded">
+            <datalist id="list-elimination"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500">2. 替代 (Substitution)</label>
+            <input type="text" id="control_substitution" list="list-substitution" placeholder="點選或輸入替代作法..." class="mt-1 w-full p-1.5 text-sm border rounded">
+            <datalist id="list-substitution"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500">3. 工程控制 (Engineering Controls)</label>
+            <input type="text" id="control_engineering" list="list-engineering" placeholder="點選或輸入工程控制..." class="mt-1 w-full p-1.5 text-sm border rounded">
+            <datalist id="list-engineering"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500">4. 管理控制 (Administrative Controls)</label>
+            <input type="text" id="control_administrative" list="list-administrative" placeholder="點選或輸入管理控制..." class="mt-1 w-full p-1.5 text-sm border rounded">
+            <datalist id="list-administrative"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500">5. 個人防護具 (PPE)</label>
+            <input type="text" id="control_ppe" list="list-ppe" placeholder="點選或輸入防護具需求..." class="mt-1 w-full p-1.5 text-sm border rounded">
+            <datalist id="list-ppe"></datalist>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded transition">
+          提交風險評估提案 (等待管理員審批)
+        </button>
+      </form>
+    </section>
+
+    <!-- 區塊 B：全方位模糊搜尋與檢索 -->
+    <section id="section-search" class="bg-white p-6 rounded-lg shadow-sm space-y-4 hidden">
+      <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">跨欄位模糊搜尋</h2>
+      <div class="flex gap-2">
+        <input type="text" id="search-keyword" placeholder="輸入專屬名稱、危害種類、控制措施等關鍵字..." class="flex-grow p-2 border border-gray-300 rounded">
+        <button onclick="performSearch()" class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded transition">搜尋</button>
+      </div>
+      <div id="search-results" class="space-y-3 pt-2">
+        <!-- 搜尋結果動態載入處 -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 管理員審批彈窗 Modal -->
+  <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold text-red-600">管理員審批專區 (待審批清單)</h3>
+        <button onclick="closeAdminModal()" class="text-gray-500 hover:text-gray-700 font-bold">✕ 關閉</button>
+      </div>
+      <div id="pending-container" class="space-y-4">
+        <!-- 動態載入待審批項目 -->
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center py-4 text-xs text-gray-400">
+    Production Safe Platform powered by GitHub, PWA & GAS.
+  </h2>
+
+  <!-- 前端 JavaScript 邏輯 -->
+  <script>
+    // 請將此處替換為妳部署 GAS 後端產生的 Web App 網址
+    const GAS_API_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec";
+    const ADMIN_PASSWORD_HASH = "admin123"; // 可依需求調整管理員密碼
+
+    let globalSettings = {};
+
+    window.onload = function() {
+      fetchSettings();
+      checkPendingCount();
+    };
+
+    // 頁籤切換
+    function switchTab(tabName) {
+      if (tabName === 'create') {
+        document.getElementById('section-create').classList.remove('hidden');
+        document.getElementById('section-search').classList.add('hidden');
+        document.getElementById('tab-create').className = "py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none";
+        document.getElementById('tab-search').className = "py-2 px-4 font-medium text-gray-500 hover:text-gray-700 focus:outline-none";
+      } else {
+        document.getElementById('section-create').classList.add('hidden');
+        document.getElementById('section-search').classList.remove('hidden');
+        document.getElementById('tab-create').className = "py-2 px-4 font-medium text-gray-500 hover:text-gray-700 focus:outline-none";
+        document.getElementById('tab-search').className = "py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none";
+        performSearch(); // 預設載入全部
+      }
+    }
+
+    // 計算 4x4 風險等級
+    function calculateRisk() {
+      let sev = Number(document.getElementById('severity').value);
+      let lik = Number(document.getElementById('likelihood').value);
+      let risk = sev * lik;
+      let display = document.getElementById('risk-display');
+      display.innerText = risk;
+      
+      // 依風險高低給予顏色提示
+      if (risk >= 10) display.className = "text-2xl font-black text-red-600";
+      else if (risk >= 5) display.className = "text-2xl font-black text-orange-500";
+      else display.className = "text-2xl font-black text-green-600";
+    }
+
+    // 取得快選清單與資料庫
+    async function fetchSettings() {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=getSettings`);
+        let json = await res.json();
+        if (json.status === "success") {
+          globalSettings = json.data;
+          
+          // 填入危害種類 datalist
+          let hazardList = document.getElementById('hazard-list');
+          hazardList.innerHTML = json.data.hazards.map(h => `<option value="${h}">`).join('');
+          
+          // 填入五大控制措施 datalists
+          fillDatalist('list-elimination', json.data.controls.elimination);
+          fillDatalist('list-substitution', json.data.controls.substitution);
+          fillDatalist('list-engineering', json.data.controls.engineering);
+          fillDatalist('list-administrative', json.data.controls.administrative);
+          fillDatalist('list-ppe', json.data.controls.ppe);
+        }
+      } catch (err) {
+        console.error("無法取得快選資料", err);
+      }
+    }
+
+    function fillDatalist(elementId, items) {
+      let el = document.getElementById(elementId);
+      if (el && items) {
+        el.innerHTML = items.map(i => `<option value="${i}">`).join('');
+      }
+    }
+
+    // 檢查待審批數量並更新主標題紅點
+    async function checkPendingCount() {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=getPending`);
+        let json = await res.json();
+        if (json.status === "success" && json.count > 0) {
+          document.getElementById('main-title').innerText = `職安風險評估平台 (${json.count} 待審批)`;
+        } else {
+          document.getElementById('main-title').innerText = `職安風險評估平台`;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 管理員模式切換（密碼驗證 + 彈窗審批）
+    async function toggleAdminMode() {
+      let pwd = prompt("請輸入管理員密碼以進入審批介面：");
+      if (pwd === ADMIN_PASSWORD_HASH) {
+        await loadPendingListForModal();
+      } else if (pwd !== null) {
+        alert("密碼錯誤！");
+      }
+    }
+
+    // 載入待審批清單並顯示彈窗
+    async function loadPendingListForModal() {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=getPending`);
+        let json = await res.json();
+        let container = document.getElementById('pending-container');
+        
+        if (json.status === "success" && json.pending.length > 0) {
+          container.innerHTML = json.pending.map(item => `
+            <div class="border p-4 rounded-lg bg-gray-50 space-y-2">
+              <div class="flex justify-between font-bold text-blue-900">
+                <span>${item.assessment_name}</span>
+                <span class="text-sm bg-orange-100 text-orange-700 px-2 py-0.5 rounded">風險等級: ${item.risk_level}</span>
+              </div>
+              <p class="text-sm text-gray-600">建立者: ${item.creator} | 危害: ${item.hazard_type}</p>
+              <p class="text-sm bg-white p-2 border rounded">描述: ${item.hazard_desc}</p>
+              <div class="text-xs text-gray-500 space-y-1">
+                ${item.control_elimination ? `<div>• 消除: ${item.control_elimination}</div>` : ''}
+                ${item.control_substitution ? `<div>• 替代: ${item.control_substitution}</div>` : ''}
+                ${item.control_engineering ? `<div>• 工程: ${item.control_engineering}</div>` : ''}
+                ${item.control_administrative ? `<div>• 管理: ${item.control_administrative}</div>` : ''}
+                ${item.control_ppe ? `<div>• PPE: ${item.control_ppe}</div>` : ''}
+              </div>
+              <div class="flex gap-2 pt-2">
+                <button onclick="approveAction('${item.assessment_id}', true)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-sm rounded">核准並產出 QR Code</button>
+                <button onclick="approveAction('${item.assessment_id}', false)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-sm rounded">拒絕</button>
+              </div>
             </div>
-            <div id="adminDashboardSection" style="display: none;">
-                <h2>管理者控制面板</h2>
-                <div class="admin-actions-bar">
-                    <button onclick="openAddSignModal()">新增號誌</button>
-                    <button onclick="openChangePwdModal()">更改密碼</button>
-                    <button onclick="openApprovalListModal()">查看待審批清單</button>
-                </div>
+          `).join('');
+        } else {目前無待審批項目
+          container.innerHTML = `<p class="text-gray-500 text-center py-6">目前沒有需要審批的提案。</p>`;
+        }
+        document.getElementById('admin-modal').classList.remove('hidden');
+      } catch (err) {
+        alert("載入審批清單失敗");
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-modal').classList.add('hidden');
+      checkPendingCount();
+    }
+
+    // 執行審批動作 (核准/拒絕)
+    async function approveAction(assessmentId, isApproved) {
+      try {
+        let res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "approveAssessment",
+            assessment_id: assessmentId,
+            approve: isApproved
+          })
+        });
+        let json = await res.json();
+        if (json.status === "success") {
+          alert(isApproved ? "已核准，並自動生成 QR Code 與更新知識庫！" : "已拒絕該提案。");
+          loadPendingListForModal(); // 重新整理彈窗清單
+        } else {
+          alert("操作失敗");
+        }
+      } catch (err) {
+        alert("網路連線錯誤");
+      }
+    }
+
+    // 提交新的風險評估提案
+    async function submitAssessment(e) {
+      e.preventDefault();
+      let payload = {
+        action: "createAssessment",
+        assessment_name: document.getElementById('assessment_name').value,
+        creator: document.getElementById('creator').value,
+        hazard_type: document.getElementById('hazard_type').value,
+        hazard_desc: document.getElementById('hazard_desc').value,
+        severity: document.getElementById('severity').value,
+        likelihood: document.getElementById('likelihood').value,
+        control_elimination: document.getElementById('control_elimination').value,
+        control_substitution: document.getElementById('control_substitution').value,
+        control_engineering: document.getElementById('control_engineering').value,
+        control_administrative: document.getElementById('control_administrative').value,
+        control_ppe: document.getElementById('control_ppe').value
+      };
+
+      try {
+        let res = await fetch(GAS_API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        let json = await res.json();
+        if (json.status === "success") {
+          alert("提案已成功送出！請等待管理員審批通過後即可生成專屬 QR Code。");
+          document.getElementById('assessment-form').reset();
+          document.getElementById('risk-display').innerText = "1";
+          checkPendingCount();
+          switchTab('search');
+        } else {
+          alert("送出失敗：" + json.message);
+        }
+      } catch (err) {
+        alert("網路異常，請稍後再試。");
+      }
+    }
+
+    // 跨欄位模糊搜尋
+    async function performSearch() {
+      let keyword = document.getElementById('search-keyword').value;
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(keyword)}`);
+        let json = await res.json();
+        let container = document.getElementById('search-results');
+        
+        if (json.status === "success" && json.results.length > 0) {
+          container.innerHTML = json.results.map(r => `
+            <div class="border p-4 rounded-lg flex justify-between items-center bg-white shadow-sm">
+              <div>
+                <h4 class="font-bold text-blue-700">${r.assessment_name}</h4>
+                <p class="text-xs text-gray-500">狀態: <span class="font-semibold ${r.status === 'Approved' ? 'text-green-600' : 'text-orange-500'}">${r.status}</span> | 風險等級: ${r.risk_level}</p>
+              </div>
+              <div>
+                ${r.qr_code_url ? `<a href="${r.qr_code_url}" target="_blank" class="bg-blue-100 text-blue-700 text-xs px-3 py-1.5 rounded font-medium hover:bg-blue-200">查看 QR Code</a>` : `<span class="text-xs text-gray-400">審批中尚無 QR</span>`}
+              </div>
             </div>
-        </div>
-    </div>
-
-    <!-- 新增標誌 Modal -->
-    <div id="addSignModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeAddSignModal()">&times;</span>
-            <h2>新增容器與標誌</h2>
-            <form onsubmit="submitNewSign(event)">
-                <label>分類代號 (categoryId):</label>
-                <input type="text" id="newCategoryId" required placeholder="例如 cat_01">
-                <label>容器名稱 (containerName):</label>
-                <input type="text" id="newContainerName" required>
-                <label>標誌說明 (signDescription):</label>
-                <textarea id="newSignDesc" required></textarea>
-                <label>圖示網址 (iconUrl):</label>
-                <input type="text" id="newIconUrl" required placeholder="https://lh3.googleusercontent.com/d/...">
-                <label>是否為警告標誌 (isWarningSign):</label>
-                <select id="newIsWarning">
-                    <option value="FALSE">否 (FALSE)</option>
-                    <option value="TRUE">是 (TRUE - 包含五大危害控制)</option>
-                </select>
-                <button type="submit">確認新增</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 更改密碼 Modal -->
-    <div id="changePwdModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="closeChangePwdModal()">&times;</span>
-            <h2>更改管理者密碼</h2>
-            <input type="password" id="oldPwdInput" placeholder="請輸入舊密碼">
-            <input type="password" id="newPwdInput" placeholder="請輸入新密碼">
-            <button onclick="submitChangePassword()">送出變更</button>
-        </div>
-    </div>
-
-    <!-- 審批清單 Modal -->
-    <div id="approvalListModal" class="modal" style="display: none;">
-        <div class="modal-content large-modal">
-            <span class="close" onclick="closeApprovalListModal()">&times;</span>
-            <h2>待審批清單</h2>
-            <div id="approvalListContainer"></div>
-        </div>
-    </div>
-
-    <script src="app.js"></script>
+          `).join('');
+        } else {
+          container.innerHTML = `<p class="text-gray-500 text-center py-4">查無相關風險評估紀錄。</p>`;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
 </body>
 </html>
