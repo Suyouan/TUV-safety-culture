@@ -485,9 +485,23 @@ function calculateCardRisk(selectElement) {
     }
 
     async function loadAssessmentDetail(id) {
-      let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
-      let json = await res.json();
-      if (json.status === "success" && json.results.length > 0) showDetailModal(json.results[0]);
+      try {
+        console.log("正在向後端搜尋 ID:", id);
+        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
+        let json = await res.json();
+        console.log("後端回傳結果:", json);
+        
+        if (json.status === "success" && json.results && json.results.length > 0) {
+          // 精準比對 ID，避免模糊搜尋抓到其他筆
+          let matchedItem = json.results.find(r => r.assessment_id === id) || json.results[0];
+          showDetailModal(matchedItem);
+        } else {
+          console.warn("找不到對應 ID 的評估資料");
+          alert("找不到此評估編號的詳細資料：" + id);
+        }
+      } catch (err) {
+        console.error("載入詳細資料發生異常：", err);
+      }
     }
     
   </script>
