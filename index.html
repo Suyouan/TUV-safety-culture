@@ -171,6 +171,46 @@
   }
 };
 
+    // 【新增】透過 assessment_id 載入詳細資訊並彈窗顯示（供手機掃描 QR Code 後檢視）
+async function loadAssessmentDetail(assessmentId) {
+  try {
+    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(assessmentId)}`);
+    let json = await res.json();
+    if (json.status === "success" && json.results.length > 0) {
+      // 找出剛好等於該 ID 的項目
+      let item = json.results.find(r => r.assessment_id === assessmentId) || json.results[0];
+      
+      // 建立一個滿版檢視彈窗把內容秀出來
+      let modalHtml = `
+        <div id="qr-detail-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-lg max-w-lg w-full p-6 space-y-4 shadow-xl">
+            <h3 class="text-xl font-bold text-blue-800 border-b pb-2">現場危害防護守則</h3>
+            <div class="space-y-2 text-sm">
+              <p><strong>評估名稱：</strong>${item.assessment_name}</p>
+              <p><strong>風險等級：</strong><span class="text-red-600 font-bold">${item.risk_level}</span></p>
+              <p><strong>目前狀態：</strong>${item.status}</p>
+            </div>
+            <div class="bg-blue-50 p-3 rounded text-xs text-blue-900">
+              請現場作業人員務必依照上述五大控制措施確實執行防護，確保作業安全。
+            </div>
+            <button onclick="closeQrModal()" class="w-full bg-blue-600 text-white py-2 rounded font-medium">關閉並返回平台首頁</button>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+  } catch (err) {
+    console.error("無法載入 QR Code 對應的風險評估細節", err);
+  }
+}
+
+function closeQrModal() {
+  let modal = document.getElementById('qr-detail-modal');
+  if (modal) modal.remove();
+  // 清除網址上的參數避免重新整理又彈出
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+
     // 頁籤切換
     function switchTab(tabName) {
       if (tabName === 'create') {
