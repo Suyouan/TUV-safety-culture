@@ -93,9 +93,34 @@
       if (assessmentId) {
         console.log("偵測到 QR Code ID:", assessmentId);
         // 直接呼叫載入並顯示詳細視窗
-        await showDetailModal(assessmentId);
+        await loadAndShowDetailDirectly(assessmentId);
       }
     };
+
+    // 專門用來處理掃描 QR Code 後直接開窗的函式
+    async function loadAndShowDetailDirectly(id) {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
+        let json = await res.json();
+        
+        if (json.status === "success" && json.results && json.results.length > 0) {
+          // 用精準比對找出對應的那一筆
+          let matched = json.results.find(item => item.assessment_id === id);
+          
+          if (matched) {
+            // 直接呼叫您原本用來長出附圖那個畫面的 Modal 函式
+            showDetailModal(matched);
+          } else {
+            alert("找不到此評估編號的詳細資料：" + id);
+          }
+        } else {
+          alert("找不到此評估編號的詳細資料：" + id);
+        }
+      } catch (err) {
+        console.error("載入詳細資料失敗：", err);
+        alert("連線後端發生錯誤");
+      }
+    }
 
     function switchTab(tabName) {
       if (tabName === 'create') {
