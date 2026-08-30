@@ -425,13 +425,29 @@ function calculateCardRisk(selectElement) {
     function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
 
     async function approveAction(id, isApproved) {
-      let res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "approveAssessment", assessment_id: id, approve: isApproved }) });
-      let json = await res.json();
-      if (json.status === "success") {
-        alert(isApproved ? "已核准並自動生成 QR Code！" : "已拒絕。");
-        loadPendingModal();
-      }
+  let res = await fetch(GAS_API_URL, { 
+    method: "POST", 
+    body: JSON.stringify({ action: "approveAssessment", assessment_id: id, approve: isApproved }) 
+  });
+  let json = await res.json();
+  
+  if (json.status === "success") {
+    alert(isApproved ? "已核准並自動生成 QR Code！" : "已拒絕。");
+    
+    // 1. 重新載入待審批彈窗清單
+    loadPendingModal();
+    
+    // 2. 更新右上角的待審批紅點數量
+    if (typeof checkPendingCount === 'function') {
+      checkPendingCount();
     }
+    
+    // 3. 自動重新執行「檢索與查詢」的搜尋，讓背景的清單狀態即時變成 Approved 或 Rejected
+    if (typeof performSearch === 'function') {
+      performSearch();
+    }
+  }
+}
 
     async function loadAssessmentDetail(id) {
       let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
