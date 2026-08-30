@@ -231,15 +231,16 @@ function toggleInputType(btn, fieldName, cardId) {
   }
 }
 
-    function calculateCardRisk(selectEl) {
-      let card = selectEl.closest('.border');
-      let sev = Number(card.querySelector('[name="severity"]').value);
-      let lik = Number(card.querySelector('[name="likelihood"]').value);
-      let riskEl = card.querySelector('.risk-val');
-      let risk = sev * lik;
-      riskEl.innerText = risk;
-      riskEl.className = `risk-val text-lg font-black ${risk >= 10 ? 'text-red-600' : risk >= 5 ? 'text-orange-500' : 'text-green-600'}`;
-    }
+    // 計算單張卡片的風險等級 (嚴重性 × 頻率)
+function calculateCardRisk(selectElement) {
+  let card = selectElement.closest('.border'); // 找到當前這張危害卡片的外層容器
+  let severity = parseInt(card.querySelector('select[name="severity"]').value) || 1;
+  let likelihood = parseInt(card.querySelector('select[name="likelihood"]').value) || 1;
+  let riskLevel = severity * likelihood;
+  
+  // 更新該卡片的風險等級顯示
+  card.querySelector('.risk-val').innerText = riskLevel;
+}
 
     async function submitAssessment(e) {
       e.preventDefault();
