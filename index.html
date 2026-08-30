@@ -160,9 +160,16 @@
     let globalSettings = {};
 
     window.onload = function() {
-      fetchSettings();
-      checkPendingCount();
-    };
+  fetchSettings();
+  checkPendingCount();
+
+  // 【新增】檢查網址是否有帶 assessment_id（代表是手機掃描 QR Code 進來的）
+  const urlParams = new URLSearchParams(window.location.search);
+  const assessmentId = urlParams.get('assessment_id');
+  if (assessmentId) {
+    loadAssessmentDetail(assessmentId);
+  }
+};
 
     // 頁籤切換
     function switchTab(tabName) {
