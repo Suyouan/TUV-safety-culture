@@ -81,21 +81,28 @@
     let globalSettings = {};
 
    window.onload = async function() {
-      // 1. 初始化檢查待審批數量（如果有這個功能的話）
-      if (typeof checkPendingCount === 'function') {
-        checkPendingCount();
-      }
+  // 1. 初始化檢查待審批數量
+  if (typeof checkPendingCount === 'function') {
+    checkPendingCount();
+  }
 
-      // 2. 抓取網址中的 assessment_id 參數
-      const urlParams = new URLSearchParams(window.location.search);
-      const assessmentId = urlParams.get('assessment_id');
+  // 2. 抓取遠端選單設定與初始化第一張危害卡片
+  if (typeof fetchSettings === 'function') {
+    await fetchSettings();
+  }
+  if (typeof addHazardCard === 'function') {
+    addHazardCard(); // 確保剛進畫面時就會自動長出第一張危害卡片
+  }
 
-      if (assessmentId) {
-        console.log("偵測到 QR Code ID:", assessmentId);
-        // 直接呼叫載入並顯示詳細視窗
-        await loadAndShowDetailDirectly(assessmentId);
-      }
-    };
+  // 3. 抓取網址中的 assessment_id 參數（支援 QR Code 掃描直接開窗）
+  const urlParams = new URLSearchParams(window.location.search);
+  const assessmentId = urlParams.get('assessment_id');
+
+  if (assessmentId) {
+    console.log("偵測到 QR Code ID:", assessmentId);
+    await loadAndShowDetailDirectly(assessmentId);
+  }
+};
 
     // 專門用來處理掃描 QR Code 後直接開窗的函式
     async function loadAndShowDetailDirectly(id) {
