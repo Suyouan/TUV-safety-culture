@@ -79,15 +79,20 @@
     const ADMIN_PASSWORD_HASH = "admin123";
     let globalSettings = {};
 
-    window.onload = function() {
-      fetchSettings();
-      checkPendingCount();
-      addHazardCard(); // 預設展開第一張危害卡片
+    window.onload = async function() {
+  // 1. 先把後端的危害種類與控制措施資料抓回來
+  await fetchSettings();
+  
+  // 2. 確定資料抓到了，才初始化第一張帶有選單的危害卡片
+  addHazardCard();
+  
+  checkPendingCount();
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const assessmentId = urlParams.get('assessment_id');
-      if (assessmentId) loadAssessmentDetail(assessmentId);
-    };
+  // 3. 檢查網址是否有帶 QR Code 的 assessment_id
+  const urlParams = new URLSearchParams(window.location.search);
+  const assessmentId = urlParams.get('assessment_id');
+  if (assessmentId) loadAssessmentDetail(assessmentId);
+};
 
     function switchTab(tabName) {
       if (tabName === 'create') {
@@ -109,14 +114,9 @@
     let res = await fetch(`${GAS_API_URL}?action=getSettings`);
     let json = await res.json();
     if (json.status === "success") {
-      globalSettings = json.data;
-      // 如果畫面上已經有卡片，重新載入第一張卡片或讓使用者點新增時自動帶入最新選單
-      let container = document.getElementById('hazards-container');
-      if (container && container.children.length === 0) {
-        addHazardCard();
-      }
+      window.globalSettings = json.data; // 確保全域變數有拿到資料
     }
-  } catch (err) { console.error(err); }
+  } catch (err) { console.error("抓取選單設定失敗", err); }
 }
 
     // 【穩定版】改回傳統 <select> 下拉選單，並附帶切換自訂輸入功能
