@@ -80,32 +80,22 @@
     const ADMIN_PASSWORD_HASH = "admin123";
     let globalSettings = {};
 
-    window.onload = async function() {
-  try {
-    // 1. 抓取設定
-    if (typeof fetchSettings === 'function') {
-      await fetchSettings();
-    }
-    
-    // 2. 初始化卡片
-    if (typeof addHazardCard === 'function') {
-      addHazardCard();
-    }
-    
-    // 3. 檢查網址是否有帶 QR Code 的 assessment_id
-    const urlParams = new URLSearchParams(window.location.search);
-    const assessmentId = urlParams.get('assessment_id');
-    
-    if (assessmentId) {
-      console.log("偵測到 QR Code ID:", assessmentId);
-      if (typeof loadAssessmentDetail === 'function') {
-        loadAssessmentDetail(assessmentId);
+   window.onload = async function() {
+      // 1. 初始化檢查待審批數量（如果有這個功能的話）
+      if (typeof checkPendingCount === 'function') {
+        checkPendingCount();
       }
-    }
-  } catch (err) {
-    console.error("初始化載入發生錯誤：", err);
-  }
-};
+
+      // 2. 抓取網址中的 assessment_id 參數
+      const urlParams = new URLSearchParams(window.location.search);
+      const assessmentId = urlParams.get('assessment_id');
+
+      if (assessmentId) {
+        console.log("偵測到 QR Code ID:", assessmentId);
+        // 直接呼叫載入並顯示詳細視窗
+        await showDetailModal(assessmentId);
+      }
+    };
 
     function switchTab(tabName) {
       if (tabName === 'create') {
