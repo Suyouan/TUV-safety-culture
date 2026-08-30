@@ -3,201 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">職安風險評估與控制平台</title>
-  <!-- Tailwind CSS 確保極速與響應式排版 -->
+  <title id="page-title">職安風險評估與控制平台 (多危害版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
 
-  <!-- 頂部導航列 -->
   <header class="bg-blue-600 text-white shadow-md">
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 id="main-title" class="text-xl font-bold">職安風險評估平台</h1>
-      <div class="flex items-center space-x-2">
-        <button id="btn-admin-toggle" onclick="toggleAdminMode()" class="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded text-sm transition">
-          管理員模式
-        </button>
-      </div>
+      <button onclick="toggleAdminMode()" class="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded text-sm transition">管理員模式</button>
     </div>
   </header>
 
-  <!-- 主要內容區 -->
   <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
-
-    <!-- 導航切換頁籤 -->
     <div class="flex border-b border-gray-200">
-      <button onclick="switchTab('create')" id="tab-create" class="py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none">新增風險評估</button>
+      <button onclick="switchTab('create')" id="tab-create" class="py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none">新增風險評估提案</button>
       <button onclick="switchTab('search')" id="tab-search" class="py-2 px-4 font-medium text-gray-500 hover:text-gray-700 focus:outline-none">檢索與查詢</button>
     </div>
 
-    <!-- 區塊 A：新增風險評估提案表單 -->
+    <!-- 新增表單 -->
     <section id="section-create" class="bg-white p-6 rounded-lg shadow-sm space-y-4">
-      <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">建立新的風險評估與控制措施</h2>
+      <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">建立包含多個危害的評估提案</h2>
       
-      <form id="assessment-form" onsubmit="submitAssessment(event)" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">專屬評估名稱</label>
-          <input type="text" id="assessment_name" required placeholder="例如：A廠區CNC機台捲入風險評估" class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
+      <form id="assessment-form" onsubmit="submitAssessment(event)" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
+            <label class="block text-sm font-medium text-gray-700">專屬評估名稱</label>
+            <input type="text" id="assessment_name" required placeholder="例如：A廠區高壓電測試作業" class="mt-1 w-full p-2 border rounded">
+          </div>
+          <div>
             <label class="block text-sm font-medium text-gray-700">建立者姓名</label>
-            <input type="text" id="creator" required placeholder="請輸入您的名字" class="mt-1 w-full p-2 border border-gray-300 rounded">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">危害種類 (選取或直接輸入新種類)</label>
-            <input type="text" id="hazard_type" list="hazard-list" required placeholder="選擇或輸入危害種類..." class="mt-1 w-full p-2 border border-gray-300 rounded">
-            <datalist id="hazard-list"></datalist>
+            <input type="text" id="creator" required placeholder="您的姓名" class="mt-1 w-full p-2 border rounded">
           </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">危害情境詳細描述</label>
-          <textarea id="hazard_desc" rows="2" required placeholder="描述具體發生物品、動作或環境..." class="mt-1 w-full p-2 border border-gray-300 rounded"></textarea>
+        <!-- 動態危害項目容器 -->
+        <div id="hazards-container" class="space-y-4">
+          <!-- 預設第一項危害 -->
         </div>
 
-        <!-- 4x4 風險矩陣 -->
-        <div class="bg-gray-50 p-4 rounded-lg border grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">嚴重性 (1~4)</label>
-            <select id="severity" onchange="calculateRisk()" class="mt-1 w-full p-2 border border-gray-300 rounded bg-white">
-              <option value="1">1 - 輕微</option>
-              <option value="2">2 - 中等</option>
-              <option value="3">3 - 嚴重</option>
-              <option value="4">4 - 災難性</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">頻率 (1~4)</label>
-            <select id="likelihood" onchange="calculateRisk()" class="mt-1 w-full p-2 border border-gray-300 rounded bg-white">
-              <option value="1">1 - 極罕見</option>
-              <option value="2">2 - 偶爾</option>
-              <option value="3">3 - 經常</option>
-              <option value="4">4 - 極頻繁</option>
-            </select>
-          </div>
-          <div class="text-center md:text-left">
-            <span class="block text-xs text-gray-500 uppercase font-bold">計算後風險等級 (1~16)</span>
-            <span id="risk-display" class="text-2xl font-black text-blue-600">1</span>
-          </div>
-        </div>
+        <button type="button" onclick="addHazardCard()" class="w-full border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 py-2 rounded font-medium transition">
+          ＋ 點此新增另一個危害項目
+        </button>
 
-        <!-- 五大控制階層 -->
-        <div class="space-y-3 pt-2">
-          <h3 class="text-md font-semibold text-gray-700">五大控制措施（可從下方選取或自行輸入自訂項目）</h3>
-          
-          <div>
-            <label class="block text-xs font-semibold text-gray-500">1. 消除 (Elimination)</label>
-            <input type="text" id="control_elimination" list="list-elimination" placeholder="點選或輸入消除作法..." class="mt-1 w-full p-1.5 text-sm border rounded">
-            <datalist id="list-elimination"></datalist>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500">2. 替代 (Substitution)</label>
-            <input type="text" id="control_substitution" list="list-substitution" placeholder="點選或輸入替代作法..." class="mt-1 w-full p-1.5 text-sm border rounded">
-            <datalist id="list-substitution"></datalist>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500">3. 工程控制 (Engineering Controls)</label>
-            <input type="text" id="control_engineering" list="list-engineering" placeholder="點選或輸入工程控制..." class="mt-1 w-full p-1.5 text-sm border rounded">
-            <datalist id="list-engineering"></datalist>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500">4. 管理控制 (Administrative Controls)</label>
-            <input type="text" id="control_administrative" list="list-administrative" placeholder="點選或輸入管理控制..." class="mt-1 w-full p-1.5 text-sm border rounded">
-            <datalist id="list-administrative"></datalist>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500">5. 個人防護具 (PPE)</label>
-            <input type="text" id="control_ppe" list="list-ppe" placeholder="點選或輸入防護具需求..." class="mt-1 w-full p-1.5 text-sm border rounded">
-            <datalist id="list-ppe"></datalist>
-          </div>
-        </div>
-
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded transition">
-          提交風險評估提案 (等待管理員審批)
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded transition shadow">
+          提交完整提案 (送出審批)
         </button>
       </form>
     </section>
 
-    <!-- 區塊 B：全方位模糊搜尋與檢索 -->
+    <!-- 檢索與查詢 -->
     <section id="section-search" class="bg-white p-6 rounded-lg shadow-sm space-y-4 hidden">
       <h2 class="text-lg font-semibold text-gray-700 border-b pb-2">跨欄位模糊搜尋</h2>
       <div class="flex gap-2">
-        <input type="text" id="search-keyword" placeholder="輸入專屬名稱、危害種類、控制措施等關鍵字..." class="flex-grow p-2 border border-gray-300 rounded">
-        <button onclick="performSearch()" class="bg-gray-800 hover:bg-black text-white px-4 py-2 rounded transition">搜尋</button>
+        <input type="text" id="search-keyword" placeholder="輸入評估名稱或危害關鍵字..." class="flex-grow p-2 border rounded">
+        <button onclick="performSearch()" class="bg-gray-800 text-white px-4 py-2 rounded">搜尋</button>
       </div>
-      <div id="search-results" class="space-y-3 pt-2">
-        <!-- 搜尋結果動態載入處 -->
-      </div>
+      <div id="search-results" class="space-y-3 pt-2"></div>
     </section>
-
   </main>
 
-  <!-- 管理員審批彈窗 Modal -->
+  <!-- 管理員審批彈窗 -->
   <div id="admin-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
     <div class="bg-white rounded-lg max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-lg font-bold text-red-600">管理員審批專區 (待審批清單)</h3>
-        <button onclick="closeAdminModal()" class="text-gray-500 hover:text-gray-700 font-bold">✕ 關閉</button>
+        <h3 class="text-lg font-bold text-red-600">管理員審批專區</h3>
+        <button onclick="closeAdminModal()" class="text-gray-500 font-bold">✕ 關閉</button>
       </div>
-      <div id="pending-container" class="space-y-4">
-        <!-- 動態載入待審批項目 -->
-      </div>
+      <div id="pending-container" class="space-y-4"></div>
     </div>
   </div>
 
-  <footer class="text-center py-4 text-xs text-gray-400">
-    Production Safe Platform powered by GitHub, PWA & GAS.
-  </h2>
-
-  <!-- 前端 JavaScript 邏輯 -->
   <script>
-    // 請將此處替換為妳部署 GAS 後端產生的 Web App 網址
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
-    const ADMIN_PASSWORD_HASH = "admin123"; // 可依需求調整管理員密碼
-
+    const GAS_API_URL = "https://script.google.com/macros/s/YOUR_GAS_DEPLOYMENT_ID/exec";
+    const ADMIN_PASSWORD_HASH = "admin123";
     let globalSettings = {};
 
     window.onload = function() {
-  fetchSettings();
-  checkPendingCount();
+      fetchSettings();
+      checkPendingCount();
+      addHazardCard(); // 預設展開第一張危害卡片
 
-  // 【新增】檢查網址是否有帶 assessment_id（代表是手機掃描 QR Code 進來的）
-  const urlParams = new URLSearchParams(window.location.search);
-  const assessmentId = urlParams.get('assessment_id');
-  if (assessmentId) {
-    loadAssessmentDetail(assessmentId);
-  }
-};
+      const urlParams = new URLSearchParams(window.location.search);
+      const assessmentId = urlParams.get('assessment_id');
+      if (assessmentId) loadAssessmentDetail(assessmentId);
+    };
 
-    // 【修正後】透過 assessment_id 載入詳細資訊並自動彈窗顯示
-async function loadAssessmentDetail(assessmentId) {
-  try {
-    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(assessmentId)}`);
-    let json = await res.json();
-    if (json.status === "success" && json.results.length > 0) {
-      // 精準找出對應 ID 的項目
-      let item = json.results.find(r => r.assessment_id === assessmentId) || json.results[0];
-      
-      // 直接呼叫我們原本寫好的詳情彈窗函式，完整呈現和截圖一模一樣的內容
-      showAssessmentDetailModal(item);
-    } else {
-      alert("找不到對應的風險評估資料：" + assessmentId);
-    }
-  } catch (err) {
-    console.error("無法載入 QR Code 對應的風險評估細節", err);
-  }
-}
-
-function closeQrModal() {
-  let modal = document.getElementById('qr-detail-modal');
-  if (modal) modal.remove();
-  // 清除網址上的參數避免重新整理又彈出
-  window.history.replaceState({}, document.title, window.location.pathname);
-}
-
-    // 頁籤切換
     function switchTab(tabName) {
       if (tabName === 'create') {
         document.getElementById('section-create').classList.remove('hidden');
@@ -209,258 +100,239 @@ function closeQrModal() {
         document.getElementById('section-search').classList.remove('hidden');
         document.getElementById('tab-create').className = "py-2 px-4 font-medium text-gray-500 hover:text-gray-700 focus:outline-none";
         document.getElementById('tab-search').className = "py-2 px-4 font-medium text-blue-600 border-b-2 border-blue-600 focus:outline-none";
-        performSearch(); // 預設載入全部
+        performSearch();
       }
     }
 
-    // 計算 4x4 風險等級
-    function calculateRisk() {
-      let sev = Number(document.getElementById('severity').value);
-      let lik = Number(document.getElementById('likelihood').value);
-      let risk = sev * lik;
-      let display = document.getElementById('risk-display');
-      display.innerText = risk;
-      
-      // 依風險高低給予顏色提示
-      if (risk >= 10) display.className = "text-2xl font-black text-red-600";
-      else if (risk >= 5) display.className = "text-2xl font-black text-orange-500";
-      else display.className = "text-2xl font-black text-green-600";
-    }
-
-    // 取得快選清單與資料庫
     async function fetchSettings() {
       try {
         let res = await fetch(`${GAS_API_URL}?action=getSettings`);
         let json = await res.json();
         if (json.status === "success") {
           globalSettings = json.data;
-          
-          // 填入危害種類 datalist
-          let hazardList = document.getElementById('hazard-list');
-          hazardList.innerHTML = json.data.hazards.map(h => `<option value="${h}">`).join('');
-          
-          // 填入五大控制措施 datalists
-          fillDatalist('list-elimination', json.data.controls.elimination);
-          fillDatalist('list-substitution', json.data.controls.substitution);
-          fillDatalist('list-engineering', json.data.controls.engineering);
-          fillDatalist('list-administrative', json.data.controls.administrative);
-          fillDatalist('list-ppe', json.data.controls.ppe);
+          window.hazardOptionsHtml = json.data.hazards.map(h => `<option value="${h}">`).join('');
+          window.controlOptionsHtml = {
+            elimination: json.data.controls.elimination.map(i => `<option value="${i}">`).join(''),
+            substitution: json.data.controls.substitution.map(i => `<option value="${i}">`).join(''),
+            engineering: json.data.controls.engineering.map(i => `<option value="${i}">`).join(''),
+            administrative: json.data.controls.administrative.map(i => `<option value="${i}">`).join(''),
+            ppe: json.data.controls.ppe.map(i => `<option value="${i}">`).join('')
+          };
+          // 更新現有卡片的 datalist
+          document.querySelectorAll('datalist').forEach(dl => {
+            let type = dl.dataset.type;
+            if (type && window.controlOptionsHtml[type]) dl.innerHTML = window.controlOptionsHtml[type];
+            if (type === 'hazard') dl.innerHTML = window.hazardOptionsHtml;
+          });
         }
-      } catch (err) {
-        console.error("無法取得快選資料", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
-    function fillDatalist(elementId, items) {
-      let el = document.getElementById(elementId);
-      if (el && items) {
-        el.innerHTML = items.map(i => `<option value="${i}">`).join('');
-      }
-    }
-
-    // 檢查待審批數量並更新主標題紅點
-    async function checkPendingCount() {
-      try {
-        let res = await fetch(`${GAS_API_URL}?action=getPending`);
-        let json = await res.json();
-        if (json.status === "success" && json.count > 0) {
-          document.getElementById('main-title').innerText = `職安風險評估平台 (${json.count} 待審批)`;
-        } else {
-          document.getElementById('main-title').innerText = `職安風險評估平台`;
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // 管理員模式切換（密碼驗證 + 彈窗審批）
-    async function toggleAdminMode() {
-      let pwd = prompt("請輸入管理員密碼以進入審批介面：");
-      if (pwd === ADMIN_PASSWORD_HASH) {
-        await loadPendingListForModal();
-      } else if (pwd !== null) {
-        alert("密碼錯誤！");
-      }
-    }
-
-    // 載入待審批清單並顯示彈窗
-    async function loadPendingListForModal() {
-      try {
-        let res = await fetch(`${GAS_API_URL}?action=getPending`);
-        let json = await res.json();
-        let container = document.getElementById('pending-container');
-        
-        if (json.status === "success" && json.pending.length > 0) {
-          container.innerHTML = json.pending.map(item => `
-            <div class="border p-4 rounded-lg bg-gray-50 space-y-2">
-              <div class="flex justify-between font-bold text-blue-900">
-                <span>${item.assessment_name}</span>
-                <span class="text-sm bg-orange-100 text-orange-700 px-2 py-0.5 rounded">風險等級: ${item.risk_level}</span>
-              </div>
-              <p class="text-sm text-gray-600">建立者: ${item.creator} | 危害: ${item.hazard_type}</p>
-              <p class="text-sm bg-white p-2 border rounded">描述: ${item.hazard_desc}</p>
-              <div class="text-xs text-gray-500 space-y-1">
-                ${item.control_elimination ? `<div>• 消除: ${item.control_elimination}</div>` : ''}
-                ${item.control_substitution ? `<div>• 替代: ${item.control_substitution}</div>` : ''}
-                ${item.control_engineering ? `<div>• 工程: ${item.control_engineering}</div>` : ''}
-                ${item.control_administrative ? `<div>• 管理: ${item.control_administrative}</div>` : ''}
-                ${item.control_ppe ? `<div>• PPE: ${item.control_ppe}</div>` : ''}
-              </div>
-              <div class="flex gap-2 pt-2">
-                <button onclick="approveAction('${item.assessment_id}', true)" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 text-sm rounded">核准並產出 QR Code</button>
-                <button onclick="approveAction('${item.assessment_id}', false)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 text-sm rounded">拒絕</button>
-              </div>
+    // 動態新增危害卡片
+    function addHazardCard() {
+      let container = document.getElementById('hazards-container');
+      let cardId = 'hazard-card-' + Date.now();
+      let cardHtml = `
+        <div id="${cardId}" class="border border-blue-200 bg-blue-50/30 p-4 rounded-lg space-y-3 relative">
+          <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-red-500 hover:text-red-700 text-sm font-bold">移除此危害 ✕</button>
+          <h3 class="font-bold text-blue-900 text-sm">危害項目</h3>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600">危害種類 (可選取現有或直接輸入新種類)</label>
+            <input type="text" name="hazard_type" list="list-${cardId}-hazard" required placeholder="選擇或輸入危害種類..." class="mt-1 w-full p-2 border rounded bg-white text-sm">
+            <datalist id="list-${cardId}-hazard" data-type="hazard">${window.hazardOptionsHtml || ''}</datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600">危害情境詳細描述</label>
+            <textarea name="hazard_desc" rows="2" required placeholder="描述具體情境..." class="mt-1 w-full p-2 border rounded bg-white text-sm"></textarea>
+          </div>
+          <div class="grid grid-cols-3 gap-2 items-center bg-white p-3 rounded border">
+            <div>
+              <label class="block text-xs font-medium">嚴重性 (1~4)</label>
+              <select name="severity" onchange="calculateCardRisk(this)" class="w-full p-1 border rounded text-sm">
+                <option value="1">1 - 輕微</option><option value="2">2 - 中等</option><option value="3">3 - 嚴重</option><option value="4">4 - 災難</option>
+              </select>
             </div>
-          `).join('');
-        } else {目前無待審批項目
-          container.innerHTML = `<p class="text-gray-500 text-center py-6">目前沒有需要審批的提案。</p>`;
-        }
-        document.getElementById('admin-modal').classList.remove('hidden');
-      } catch (err) {
-        alert("載入審批清單失敗");
-      }
+            <div>
+              <label class="block text-xs font-medium">頻率 (1~4)</label>
+              <select name="likelihood" onchange="calculateCardRisk(this)" class="w-full p-1 border rounded text-sm">
+                <option value="1">1 - 極罕見</option><option value="2">2 - 偶爾</option><option value="3">3 - 經常</option><option value="4">4 - 極頻繁</option>
+              </select>
+            </div>
+            <div class="text-center">
+              <span class="block text-[10px] text-gray-400">風險等級</span>
+              <span class="risk-val text-lg font-black text-blue-600">1</span>
+            </div>
+          </div>
+          <div class="space-y-2 pt-1">
+            <p class="text-xs font-bold text-gray-700">五大控制措施（點選現有或自行輸入）</p>
+            <input type="text" name="control_elimination" list="list-${cardId}-elimination" placeholder="1. 消除 (Elimination)" class="w-full p-1.5 text-xs border rounded bg-white">
+            <datalist id="list-${cardId}-elimination" data-type="elimination">${window.controlOptionsHtml?.elimination || ''}</datalist>
+            
+            <input type="text" name="control_substitution" list="list-${cardId}-substitution" placeholder="2. 替代 (Substitution)" class="w-full p-1.5 text-xs border rounded bg-white">
+            <datalist id="list-${cardId}-substitution" data-type="substitution">${window.controlOptionsHtml?.substitution || ''}</datalist>
+            
+            <input type="text" name="control_engineering" list="list-${cardId}-engineering" placeholder="3. 工程控制 (Engineering)" class="w-full p-1.5 text-xs border rounded bg-white">
+            <datalist id="list-${cardId}-engineering" data-type="engineering">${window.controlOptionsHtml?.engineering || ''}</datalist>
+            
+            <input type="text" name="control_administrative" list="list-${cardId}-administrative" placeholder="4. 管理控制 (Administrative)" class="w-full p-1.5 text-xs border rounded bg-white">
+            <datalist id="list-${cardId}-administrative" data-type="administrative">${window.controlOptionsHtml?.administrative || ''}</datalist>
+            
+            <input type="text" name="control_ppe" list="list-${cardId}-ppe" placeholder="5. 個人防護具 (PPE)" class="w-full p-1.5 text-xs border rounded bg-white">
+            <datalist id="list-${cardId}-ppe" data-type="ppe">${window.controlOptionsHtml?.ppe || ''}</datalist>
+          </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', cardHtml);
     }
 
-    function closeAdminModal() {
-      document.getElementById('admin-modal').classList.add('hidden');
-      checkPendingCount();
+    function calculateCardRisk(selectEl) {
+      let card = selectEl.closest('.border');
+      let sev = Number(card.querySelector('[name="severity"]').value);
+      let lik = Number(card.querySelector('[name="likelihood"]').value);
+      let riskEl = card.querySelector('.risk-val');
+      let risk = sev * lik;
+      riskEl.innerText = risk;
+      riskEl.className = `risk-val text-lg font-black ${risk >= 10 ? 'text-red-600' : risk >= 5 ? 'text-orange-500' : 'text-green-600'}`;
     }
 
-    // 執行審批動作 (核准/拒絕)
-    async function approveAction(assessmentId, isApproved) {
-      try {
-        let res = await fetch(GAS_API_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "approveAssessment",
-            assessment_id: assessmentId,
-            approve: isApproved
-          })
-        });
-        let json = await res.json();
-        if (json.status === "success") {
-          alert(isApproved ? "已核准，並自動生成 QR Code 與更新知識庫！" : "已拒絕該提案。");
-          loadPendingListForModal(); // 重新整理彈窗清單
-        } else {
-          alert("操作失敗");
-        }
-      } catch (err) {
-        alert("網路連線錯誤");
-      }
-    }
-
-    // 提交新的風險評估提案
     async function submitAssessment(e) {
       e.preventDefault();
+      let hazardCards = document.querySelectorAll('#hazards-container > div');
+      if (hazardCards.length === 0) { alert("請至少新增一個危害項目！"); return; }
+
+      let hazardsData = [];
+      hazardCards.forEach(card => {
+        hazardsData.push({
+          hazard_type: card.querySelector('[name="hazard_type"]').value,
+          hazard_desc: card.querySelector('[name="hazard_desc"]').value,
+          severity: card.querySelector('[name="severity"]').value,
+          likelihood: card.querySelector('[name="likelihood"]').value,
+          control_elimination: card.querySelector('[name="control_elimination"]').value,
+          control_substitution: card.querySelector('[name="control_substitution"]').value,
+          control_engineering: card.querySelector('[name="control_engineering"]').value,
+          control_administrative: card.querySelector('[name="control_administrative"]').value,
+          control_ppe: card.querySelector('[name="control_ppe"]').value
+        });
+      });
+
       let payload = {
         action: "createAssessment",
         assessment_name: document.getElementById('assessment_name').value,
         creator: document.getElementById('creator').value,
-        hazard_type: document.getElementById('hazard_type').value,
-        hazard_desc: document.getElementById('hazard_desc').value,
-        severity: document.getElementById('severity').value,
-        likelihood: document.getElementById('likelihood').value,
-        control_elimination: document.getElementById('control_elimination').value,
-        control_substitution: document.getElementById('control_substitution').value,
-        control_engineering: document.getElementById('control_engineering').value,
-        control_administrative: document.getElementById('control_administrative').value,
-        control_ppe: document.getElementById('control_ppe').value
+        hazards: hazardsData
       };
 
       try {
-        let res = await fetch(GAS_API_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
+        let res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
         let json = await res.json();
         if (json.status === "success") {
-          alert("提案已成功送出！請等待管理員審批通過後即可生成專屬 QR Code。");
+          alert("提案已送出！等待管理員審批通過後即會生成 QR Code。");
           document.getElementById('assessment-form').reset();
-          document.getElementById('risk-display').innerText = "1";
-          checkPendingCount();
+          document.getElementById('hazards-container').innerHTML = '';
+          addHazardCard();
           switchTab('search');
-        } else {
-          alert("送出失敗：" + json.message);
-        }
-      } catch (err) {
-        alert("網路異常，請稍後再試。");
-      }
+        } else { alert("送出失敗"); }
+      } catch (err) { alert("網路異常"); }
     }
 
-   // 【修改後】全方位模糊搜尋
-async function performSearch() {
-  let keyword = document.getElementById('search-keyword').value;
-  try {
-    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(keyword)}`);
-    let json = await res.json();
-    let container = document.getElementById('search-results');
-    
-    if (json.status === "success" && json.results.length > 0) {
-      container.innerHTML = json.results.map(r => `
-        <div onclick='showAssessmentDetailModal(${JSON.stringify(r)})' class="border p-4 rounded-lg flex justify-between items-center bg-white shadow-sm hover:bg-blue-50 cursor-pointer transition">
-          <div>
-            <h4 class="font-bold text-blue-700">${r.assessment_name}</h4>
-            <p class="text-xs text-gray-500">狀態: <span class="font-semibold ${r.status === 'Approved' ? 'text-green-600' : 'text-orange-500'}">${r.status}</span> | 風險等級: ${r.risk_level}</p>
-          </div>
-          <div>
-            <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded font-medium">點擊查看詳情</span>
+    async function performSearch() {
+      let keyword = document.getElementById('search-keyword').value;
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(keyword)}`);
+        let json = await res.json();
+        let container = document.getElementById('search-results');
+        
+        if (json.status === "success" && json.results.length > 0) {
+          container.innerHTML = json.results.map(r => `
+            <div onclick='showDetailModal(${JSON.stringify(r)})' class="border p-4 rounded-lg flex justify-between items-center bg-white shadow-sm hover:bg-blue-50 cursor-pointer transition">
+              <div>
+                <h4 class="font-bold text-blue-700">${r.assessment_name}</h4>
+                <p class="text-xs text-gray-500">建立者: ${r.creator} | 狀態: <span class="${r.status === 'Approved' ? 'text-green-600' : 'text-orange-500'} font-semibold">${r.status}</span> | 包含危害數: ${r.hazards.length} 項</p>
+              </div>
+              <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1.5 rounded font-medium">查看詳情</span>
+            </div>
+          `).join('');
+        } else { container.innerHTML = `<p class="text-gray-500 text-center py-4">查無相關紀錄。</p>`; }
+      } catch (err) { console.error(err); }
+    }
+
+    function showDetailModal(item) {
+      let hazardsHtml = item.hazards.map((h, index) => `
+        <div class="border p-3 rounded bg-gray-50 space-y-1 mb-2 text-xs">
+          <div class="font-bold text-blue-900">#${index + 1} 危害種類: ${h.hazard_type} (風險等級: <span class="text-red-600 font-bold">${h.risk_level}</span>)</div>
+          <div><strong>詳細描述：</strong>${h.hazard_desc}</div>
+          <div class="pt-1 border-t space-y-0.5 text-gray-700">
+            <div>• 消除：${h.control_elimination || '無'}</div>
+            <div>• 替代：${h.control_substitution || '無'}</div>
+            <div>• 工程：${h.control_engineering || '無'}</div>
+            <div>• 管理：${h.control_administrative || '無'}</div>
+            <div>• PPE：${h.control_ppe || '無'}</div>
           </div>
         </div>
       `).join('');
-    } else {
-      container.innerHTML = `<p class="text-gray-500 text-center py-4">查無相關風險評估紀錄。</p>`;
+
+      let modalHtml = `
+        <div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+          <div class="bg-white rounded-lg max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
+            <div class="flex justify-between items-center border-b pb-2">
+              <h3 class="text-lg font-bold text-blue-800">${item.assessment_name}</h3>
+              <button onclick="document.getElementById('detail-modal').remove()" class="text-gray-500 font-bold">✕ 關閉</button>
+            </div>
+            <div class="space-y-2">
+              <h4 class="text-sm font-semibold text-gray-700">對應的所有危害與控制措施：</h4>
+              ${hazardsHtml}
+            </div>
+            ${item.qr_code_url ? `<div class="text-center pt-2"><p class="text-xs text-gray-500 mb-1">專屬 QR Code</p><img src="${item.qr_code_url}" class="mx-auto w-28 h-28 border p-1 rounded"></div>` : `<p class="text-xs text-gray-400 text-center">尚未審批，無 QR Code。</p>`}
+            <button onclick="document.getElementById('detail-modal').remove()" class="w-full bg-gray-800 text-white py-2 rounded text-sm">關閉視窗</button>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
-  } catch (err) {
-    console.error(err);
-  }
-}
 
-// 【新增】點擊搜尋結果後彈出完整的風險評估與五大控制階層詳情
-function showAssessmentDetailModal(item) {
-  let modalHtml = `
-    <div id="search-detail-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-      <div class="bg-white rounded-lg max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h3 class="text-lg font-bold text-blue-800">${item.assessment_name}</h3>
-          <button onclick="closeSearchDetailModal()" class="text-gray-500 hover:text-gray-700 font-bold">✕ 關閉</button>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded">
-          <div><strong>危害種類：</strong>${item.hazard_type || '未指定'}</div>
-          <div><strong>風險等級：</strong><span class="text-red-600 font-bold">${item.risk_level} (嚴重性 × 頻率)</span></div>
-          <div class="col-span-2"><strong>詳細描述：</strong>${item.hazard_desc || '無'}</div>
-        </div>
+    async function toggleAdminMode() {
+      let pwd = prompt("請輸入管理員密碼：");
+      if (pwd === ADMIN_PASSWORD_HASH) loadPendingModal();
+      else if (pwd !== null) alert("密碼錯誤！");
+    }
 
-        <div class="space-y-2">
-          <h4 class="text-sm font-semibold text-gray-700 border-b pb-1">五大控制措施執行方案</h4>
-          <div class="text-xs space-y-1.5 bg-blue-50 p-3 rounded">
-            <div>• <strong>消除 (Elimination)：</strong>${item.control_elimination || '無'}</div>
-            <div>• <strong>替代 (Substitution)：</strong>${item.control_substitution || '無'}</div>
-            <div>• <strong>工程控制 (Engineering)：</strong>${item.control_engineering || '無'}</div>
-            <div>• <strong>管理控制 (Administrative)：</strong>${item.control_administrative || '無'}</div>
-            <div>• <strong>個人防護具 (PPE)：</strong>${item.control_ppe || '無'}</div>
-          </div>
-        </div>
+    async function loadPendingModal() {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=getPending`);
+        let json = await res.json();
+        let container = document.getElementById('pending-container');
+        if (json.status === "success" && json.pending.length > 0) {
+          container.innerHTML = json.pending.map(item => `
+            <div class="border p-4 rounded-lg bg-gray-50 space-y-2">
+              <div class="font-bold text-blue-900">${item.assessment_name} <span class="text-xs font-normal text-gray-500">(建立者: ${item.creator})</span></div>
+              <p class="text-xs text-gray-600">包含 ${item.hazards.length} 項危害明細</p>
+              <div class="flex gap-2 pt-2">
+                <button onclick="approveAction('${item.assessment_id}', true)" class="bg-green-600 text-white px-3 py-1 text-sm rounded">核准並產出 QR Code</button>
+                <button onclick="approveAction('${item.assessment_id}', false)" class="bg-red-600 text-white px-3 py-1 text-sm rounded">拒絕</button>
+              </div>
+            </div>
+          `).join('');
+        } else { container.innerHTML = `<p class="text-gray-500 text-center py-4">目前無待審批項目。</p>`; }
+        document.getElementById('admin-modal').classList.remove('hidden');
+      } catch (err) { alert("載入失敗"); }
+    }
 
-        ${item.qr_code_url ? `
-          <div class="text-center pt-2">
-            <p class="text-xs text-gray-500 mb-1">專屬 QR Code 標誌</p>
-            <img src="${item.qr_code_url}" alt="QR Code" class="mx-auto w-32 h-32 border p-1 rounded">
-          </div>
-        ` : `<p class="text-xs text-gray-400 text-center">此項目尚未審批通過，尚無專屬 QR Code。</p>`}
+    function closeAdminModal() { document.getElementById('admin-modal').classList.add('hidden'); }
 
-        <button onclick="closeSearchDetailModal()" class="w-full bg-gray-800 hover:bg-black text-white py-2 rounded font-medium transition">關閉視窗</button>
-      </div>
-    </div>
-  `;
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
+    async function approveAction(id, isApproved) {
+      let res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "approveAssessment", assessment_id: id, approve: isApproved }) });
+      let json = await res.json();
+      if (json.status === "success") {
+        alert(isApproved ? "已核准並自動生成 QR Code！" : "已拒絕。");
+        loadPendingModal();
+      }
+    }
 
-function closeSearchDetailModal() {
-  let modal = document.getElementById('search-detail-modal');
-  if (modal) modal.remove();
-}
-    
+    async function loadAssessmentDetail(id) {
+      let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
+      let json = await res.json();
+      if (json.status === "success" && json.results.length > 0) showDetailModal(json.results[0]);
+    }
   </script>
 </body>
 </html>
