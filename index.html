@@ -12,6 +12,7 @@
     <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 id="main-title" class="text-xl font-bold">職安風險評估平台</h1>
       <button onclick="toggleAdminMode()" class="bg-blue-700 hover:bg-blue-800 px-3 py-1.5 rounded text-sm transition">管理員模式</button>
+      <span id="pending-badge" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full hidden">0</span>
     </div>
   </header>
 
@@ -80,18 +81,30 @@
     let globalSettings = {};
 
     window.onload = async function() {
-  // 1. 先把後端的危害種類與控制措施資料抓回來
-  await fetchSettings();
-  
-  // 2. 確定資料抓到了，才初始化第一張帶有選單的危害卡片
-  addHazardCard();
-  
-  checkPendingCount();
-
-  // 3. 檢查網址是否有帶 QR Code 的 assessment_id
-  const urlParams = new URLSearchParams(window.location.search);
-  const assessmentId = urlParams.get('assessment_id');
-  if (assessmentId) loadAssessmentDetail(assessmentId);
+  try {
+    // 1. 抓取設定
+    if (typeof fetchSettings === 'function') {
+      await fetchSettings();
+    }
+    
+    // 2. 初始化卡片
+    if (typeof addHazardCard === 'function') {
+      addHazardCard();
+    }
+    
+    // 3. 檢查網址是否有帶 QR Code 的 assessment_id
+    const urlParams = new URLSearchParams(window.location.search);
+    const assessmentId = urlParams.get('assessment_id');
+    
+    if (assessmentId) {
+      console.log("偵測到 QR Code ID:", assessmentId);
+      if (typeof loadAssessmentDetail === 'function') {
+        loadAssessmentDetail(assessmentId);
+      }
+    }
+  } catch (err) {
+    console.error("初始化載入發生錯誤：", err);
+  }
 };
 
     function switchTab(tabName) {
@@ -449,11 +462,34 @@ function calculateCardRisk(selectElement) {
   }
 }
 
+    // 檢查待審批數量（安全防禦版，避免找不到 DOM 元素報錯）
+    async function checkPendingCount() {
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=getPending`);
+        let json = await res.json();
+        if (json.status === "success") {
+          let count = json.pending ? json.pending.length : 0;
+          let badge = document.getElementById('pending-badge');
+          if (badge) {
+            if (count > 0) {
+              badge.innerText = count;
+              badge.classList.remove('hidden');
+            } else {
+              badge.classList.add('hidden');
+            }
+          }
+        }
+      } catch (err) {
+        console.error("檢查待審批數量失敗：", err);
+      }
+    }
+
     async function loadAssessmentDetail(id) {
       let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
       let json = await res.json();
       if (json.status === "success" && json.results.length > 0) showDetailModal(json.results[0]);
     }
+    
   </script>
 </body>
 </html>
