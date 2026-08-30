@@ -104,29 +104,35 @@
       }
     }
 
-    async function fetchSettings() {
-      try {
-        let res = await fetch(`${GAS_API_URL}?action=getSettings`);
-        let json = await res.json();
-        if (json.status === "success") {
-          globalSettings = json.data;
-          window.hazardOptionsHtml = json.data.hazards.map(h => `<option value="${h}">`).join('');
-          window.controlOptionsHtml = {
-            elimination: json.data.controls.elimination.map(i => `<option value="${i}">`).join(''),
-            substitution: json.data.controls.substitution.map(i => `<option value="${i}">`).join(''),
-            engineering: json.data.controls.engineering.map(i => `<option value="${i}">`).join(''),
-            administrative: json.data.controls.administrative.map(i => `<option value="${i}">`).join(''),
-            ppe: json.data.controls.ppe.map(i => `<option value="${i}">`).join('')
-          };
-          // 更新現有卡片的 datalist
-          document.querySelectorAll('datalist').forEach(dl => {
-            let type = dl.dataset.type;
-            if (type && window.controlOptionsHtml[type]) dl.innerHTML = window.controlOptionsHtml[type];
-            if (type === 'hazard') dl.innerHTML = window.hazardOptionsHtml;
-          });
-        }
-      } catch (err) { console.error(err); }
+    // 【修正後】取得設定並自動更新畫面上所有卡片的 datalist
+async function fetchSettings() {
+  try {
+    let res = await fetch(`${GAS_API_URL}?action=getSettings`);
+    let json = await res.json();
+    if (json.status === "success") {
+      globalSettings = json.data;
+      window.hazardOptionsHtml = json.data.hazards.map(h => `<option value="${h}">`).join('');
+      window.controlOptionsHtml = {
+        elimination: json.data.controls.elimination.map(i => `<option value="${i}">`).join(''),
+        substitution: json.data.controls.substitution.map(i => `<option value="${i}">`).join(''),
+        engineering: json.data.controls.engineering.map(i => `<option value="${i}">`).join(''),
+        administrative: json.data.controls.administrative.map(i => `<option value="${i}">`).join(''),
+        ppe: json.data.controls.ppe.map(i => `<option value="${i}">`).join('')
+      };
+      
+      // 自動更新畫面上已經存在的所有 datalist 元素
+      document.querySelectorAll('datalist').forEach(dl => {
+        let id = dl.id;
+        if (id.includes('-hazard')) dl.innerHTML = window.hazardOptionsHtml;
+        else if (id.includes('-elimination')) dl.innerHTML = window.controlOptionsHtml.elimination;
+        else if (id.includes('-substitution')) dl.innerHTML = window.controlOptionsHtml.substitution;
+        else if (id.includes('-engineering')) dl.innerHTML = window.controlOptionsHtml.engineering;
+        else if (id.includes('-administrative')) dl.innerHTML = window.controlOptionsHtml.administrative;
+        else if (id.includes('-ppe')) dl.innerHTML = window.controlOptionsHtml.ppe;
+      });
     }
+  } catch (err) { console.error(err); }
+}
 
     // 【修正後】動態新增危害卡片（包含完整的 datalist 選項綁定）
 function addHazardCard() {
