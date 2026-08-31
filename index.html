@@ -163,9 +163,16 @@
 
         function checkUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            const item = urlParams.get('item');
-            if (item) {
-                setTimeout(() => router.goDetail(decodeURIComponent(item)), 600);
+            const itemName = urlParams.get('item'); // 統一抓取 item 參數作為 itemName
+            if (itemName) {
+                const decodedName = decodeURIComponent(itemName);
+                // 確保全域資料已載入後再進行跳轉渲染
+                const checkInterval = setInterval(() => {
+                    if (globalData.items && globalData.items.length > 0) {
+                        clearInterval(checkInterval);
+                        router.goDetail(decodedName);
+                    }
+                }, 100);
             }
         }
 
@@ -227,18 +234,20 @@
                 </div>
             `).join('');
         }
-
+        
         // 渲染詳情頁面：完整呈現該儀器/動作的所有危害種類與所有危害的五大控制措施細項
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
+            
             if (!item) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400">找不到該項目的詳細資料。</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400">找不到該項目「${itemName}」的詳細資料或尚未通過審核。</div>`;
                 return;
             }
 
             const approvedHazards = item.hazards.filter(h => h.status === 'Approved');
             const isFullyApproved = approvedHazards.length > 0;
+            // 讓 QR Code 掃描後產生的網址正確指向該儀器名稱
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
             container.innerHTML = `
@@ -278,7 +287,10 @@
             `;
 
             if (isFullyApproved) {
-                new QRCode(document.getElementById("qrcode-box"), {
+                // 清空原本的 QRCode 避免重複產生
+                const qrBox = document.getElementById("qrcode-box");
+                qrBox.innerHTML = '<div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>';
+                new QRCode(qrBox, {
                     text: currentUrl,
                     width: 100,
                     height: 100
