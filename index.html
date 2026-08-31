@@ -24,7 +24,7 @@
 
     <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
         
-        <!-- 視圖 1: 首頁列表 -->
+        <!-- 首頁列表 -->
         <div id="view-home" class="space-y-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex gap-2">
@@ -39,10 +39,7 @@
                 </div>
                 <div class="flex justify-between items-center pt-2">
                     <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                        <i class="fa-solid fa-plus"></i> 新增儀器與危害控制評估
-                    </button>
-                    <button onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                        <i class="fa-solid fa-file-pdf"></i> 匯出標籤 PDF
+                        <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
                 </div>
             </div>
@@ -50,7 +47,7 @@
             <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 視圖 2: 詳細檢視 (完整呈現五大控制措施) -->
+        <!-- 詳細檢視 (呈現所有危害與五大控制細項，且僅核准項目帶有 QR Code) -->
         <div id="view-detail" class="hidden space-y-4">
             <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                 <i class="fa-solid fa-arrow-left"></i> 返回清單
@@ -58,7 +55,7 @@
             <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6"></div>
         </div>
 
-        <!-- 視圖 3: 管理員後台 -->
+        <!-- 管理員後台 -->
         <div id="view-admin" class="hidden space-y-4">
             <div class="flex justify-between items-center">
                 <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
@@ -83,11 +80,11 @@
 
     </main>
 
-    <!-- 新增/提報 Modal (內含五大控制措施必要填寫區塊) -->
+    <!-- 新增 Modal -->
     <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold text-slate-800">新增風險評估與五大控制措施</h3>
+                <h3 class="text-lg font-bold text-slate-800">新增儀器/動作與風險評估</h3>
                 <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
@@ -123,13 +120,10 @@
                     </div>
                 </div>
 
-                <!-- 五大危害控制措施必要填寫區塊 -->
+                <!-- 五大控制措施必要填寫區塊 -->
                 <div class="border-t pt-4 space-y-3">
-                    <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-list-check mr-1"></i> 五大危害控制措施（必要填寫）</h4>
-                    <p class="text-xs text-slate-500">請針對上述危害，於以下五大層級分別填入對應的具體控制方法（若無對應可填「無」）：</p>
-                    
+                    <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-list-check mr-1"></i> 五大危害控制措施</h4>
                     <div class="space-y-3 bg-slate-50 p-4 rounded-xl border">
-                        <!-- 1. 消除 -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-bold text-slate-700">1. 消除 (Elimination)</label>
@@ -137,7 +131,6 @@
                             </div>
                             <div id="container-elimination" class="space-y-2"></div>
                         </div>
-                        <!-- 2. 取代 -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-bold text-slate-700">2. 取代 (Substitution)</label>
@@ -145,7 +138,6 @@
                             </div>
                             <div id="container-substitution" class="space-y-2"></div>
                         </div>
-                        <!-- 3. 工程控制 -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-bold text-slate-700">3. 工程控制 (Engineering Controls)</label>
@@ -153,7 +145,6 @@
                             </div>
                             <div id="container-engineering" class="space-y-2"></div>
                         </div>
-                        <!-- 4. 管理控制 -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-bold text-slate-700">4. 管理控制 (Administrative Controls)</label>
@@ -161,7 +152,6 @@
                             </div>
                             <div id="container-administrative" class="space-y-2"></div>
                         </div>
-                        <!-- 5. 個人防護具 -->
                         <div>
                             <div class="flex justify-between items-center mb-1">
                                 <label class="text-xs font-bold text-slate-700">5. 個人防護具 (PPE)</label>
@@ -174,7 +164,7 @@
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-lg text-sm">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出儲存</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出提報</button>
                 </div>
             </form>
         </div>
@@ -195,13 +185,11 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
         let globalData = { items: [], masterHazards: [], masterControls: [] };
         let html5QrCode = null;
-
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
 
         window.addEventListener('DOMContentLoaded', () => {
             fetchData();
             checkUrlParams();
-            // 初始化五大類別各給一個輸入行
             controlTypes.forEach(type => addControlRow(type, ''));
         });
 
@@ -239,7 +227,13 @@
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
-                    renderItemList(globalData.items);
+                    // 過濾：只留下「至少有一個 hazard 是 Approved」的儀器/動作作為前台公開顯示項目
+                    const approvedItems = globalData.items.map(item => {
+                        const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                        return { ...item, hazards: validHazards };
+                    }).filter(item => item.hazards.length > 0);
+
+                    renderItemList(approvedItems);
                     populateMasterSelectors();
                 }
             } catch (err) {
@@ -249,7 +243,12 @@
 
         function handleSearch() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = globalData.items.filter(item => {
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            const filtered = approvedItems.filter(item => {
                 const matchName = item.itemName.toLowerCase().includes(keyword);
                 const matchSub = item.hazards.some(h => {
                     if (h.hazard.toLowerCase().includes(keyword)) return true;
@@ -265,7 +264,7 @@
         function renderItemList(items) {
             const container = document.getElementById('itemListContainer');
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border">找不到符合條件的項目</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border">目前尚無已核准的項目</div>`;
                 return;
             }
 
@@ -273,10 +272,10 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
                     <div>
                         <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">包含 ${item.hazards.length} 項危害種類評估（皆配置五大控制措施）</p>
+                        <p class="text-xs text-slate-500 mt-0.5">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
                     <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
-                        查看詳情 <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
+                        查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
             `).join('');
@@ -287,6 +286,9 @@
             const container = document.getElementById('detailContent');
             if (!item) return;
 
+            // 檢查該項目是否具備至少一個 Approved 危害
+            const approvedHazards = item.hazards.filter(h => h.status === 'Approved');
+            const isFullyApproved = approvedHazards.length > 0;
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
             const controlLabels = {
@@ -301,12 +303,14 @@
                 <div class="flex justify-between items-start border-b pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
-                        <p class="text-xs text-slate-500 mt-1">完整風險評估與五大危害控制措施矩陣</p>
+                        <p class="text-xs text-slate-500 mt-1">完整風險評估與所有危害之五大控制措施明細</p>
                     </div>
-                    <div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm"></div>
+                    <!-- 條件式渲染 QR Code：只有通過審核的項目才有 -->
+                    ${isFullyApproved ? `<div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm text-center"><div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div></div>` : `<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded text-xs font-bold">尚未核准，無 QR Code</span>`}
                 </div>
+                
                 <div class="space-y-6">
-                    ${item.hazards.map((h, idx) => `
+                    ${approvedHazards.map((h, idx) => `
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                             <div class="flex justify-between items-center border-b pb-2">
                                 <span class="font-bold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
@@ -314,7 +318,7 @@
                             </div>
                             
                             <div class="space-y-2 pt-1">
-                                <div class="text-xs font-bold text-slate-700">五大危害控制措施明細：</div>
+                                <div class="text-xs font-bold text-slate-700">五大危害控制措施細項：</div>
                                 ${Object.keys(controlLabels).map(key => {
                                     const methods = (h.controlHierarchy && h.controlHierarchy[key]) ? h.controlHierarchy[key] : ['無'];
                                     return `
@@ -332,11 +336,13 @@
                 </div>
             `;
 
-            new QRCode(document.getElementById("qrcode-box"), {
-                text: currentUrl,
-                width: 100,
-                height: 100
-            });
+            if (isFullyApproved) {
+                new QRCode(document.getElementById("qrcode-box"), {
+                    text: currentUrl,
+                    width: 100,
+                    height: 100
+                });
+            }
         }
 
         function populateMasterSelectors() {
@@ -347,7 +353,7 @@
         function addControlRow(type, val = '') {
             const container = document.getElementById(`container-${type}`);
             const row = document.createElement('div');
-            row.className = "flex gap-2 items-center control-row-" + type;
+            row.className = "flex gap-2 items-center";
             
             const controlOptions = `<option value="">-- 從歷史詞庫選擇 --</option>` +
                 (globalData.masterControls ? globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('') : '');
@@ -372,8 +378,6 @@
 
         async function submitItemForm(e) {
             e.preventDefault();
-            
-            // 收集五大控制措施各欄位資料
             const controlHierarchy = {};
             controlTypes.forEach(type => {
                 const inputs = document.querySelectorAll(`#container-${type} input`);
@@ -394,7 +398,7 @@
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
             const json = await res.json();
             if (json.status === 'success') {
-                alert('已成功送出！自主提報項目將進入待審核狀態。');
+                alert('已成功送出自主提報！將等待管理員審核。');
                 closeAddModal();
                 fetchData();
             }
@@ -449,14 +453,24 @@
             container.innerHTML = pendingItems.map(p => `
                 <div class="p-4 border rounded-lg bg-slate-50 space-y-2">
                     <div class="font-bold text-sm text-indigo-600">${p.itemName}</div>
-                    <div class="text-xs text-slate-600"><strong>危害：</strong>${p.hazard} (風險等級: ${p.riskLevel}級)</div>
-                    <div class="flex justify-end gap-2 pt-1">
-                        <button onclick="approveItem('${p.id}')" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium">核准</button>
+                    <div class="text-xs text-slate-600"><strong>危害種類：</strong>${p.hazard} (風險等級: ${p.riskLevel}級)</div>
+                    <div class="flex justify-end gap-2 pt-2">
+                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-medium">核准</button>
+                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium">拒絕</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        async function updateStatus(id, status) {
+            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateItemStatus', id, status }) });
+            const json = await res.json();
+            if (json.status === 'success') {
+                alert(status === 'Approved' ? '已核准該項目！' : '已拒絕該項目。');
+                fetchData();
+                loadPendingItems();
+            }
+        }
     </script>
     <style>
         @media print {
