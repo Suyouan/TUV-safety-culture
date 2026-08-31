@@ -69,8 +69,8 @@
                         <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
                     <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-        <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
-    </button>
+                        <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
+                    </button>
                 </div>
             </div>
 
@@ -78,9 +78,9 @@
         </div>
 
         <!-- 專門用來放列印標籤的隱藏/動態容器 -->
-<div id="print-labels-container" class="hidden"></div>
+        <div id="print-labels-container" class="hidden"></div>
         
-        <!-- 詳細檢視 (呈現所有危害與五大控制細項，具備 QR Code) -->
+        <!-- 詳細檢視 -->
         <div id="view-detail" class="hidden space-y-4">
             <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                 <i class="fa-solid fa-arrow-left"></i> 返回清單
@@ -113,7 +113,7 @@
 
     </main>
 
-    <!-- 新增 Modal (支援動態新增多個危害種類) -->
+    <!-- 新增 Modal -->
     <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
@@ -126,7 +126,6 @@
                     <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg" placeholder="例如：CNC 操作機台">
                 </div>
 
-                <!-- 危害清單動態容器 -->
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b pb-1">
                         <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 危害種類與控制措施清單</h4>
@@ -158,7 +157,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
-        let globalData = { items: [], masterHazards: [], masterControls: [] };
+        let globalData = { items: [], masterHazards: [], hazardControlHistory: {} };
         let html5QrCode = null;
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
@@ -196,10 +195,9 @@
 
         function checkUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            const itemName = urlParams.get('item'); // 統一抓取 item 參數作為 itemName
+            const itemName = urlParams.get('item');
             if (itemName) {
                 const decodedName = decodeURIComponent(itemName);
-                // 確保全域資料已載入後再進行跳轉渲染
                 const checkInterval = setInterval(() => {
                     if (globalData.items && globalData.items.length > 0) {
                         clearInterval(checkInterval);
@@ -215,7 +213,10 @@
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
-                    // 過濾：只留下「至少有一個 hazard 是 Approved」的儀器/動作
+                    
+                    // 建立嚴格隔離的詞庫對應表：hazardControlHistory[hazardName][controlType] = Set/Array
+                    buildHazardControlHistory();
+
                     const approvedItems = globalData.items.map(item => {
                         const validHazards = item.hazards.filter(h => h.status === 'Approved');
                         return { ...item, hazards: validHazards };
@@ -228,6 +229,53 @@
             }
         }
 
+        // 核心邏輯：建立「危害種類」與「五大控制措施類別」的雙重隔離歷史紀錄字典
+        function buildHazardControlHistory() {
+            const historyMap = {};
+            
+            // 從所有已存在的項目與歷史資料中萃取
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        // 僅採納已核准或現有紀錄來建立精準詞庫
+                        const hName = h.hazard ? h.hazard.trim() : '';
+                        if (!hName) return;
+
+                        if (!historyMap[hName]) {
+                            historyMap[hName] = {
+                                elimination: new Set(),
+                                substitution: new Set(),
+                                engineering: new Set(),
+                                administrative: new Set(),
+                                ppe: new Set()
+                            };
+                        }
+
+                        if (h.controlHierarchy) {
+                            controlTypes.forEach(type => {
+                                if (Array.isArray(h.controlHierarchy[type])) {
+                                    h.controlHierarchy[type].forEach(method => {
+                                        if (method && method !== '無') {
+                                            historyMap[hName][type].add(method.trim());
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+
+            // 轉成 Array 方便前端 select 渲染
+            globalData.hazardControlHistory = {};
+            Object.keys(historyMap).forEach(hName => {
+                globalData.hazardControlHistory[hName] = {};
+                controlTypes.forEach(type => {
+                    globalData.hazardControlHistory[hName][type] = Array.from(historyMap[hName][type]);
+                });
+            });
+        }
+
         function exportLabelsPdf() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const approvedItems = globalData.items.map(item => {
@@ -235,7 +283,6 @@
                 return { ...item, hazards: validHazards };
             }).filter(item => item.hazards.length > 0);
 
-            // 依據是否有搜尋關鍵字進行過濾（支援動態過濾與全量匯出）
             const targetItems = approvedItems.filter(item => {
                 if (!keyword) return true;
                 const matchName = item.itemName.toLowerCase().includes(keyword);
@@ -257,7 +304,6 @@
             container.innerHTML = '';
             container.classList.remove('hidden');
 
-            // 建立卡片
             targetItems.forEach((item, index) => {
                 const cardId = `label-qr-${index}`;
                 const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
@@ -275,7 +321,6 @@
                 `;
                 container.appendChild(cardDiv);
 
-                // 產生對應的 QR Code
                 new QRCode(document.getElementById(cardId), {
                     text: currentUrl,
                     width: 90,
@@ -283,7 +328,6 @@
                 });
             });
 
-            // 延遲一下確保 QR Code 渲染完成後觸發列印
             setTimeout(() => {
                 window.print();
                 container.classList.add('hidden');
@@ -331,7 +375,6 @@
             `).join('');
         }
         
-        // 渲染詳情頁面：完整呈現該儀器/動作的所有危害種類與所有危害的五大控制措施細項
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
@@ -343,7 +386,6 @@
 
             const approvedHazards = item.hazards.filter(h => h.status === 'Approved');
             const isFullyApproved = approvedHazards.length > 0;
-            // 讓 QR Code 掃描後產生的網址正確指向該儀器名稱
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
             container.innerHTML = `
@@ -383,7 +425,6 @@
             `;
 
             if (isFullyApproved) {
-                // 清空原本的 QRCode 避免重複產生
                 const qrBox = document.getElementById("qrcode-box");
                 qrBox.innerHTML = '<div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>';
                 new QRCode(qrBox, {
@@ -412,8 +453,8 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
-                    <select onchange="this.nextElementSibling.value = this.value" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
-                    <input type="text" name="hazardName" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
+                    <select onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
+                    <input type="text" name="hazardName" oninput="onHazardInputChange('${blockId}', this.value)" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -449,21 +490,73 @@
                 </div>
             `;
             container.appendChild(div);
-            // 預設每個控制措施給一個輸入框
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
-        function addControlRow(blockId, type) {
+        // 當使用者從下拉選單選擇危害種類時，連動更新文字框並重新整理該危害底下的五大控制措施選單
+        function onHazardSelectChange(blockId, selectedValue) {
+            const block = document.getElementById(blockId);
+            const input = block.querySelector('input[name="hazardName"]');
+            input.value = selectedValue;
+            updateControlDropdownsForBlock(blockId, selectedValue);
+        }
+
+        // 當使用者手動在文字框輸入危害種類時，也同步動態過濾對應的控制措施詞庫
+        function onHazardInputChange(blockId, typedValue) {
+            updateControlDropdownsForBlock(blockId, typedValue.trim());
+        }
+
+        // 嚴格隔離核心：根據當前填寫的「危害種類」，只抓取屬於該危害種類且屬於該控制類別的歷史紀錄
+        function updateControlDropdownsForBlock(blockId, hazardName) {
+            const block = document.getElementById(blockId);
+            
+            controlTypes.forEach(type => {
+                const subContainer = block.querySelector(`.sub-container-${type}`);
+                if (!subContainer) return;
+
+                // 取得該危害種類、該控制類別專屬的歷史詞庫
+                let availableMethods = [];
+                if (globalData.hazardControlHistory && 
+                    globalData.hazardControlHistory[hazardName] && 
+                    globalData.hazardControlHistory[hazardName][type]) {
+                    availableMethods = globalData.hazardControlHistory[hazardName][type];
+                }
+
+                const controlOptionsHtml = `<option value="">-- 歷史詞庫 --</option>` +
+                    availableMethods.map(c => `<option value="${c}">${c}</option>`).join('');
+
+                // 更新該控制類別底下所有現存 row 的 select 選單內容
+                const selects = subContainer.querySelectorAll('select.control-history-select');
+                selects.forEach(sel => {
+                    const currentVal = sel.value;
+                    sel.innerHTML = controlOptionsHtml;
+                    sel.value = currentVal; // 保持原本選中的值
+                });
+            });
+        }
+
+        function addControlRow(blockId, type, defaultValue = '') {
             const block = document.getElementById(blockId);
             const container = block.querySelector(`.sub-container-${type}`);
+            const hazardNameInput = block.querySelector('input[name="hazardName"]');
+            const currentHazard = hazardNameInput ? hazardNameInput.value.trim() : '';
+
+            // 嚴格隔離：只撈取該危害種類底下的該控制措施歷史紀錄
+            let availableMethods = [];
+            if (globalData.hazardControlHistory && 
+                globalData.hazardControlHistory[currentHazard] && 
+                globalData.hazardControlHistory[currentHazard][type]) {
+                availableMethods = globalData.hazardControlHistory[currentHazard][type];
+            }
+
             const controlOptions = `<option value="">-- 歷史詞庫 --</option>` +
-                (globalData.masterControls ? globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('') : '');
+                availableMethods.map(c => `<option value="${c}">${c}</option>`).join('');
 
             const row = document.createElement('div');
             row.className = "flex gap-1 items-center";
             row.innerHTML = `
-                <select onchange="this.nextElementSibling.value = this.value" class="w-1/3 px-1 py-1 border rounded text-[11px] bg-white">${controlOptions}</select>
-                <input type="text" required class="flex-grow px-2 py-1 border rounded text-[11px]" placeholder="控制方法">
+                <select onchange="this.nextElementSibling.value = this.value" class="control-history-select w-1/3 px-1 py-1 border rounded text-[11px] bg-white">${controlOptions}</select>
+                <input type="text" value="${defaultValue}" required class="flex-grow px-2 py-1 border rounded text-[11px]" placeholder="控制方法">
                 <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(row);
@@ -472,7 +565,7 @@
         function openAddModal() { 
             document.getElementById('addModal').classList.remove('hidden');
             document.getElementById('hazardsContainer').innerHTML = '';
-            addHazardBlock(); // 預設打開時先帶有一個危害區塊
+            addHazardBlock();
         }
 
         function closeAddModal() { 
@@ -581,7 +674,6 @@
                         <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${p.riskLevel} 級 (嚴重:${p.severity} / 頻率:${p.frequency})</span>
                     </div>
 
-                    <!-- 完整呈現五大控制措施細項 -->
                     <div class="space-y-1.5 pt-1">
                         <div class="text-[11px] font-bold text-slate-600">五大危害控制措施細項：</div>
                         ${controlTypes.map(type => {
@@ -606,19 +698,16 @@
         }
 
         async function updateStatus(id, status) {
-            // 1. 立即從前端全域資料中移除或更新該筆資料，讓畫面瞬間響應消失
             globalData.items.forEach(item => {
                 item.hazards.forEach(h => {
                     if (h.id === id) {
-                        h.status = status; // 變成 Approved 或 Rejected
+                        h.status = status;
                     }
                 });
             });
 
-            // 2. 立即重新整理後台待審核清單（該筆資料會馬上不見）與前台列表
             loadPendingItems();
 
-            // 3. 非同步發送請求給 Google Apps Script 後端更新資料庫
             try {
                 const res = await fetch(API_URL, { 
                     method: 'POST', 
@@ -627,7 +716,7 @@
                 const json = await res.json();
                 if (json.status !== 'success') {
                     alert('後端狀態更新失敗，請重新整理。');
-                    fetchData(); // 若失敗則重新抓取伺服器資料
+                    fetchData();
                 }
             } catch (err) {
                 console.error("更新狀態發生錯誤", err);
