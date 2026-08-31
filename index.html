@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>風險評估與控制管理系統 - 極簡卡片流</title>
+    <title>儀器與動作風險評估暨五大危害控制管理系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -33,102 +33,79 @@
                 border: 2px dashed #cbd5e1 !important;
                 page-break-inside: avoid;
             }
-            .print-detail-view, .print-detail-view * {
-                visibility: visible !important;
-            }
-            .print-detail-view {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-        }
-        .card-shadow {
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
         }
     </style>
 </head>
-<body class="bg-zinc-900 text-zinc-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 頂部極簡導覽 -->
-    <header class="border-b border-zinc-800 bg-zinc-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-xl mx-auto px-4 py-3.5 flex justify-between items-center">
-            <h1 class="text-sm font-semibold tracking-wider flex items-center gap-2 cursor-pointer text-zinc-200" onclick="router.goHome()">
-                <i class="fa-solid fa-cube text-indigo-400"></i> RISK CONTROL
+    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
+                <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
-            <div class="flex items-center gap-2">
-                <button onclick="openScanModal()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-qrcode"></i> 掃描
-                </button>
-                <button onclick="router.goAdmin()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-full text-xs font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-lock"></i> 後台
-                </button>
-            </div>
+            <button onclick="router.goAdmin()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition">
+                <i class="fa-solid fa-lock mr-1"></i> 管理後台
+            </button>
         </div>
     </header>
 
-    <main class="max-w-xl w-full mx-auto p-4 flex-grow flex flex-col justify-center">
+    <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
         
-        <!-- 首頁：卡片流滑動檢視 -->
-        <div id="view-home" class="space-y-4 my-auto">
-            <!-- 搜尋與快速操作列 -->
-            <div class="bg-zinc-800/50 p-3 rounded-2xl border border-zinc-800/80 flex gap-2 items-center">
-                <div class="relative flex-grow">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-zinc-500 text-xs"></i>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜尋設備、危害或控制對策..." 
-                        class="w-full pl-9 pr-4 py-2 bg-zinc-900/90 border border-zinc-700/50 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-zinc-200 placeholder-zinc-500">
+        <!-- 首頁列表 -->
+        <div id="view-home" class="space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+                <div class="flex gap-2">
+                    <div class="relative flex-grow">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400"></i>
+                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜尋儀器/動作名稱、危害或控制方法..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button onclick="openScanModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg font-medium flex items-center gap-2 transition">
+                        <i class="fa-solid fa-qrcode"></i> 掃描
+                    </button>
                 </div>
-                <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white p-2.5 rounded-xl text-xs font-medium transition flex-shrink-0" title="自主提報風險評估">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-                <button onclick="exportLabelsPdf()" class="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 p-2.5 rounded-xl text-xs font-medium transition flex-shrink-0 no-print" title="批次匯出標籤卡">
-                    <i class="fa-solid fa-file-pdf"></i>
-                </button>
+                <div class="flex justify-between items-center pt-2">
+                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                        <i class="fa-solid fa-plus"></i> 自主提報風險評估
+                    </button>
+                    <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+        <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
+    </button>
+                </div>
             </div>
 
-            <!-- 卡片堆疊容器 (Card Stack Container) -->
-            <div id="cardStackContainer" class="relative w-full min-h-[420px] flex items-center justify-center">
-                <!-- 動態生成的卡片將在這裡顯示 -->
-            </div>
-
-            <!-- 卡片切換控制列 -->
-            <div id="cardNavControls" class="flex justify-between items-center px-4 py-2">
-                <button onclick="prevCard()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-10 h-10 rounded-full flex items-center justify-center transition border border-zinc-700/50">
-                    <i class="fa-solid fa-arrow-left text-xs"></i>
-                </button>
-                <span id="cardCounter" class="text-xs font-mono text-zinc-400">0 / 0</span>
-                <button onclick="nextCard()" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 w-10 h-10 rounded-full flex items-center justify-center transition border border-zinc-700/50">
-                    <i class="fa-solid fa-arrow-right text-xs"></i>
-                </button>
-            </div>
+            <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 詳細檢視頁面 -->
-        <div id="view-detail" class="hidden space-y-4 py-2">
-            <button onclick="router.goHome()" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1.5 text-xs no-print">
-                <i class="fa-solid fa-arrow-left"></i> 返回卡片流
+        <!-- 專門用來放列印標籤的隱藏/動態容器 -->
+<div id="print-labels-container" class="hidden"></div>
+        
+        <!-- 詳細檢視 (呈現所有危害與五大控制細項，具備 QR Code) -->
+        <div id="view-detail" class="hidden space-y-4">
+            <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
+                <i class="fa-solid fa-arrow-left"></i> 返回清單
             </button>
-            <div id="detailContent" class="bg-zinc-800/60 p-5 rounded-3xl border border-zinc-700/50 space-y-5 card-shadow"></div>
+            <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6"></div>
         </div>
 
         <!-- 管理員後台 -->
-        <div id="view-admin" class="hidden space-y-4 py-2">
+        <div id="view-admin" class="hidden space-y-4">
             <div class="flex justify-between items-center">
-                <button onclick="router.goHome()" class="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1.5 text-xs">
+                <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                     <i class="fa-solid fa-arrow-left"></i> 返回前台
                 </button>
-                <h2 class="text-sm font-bold text-zinc-200">管理員控制台</h2>
+                <h2 class="text-xl font-bold text-slate-800">管理員控制台</h2>
             </div>
             
-            <div id="adminLoginCard" class="bg-zinc-800/60 p-6 rounded-3xl border border-zinc-700/50 max-w-sm mx-auto space-y-4 card-shadow mt-12">
-                <h3 class="font-bold text-sm text-center text-zinc-200">請輸入管理員密碼</h3>
-                <input type="password" id="adminPasswordInput" placeholder="預設密碼: 8888" class="w-full px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-zinc-200">
-                <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-xl text-xs font-medium hover:bg-indigo-500 transition">登入後台</button>
+            <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
+                <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
+                <input type="password" id="adminPasswordInput" placeholder="預設密碼: 8888" class="w-full px-4 py-2 border rounded-lg">
+                <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
-            <div id="adminPanel" class="hidden space-y-4">
-                <div class="bg-zinc-800/60 p-5 rounded-3xl border border-zinc-700/50 space-y-3 card-shadow">
-                    <h3 class="font-bold text-xs text-zinc-400 uppercase tracking-wider border-b border-zinc-700/50 pb-2">待審核的自主提報項目</h3>
+            <div id="adminPanel" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
                     <div id="pendingListContainer" class="space-y-3"></div>
                 </div>
             </div>
@@ -136,64 +113,59 @@
 
     </main>
 
-    <!-- 新增 Modal (支援動態多危害) -->
-    <div id="addModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-lg w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto card-shadow">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                <h3 class="text-sm font-bold text-zinc-100">自主提報風險評估</h3>
-                <button onclick="closeAddModal()" class="text-zinc-500 hover:text-zinc-300"><i class="fa-solid fa-xmark text-base"></i></button>
+    <!-- 新增 Modal (支援動態新增多個危害種類) -->
+    <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800">新增儀器/動作與風險評估</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-zinc-400 mb-1">儀器 / 動作名稱 <span class="text-rose-500">*</span></label>
-                    <input type="text" id="formItemName" required class="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-xl text-xs text-zinc-200" placeholder="例如：CNC 操作機台">
+                    <label class="block text-sm font-medium mb-1">儀器 / 動作名稱 <span class="text-red-500">*</span></label>
+                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg" placeholder="例如：CNC 操作機台">
                 </div>
 
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-1">
-                        <h4 class="font-bold text-xs text-indigo-400">危害種類與控制對策</h4>
-                        <button type="button" onclick="addHazardBlock()" class="bg-indigo-950 text-indigo-300 hover:bg-indigo-900 px-2 py-1 rounded-lg text-[10px] font-bold transition">
-                            + 新增危害種類
+                <!-- 危害清單動態容器 -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center border-b pb-1">
+                        <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 危害種類與控制措施清單</h4>
+                        <button type="button" onclick="addHazardBlock()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1 rounded text-xs font-bold transition">
+                            <i class="fa-solid fa-plus mr-1"></i> 新增另一個危害種類
                         </button>
                     </div>
-                    <div id="hazardsContainer" class="space-y-3"></div>
+                    <div id="hazardsContainer" class="space-y-4"></div>
                 </div>
 
-                <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-                    <button type="button" onclick="closeAddModal()" class="px-3 py-2 bg-zinc-800 text-zinc-300 rounded-xl text-xs">取消</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-medium">送出提報</button>
+                <div class="flex justify-end gap-2 pt-2 border-t">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-lg text-sm">取消</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出提報</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- QR Code 掃描 Modal -->
-    <div id="scanModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full p-5 space-y-4 card-shadow">
-            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                <h3 class="text-sm font-bold text-zinc-200">掃描設備 QR Code</h3>
-                <button onclick="closeScanModal()" class="text-zinc-500 hover:text-zinc-300"><i class="fa-solid fa-xmark text-base"></i></button>
+    <div id="scanModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold">掃描設備/動作 QR Code</h3>
+                <button onclick="closeScanModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div id="reader" class="w-full rounded-2xl overflow-hidden"></div>
+            <div id="reader" class="w-full"></div>
         </div>
     </div>
-
-    <!-- 標籤批次列印容器 -->
-    <div id="print-labels-container" class="hidden"></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
         let globalData = { items: [], masterHazards: [], masterControls: [] };
-        let filteredItems = [];
-        let currentCardIndex = 0;
         let html5QrCode = null;
-
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
             elimination: '1. 消除 (Elimination)',
             substitution: '2. 取代 (Substitution)',
-            engineering: '3. 工程控制 (Engineering)',
-            administrative: '4. 管理控制 (Administrative)',
+            engineering: '3. 工程控制 (Engineering Controls)',
+            administrative: '4. 管理控制 (Administrative Controls)',
             ppe: '5. 個人防護具 (PPE)'
         };
 
@@ -224,9 +196,10 @@
 
         function checkUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
-            const itemName = urlParams.get('item');
+            const itemName = urlParams.get('item'); // 統一抓取 item 參數作為 itemName
             if (itemName) {
                 const decodedName = decodeURIComponent(itemName);
+                // 確保全域資料已載入後再進行跳轉渲染
                 const checkInterval = setInterval(() => {
                     if (globalData.items && globalData.items.length > 0) {
                         clearInterval(checkInterval);
@@ -242,21 +215,28 @@
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
-                    updateFilteredItems();
+                    // 過濾：只留下「至少有一個 hazard 是 Approved」的儀器/動作
+                    const approvedItems = globalData.items.map(item => {
+                        const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                        return { ...item, hazards: validHazards };
+                    }).filter(item => item.hazards.length > 0);
+
+                    renderItemList(approvedItems);
                 }
             } catch (err) {
                 console.error("資料載入失敗", err);
             }
         }
 
-        function updateFilteredItems() {
+        function exportLabelsPdf() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
                 return { ...item, hazards: validHazards };
             }).filter(item => item.hazards.length > 0);
 
-            filteredItems = approvedItems.filter(item => {
+            // 依據是否有搜尋關鍵字進行過濾（支援動態過濾與全量匯出）
+            const targetItems = approvedItems.filter(item => {
                 if (!keyword) return true;
                 const matchName = item.itemName.toLowerCase().includes(keyword);
                 const matchSub = item.hazards.some(h => {
@@ -268,128 +248,129 @@
                 return matchName || matchSub;
             });
 
-            currentCardIndex = 0;
-            renderCardStack();
-        }
-
-        function handleSearch() {
-            updateFilteredItems();
-        }
-
-        // 動態卡片流渲染 (Card Stack Flow)
-        function renderCardStack() {
-            const container = document.getElementById('cardStackContainer');
-            const counter = document.getElementById('cardCounter');
-            const controls = document.getElementById('cardNavControls');
-
-            if (filteredItems.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-zinc-500 text-xs">目前尚無符合條件的已核准設備項目</div>`;
-                counter.textContent = `0 / 0`;
-                controls.style.display = 'none';
+            if (targetItems.length === 0) {
+                alert('目前沒有符合條件的項目可供匯出標籤！');
                 return;
             }
 
-            controls.style.display = 'flex';
-            counter.textContent = `${currentCardIndex + 1} / ${filteredItems.length}`;
+            const container = document.getElementById('print-labels-container');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
 
-            const item = filteredItems[currentCardIndex];
-            const maxRisk = Math.max(...item.hazards.map(h => h.riskLevel || 1));
-            
-            // 風險等級樣式標籤
-            let riskBadgeColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-            if (maxRisk >= 4) riskBadgeColor = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-            else if (maxRisk === 3) riskBadgeColor = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-            else if (maxRisk === 2) riskBadgeColor = 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
-
-            container.innerHTML = `
-                <div class="bg-zinc-800/80 border border-zinc-700/60 rounded-3xl p-6 w-full max-w-sm card-shadow space-y-6 transition-all duration-300 transform scale-100">
-                    <div class="flex justify-between items-start">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-mono border ${riskBadgeColor}">最高風險: ${maxRisk} 級</span>
-                        <span class="text-zinc-500 text-xs font-mono">#${currentCardIndex + 1}</span>
+            // 建立卡片
+            targetItems.forEach((item, index) => {
+                const cardId = `label-qr-${index}`;
+                const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = "label-card bg-white p-4 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[380px] h-[160px] mx-auto shadow-sm";
+                cardDiv.innerHTML = `
+                    <div class="space-y-1 pr-2 overflow-hidden">
+                        <div class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
+                        <h4 class="font-bold text-base text-slate-900 truncate" style="max-width: 180px;" title="${item.itemName}">${item.itemName}</h4>
+                        <p class="text-[11px] text-slate-500">已核准危害：${item.hazards.length} 項</p>
+                        <p class="text-[9px] text-slate-400">請用手機掃描以檢視五大控制措施</p>
                     </div>
+                    <div id="${cardId}" class="p-1 bg-white border rounded flex-shrink-0"></div>
+                `;
+                container.appendChild(cardDiv);
 
-                    <div class="space-y-1">
-                        <h3 class="text-lg font-bold text-zinc-100 tracking-tight">${item.itemName}</h3>
-                        <p class="text-xs text-zinc-400">已核准危害種類：${item.hazards.length} 項</p>
+                // 產生對應的 QR Code
+                new QRCode(document.getElementById(cardId), {
+                    text: currentUrl,
+                    width: 90,
+                    height: 90
+                });
+            });
+
+            // 延遲一下確保 QR Code 渲染完成後觸發列印
+            setTimeout(() => {
+                window.print();
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 500);
+        }
+        
+        function handleSearch() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            const filtered = approvedItems.filter(item => {
+                const matchName = item.itemName.toLowerCase().includes(keyword);
+                const matchSub = item.hazards.some(h => {
+                    if (h.hazard.toLowerCase().includes(keyword)) return true;
+                    return Object.values(h.controlHierarchy).some(methods => 
+                        methods.some(m => m.toLowerCase().includes(keyword))
+                    );
+                });
+                return matchName || matchSub;
+            });
+            renderItemList(filtered);
+        }
+
+        function renderItemList(items) {
+            const container = document.getElementById('itemListContainer');
+            if (items.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border">目前尚無已核准的項目</div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
+                    <div>
+                        <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
-
-                    <div class="space-y-2 bg-zinc-900/50 p-3.5 rounded-2xl border border-zinc-800">
-                        <div class="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">主要危害預覽</div>
-                        <div class="space-y-1">
-                            ${item.hazards.slice(0, 2).map(h => `<div class="text-xs text-zinc-300 truncate">• ${h.hazard} (風險 ${h.riskLevel}級)</div>`).join('')}
-                            ${item.hazards.length > 2 ? `<div class="text-[10px] text-indigo-400">...還有 ${item.hazards.length - 2} 項危害</div>` : ''}
-                        </div>
-                    </div>
-
-                    <button onclick="router.goDetail('${item.itemName}')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-2xl text-xs font-medium transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-                        <span>完整詳細報告與 QR Code</span>
-                        <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
+                        查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
-            `;
+            `).join('');
         }
-
-        function nextCard() {
-            if (filteredItems.length === 0) return;
-            currentCardIndex = (currentCardIndex + 1) % filteredItems.length;
-            renderCardStack();
-        }
-
-        function prevCard() {
-            if (filteredItems.length === 0) return;
-            currentCardIndex = (currentCardIndex - 1 + filteredItems.length) % filteredItems.length;
-            renderCardStack();
-        }
-
-        // 詳細檢視頁面
+        
+        // 渲染詳情頁面：完整呈現該儀器/動作的所有危害種類與所有危害的五大控制措施細項
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
             
             if (!item) {
-                container.innerHTML = `<div class="text-center py-8 text-zinc-500 text-xs">找不到該項目的詳細資料。</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-slate-400">找不到該項目「${itemName}」的詳細資料或尚未通過審核。</div>`;
                 return;
             }
 
             const approvedHazards = item.hazards.filter(h => h.status === 'Approved');
             const isFullyApproved = approvedHazards.length > 0;
+            // 讓 QR Code 掃描後產生的網址正確指向該儀器名稱
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
             container.innerHTML = `
-                <div class="flex justify-between items-start border-b border-zinc-700/50 pb-4">
+                <div class="flex justify-between items-start border-b pb-4">
                     <div>
-                        <h2 class="text-base font-bold text-zinc-100">${item.itemName}</h2>
-                        <p class="text-[11px] text-zinc-400 mt-0.5">完整風險評估與五大控制對策明細</p>
+                        <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
+                        <p class="text-xs text-slate-500 mt-1">完整風險評估與所有危害之五大控制措施明細</p>
                     </div>
-                    <div class="flex items-center gap-2 no-print">
-                        ${isFullyApproved ? `<button onclick="window.print()" class="bg-zinc-700 hover:bg-zinc-600 text-zinc-200 px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition"><i class="fa-solid fa-file-pdf"></i> 列印 / PDF</button>` : ''}
-                    </div>
+                    ${isFullyApproved ? `<div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm text-center"><div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div></div>` : `<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded text-xs font-bold">尚未核准，無 QR Code</span>`}
                 </div>
-
-                ${isFullyApproved ? `
-                    <div class="flex justify-center my-2 no-print">
-                        <div id="qrcode-box" class="p-3 bg-white rounded-2xl shadow-sm text-center">
-                            <div class="text-[9px] text-zinc-800 font-bold mb-1">設備專屬 QR Code</div>
-                        </div>
-                    </div>
-                ` : `<div class="no-print"><span class="px-2.5 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full text-xs font-bold">尚未核准，無 QR Code</span></div>`}
                 
-                <div class="space-y-4 print-detail-view">
+                <div class="space-y-6">
                     ${approvedHazards.map((h, idx) => `
-                        <div class="bg-zinc-900/70 p-4 rounded-2xl border border-zinc-700/50 space-y-3">
-                            <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                                <span class="font-bold text-indigo-400 text-xs">#${idx + 1} 危害：${h.hazard}</span>
-                                <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] font-bold">風險: ${h.riskLevel} 級 (嚴:${h.severity}/頻:${h.frequency})</span>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <span class="font-bold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
                             
                             <div class="space-y-2 pt-1">
-                                <div class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">五大危害控制措施：</div>
+                                <div class="text-xs font-bold text-slate-700">五大危害控制措施細項：</div>
                                 ${controlTypes.map(type => {
                                     const methods = (h.controlHierarchy && h.controlHierarchy[type]) ? h.controlHierarchy[type] : ['無'];
                                     return `
-                                        <div class="bg-zinc-800/80 p-2.5 rounded-xl border border-zinc-700/30 text-xs">
-                                            <span class="font-bold text-indigo-300 block mb-1 text-[11px]">${controlLabels[type]}</span>
-                                            <ul class="list-disc list-inside text-zinc-300 space-y-0.5 text-[11px]">
+                                        <div class="bg-white p-2.5 rounded border border-slate-100 text-xs">
+                                            <span class="font-bold text-indigo-800 block mb-1">${controlLabels[type]}</span>
+                                            <ul class="list-disc list-inside text-slate-600 space-y-0.5">
                                                 ${methods.map(m => `<li>${m}</li>`).join('')}
                                             </ul>
                                         </div>
@@ -402,15 +383,14 @@
             `;
 
             if (isFullyApproved) {
+                // 清空原本的 QRCode 避免重複產生
                 const qrBox = document.getElementById("qrcode-box");
-                if (qrBox) {
-                    qrBox.innerHTML = '<div class="text-[9px] text-zinc-800 font-bold mb-1">設備專屬 QR Code</div>';
-                    new QRCode(qrBox, {
-                        text: currentUrl,
-                        width: 90,
-                        height: 90
-                    });
-                }
+                qrBox.innerHTML = '<div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>';
+                new QRCode(qrBox, {
+                    text: currentUrl,
+                    width: 100,
+                    height: 100
+                });
             }
         }
 
@@ -418,27 +398,27 @@
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
-            const hazardOptions = `<option value="">-- 歷史詞庫選擇 --</option>` +
+            const hazardOptions = `<option value="">-- 從歷史常用危害詞庫選擇 --</option>` +
                 (globalData.masterHazards ? globalData.masterHazards.map(h => `<option value="${h}">${h}</option>`).join('') : '');
 
             const div = document.createElement('div');
-            div.className = "p-4 bg-zinc-800/80 border border-zinc-700 rounded-2xl space-y-3 hazard-block";
+            div.className = "p-4 bg-slate-50 border rounded-xl space-relative space-y-3 hazard-block";
             div.id = blockId;
             
             div.innerHTML = `
                 <div class="flex justify-between items-center">
-                    <span class="text-[10px] font-bold text-indigo-400">危害區塊</span>
-                    <button type="button" onclick="document.getElementById('${blockId}').remove()" class="text-rose-400 hover:text-rose-300 text-[10px]"><i class="fa-solid fa-trash mr-1"></i>移除</button>
+                    <span class="text-xs font-bold text-indigo-600">危害種類區塊</span>
+                    <button type="button" onclick="document.getElementById('${blockId}').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash mr-1"></i>刪除此危害</button>
                 </div>
                 <div>
-                    <label class="block text-[10px] text-zinc-400 mb-1">危害種類 <span class="text-rose-500">*</span></label>
-                    <select onchange="this.nextElementSibling.value = this.value" class="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded-xl mb-1 text-xs text-zinc-200">${hazardOptions}</select>
-                    <input type="text" name="hazardName" required class="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-zinc-200" placeholder="或自行輸入危害種類">
+                    <label class="block text-xs font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
+                    <select onchange="this.nextElementSibling.value = this.value" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
+                    <input type="text" name="hazardName" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">嚴重度 (1~4)</label>
-                        <select name="severity" class="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-zinc-200">
+                        <label class="block text-xs font-medium mb-1">嚴重度 (1~4)</label>
+                        <select name="severity" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
                             <option value="1">1 級 (輕微)</option>
                             <option value="2">2 級 (中等)</option>
                             <option value="3">3 級 (嚴重)</option>
@@ -446,8 +426,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-zinc-400 mb-1">發生頻率 (1~4)</label>
-                        <select name="frequency" class="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-700 rounded-xl text-xs text-zinc-200">
+                        <label class="block text-xs font-medium mb-1">發生頻率 (1~4)</label>
+                        <select name="frequency" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
                             <option value="1">1 級 (極低)</option>
                             <option value="2">2 級 (偶發)</option>
                             <option value="3">3 級 (經常)</option>
@@ -455,13 +435,13 @@
                         </select>
                     </div>
                 </div>
-                <div class="space-y-2 pt-2 border-t border-zinc-700">
-                    <div class="text-[10px] font-bold text-zinc-400">五大控制措施填寫：</div>
+                <div class="space-y-2 pt-2 border-t">
+                    <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
                     ${controlTypes.map(type => `
                         <div class="space-y-1" data-control-type="${type}">
                             <div class="flex justify-between items-center">
-                                <label class="text-[10px] font-medium text-zinc-400">${controlLabels[type]}</label>
-                                <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-indigo-400 hover:underline">+ 方法</button>
+                                <label class="text-[11px] font-semibold text-slate-600">${controlLabels[type]}</label>
+                                <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-indigo-600 hover:underline">+ 方法</button>
                             </div>
                             <div class="sub-container-${type} space-y-1"></div>
                         </div>
@@ -469,21 +449,22 @@
                 </div>
             `;
             container.appendChild(div);
+            // 預設每個控制措施給一個輸入框
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
         function addControlRow(blockId, type) {
             const block = document.getElementById(blockId);
             const container = block.querySelector(`.sub-container-${type}`);
-            const controlOptions = `<option value="">-- 詞庫 --</option>` +
+            const controlOptions = `<option value="">-- 歷史詞庫 --</option>` +
                 (globalData.masterControls ? globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('') : '');
 
             const row = document.createElement('div');
             row.className = "flex gap-1 items-center";
             row.innerHTML = `
-                <select onchange="this.nextElementSibling.value = this.value" class="w-1/3 px-1 py-1 bg-zinc-900 border border-zinc-700 rounded-lg text-[10px] text-zinc-200">${controlOptions}</select>
-                <input type="text" required class="flex-grow px-2 py-1 bg-zinc-900 border border-zinc-700 rounded-lg text-[10px] text-zinc-200" placeholder="控制對策描述">
-                <button type="button" onclick="this.parentElement.remove()" class="text-zinc-500 hover:text-rose-400 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                <select onchange="this.nextElementSibling.value = this.value" class="w-1/3 px-1 py-1 border rounded text-[11px] bg-white">${controlOptions}</select>
+                <input type="text" required class="flex-grow px-2 py-1 border rounded text-[11px]" placeholder="控制方法">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(row);
         }
@@ -491,7 +472,7 @@
         function openAddModal() { 
             document.getElementById('addModal').classList.remove('hidden');
             document.getElementById('hazardsContainer').innerHTML = '';
-            addHazardBlock();
+            addHazardBlock(); // 預設打開時先帶有一個危害區塊
         }
 
         function closeAddModal() { 
@@ -535,7 +516,7 @@
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
             const json = await res.json();
             if (json.status === 'success') {
-                alert('已成功送出自主提報！等待管理員審核。');
+                alert('已成功送出自主提報！將等待管理員審核。');
                 closeAddModal();
                 fetchData();
             }
@@ -546,7 +527,7 @@
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 220, height: 220 } },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
                 decodedText => { 
                     closeScanModal(); 
                     window.location.href = decodedText; 
@@ -586,28 +567,29 @@
             });
 
             if (pendingItems.length === 0) {
-                container.innerHTML = `<p class="text-xs text-zinc-500">目前沒有待審核的項目。</p>`;
+                container.innerHTML = `<p class="text-sm text-slate-400">目前沒有待審核的項目。</p>`;
                 return;
             }
 
             container.innerHTML = pendingItems.map(p => `
-                <div class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl space-y-3">
-                    <div class="flex justify-between items-start border-b border-zinc-800 pb-2">
+                <div class="p-4 border rounded-lg bg-slate-50 space-y-3">
+                    <div class="flex justify-between items-start border-b pb-2">
                         <div>
-                            <div class="font-bold text-xs text-indigo-400">${p.itemName}</div>
-                            <div class="text-[11px] text-zinc-200 mt-0.5">危害：${p.hazard}</div>
+                            <div class="font-bold text-sm text-indigo-600">儀器/動作：${p.itemName}</div>
+                            <div class="text-xs text-slate-700 font-semibold mt-1">危害種類：${p.hazard}</div>
                         </div>
-                        <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[10px] font-bold">風險: ${p.riskLevel}級</span>
+                        <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${p.riskLevel} 級 (嚴重:${p.severity} / 頻率:${p.frequency})</span>
                     </div>
 
-                    <div class="space-y-1">
-                        <div class="text-[10px] font-bold text-zinc-400">五大控制措施細項：</div>
+                    <!-- 完整呈現五大控制措施細項 -->
+                    <div class="space-y-1.5 pt-1">
+                        <div class="text-[11px] font-bold text-slate-600">五大危害控制措施細項：</div>
                         ${controlTypes.map(type => {
                             const methods = (p.controlHierarchy && p.controlHierarchy[type]) ? p.controlHierarchy[type] : ['無'];
                             return `
-                                <div class="bg-zinc-800/50 p-2 rounded-xl border border-zinc-700/30 text-[11px]">
-                                    <span class="font-bold text-indigo-300 block mb-0.5 text-[10px]">${controlLabels[type]}</span>
-                                    <ul class="list-disc list-inside text-zinc-300 space-y-0.5">
+                                <div class="bg-white p-2 rounded border border-slate-200 text-xs">
+                                    <span class="font-bold text-indigo-800 block mb-0.5">${controlLabels[type]}</span>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
                                         ${methods.map(m => `<li>${m}</li>`).join('')}
                                     </ul>
                                 </div>
@@ -615,25 +597,28 @@
                         }).join('')}
                     </div>
 
-                    <div class="flex justify-end gap-2 pt-2 border-t border-zinc-800">
-                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-[11px] font-medium transition">核准</button>
-                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-500 text-white px-3 py-1.5 rounded-xl text-[11px] font-medium transition">拒絕</button>
+                    <div class="flex justify-end gap-2 pt-2 border-t">
+                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">核准</button>
+                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">拒絕</button>
                     </div>
                 </div>
             `).join('');
         }
 
         async function updateStatus(id, status) {
+            // 1. 立即從前端全域資料中移除或更新該筆資料，讓畫面瞬間響應消失
             globalData.items.forEach(item => {
                 item.hazards.forEach(h => {
                     if (h.id === id) {
-                        h.status = status;
+                        h.status = status; // 變成 Approved 或 Rejected
                     }
                 });
             });
 
+            // 2. 立即重新整理後台待審核清單（該筆資料會馬上不見）與前台列表
             loadPendingItems();
 
+            // 3. 非同步發送請求給 Google Apps Script 後端更新資料庫
             try {
                 const res = await fetch(API_URL, { 
                     method: 'POST', 
@@ -641,72 +626,12 @@
                 });
                 const json = await res.json();
                 if (json.status !== 'success') {
-                    alert('後端狀態更新失敗');
-                    fetchData();
+                    alert('後端狀態更新失敗，請重新整理。');
+                    fetchData(); // 若失敗則重新抓取伺服器資料
                 }
             } catch (err) {
                 console.error("更新狀態發生錯誤", err);
             }
-        }
-
-        // 批次匯出標籤卡功能（支援智慧過濾與全量匯出、虛線裁切邊框）
-        function exportLabelsPdf() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const approvedItems = globalData.items.map(item => {
-                const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                return { ...item, hazards: validHazards };
-            }).filter(item => item.hazards.length > 0);
-
-            const targetItems = approvedItems.filter(item => {
-                if (!keyword) return true;
-                const matchName = item.itemName.toLowerCase().includes(keyword);
-                const matchSub = item.hazards.some(h => {
-                    if (h.hazard.toLowerCase().includes(keyword)) return true;
-                    return Object.values(h.controlHierarchy).some(methods => 
-                        methods.some(m => m.toLowerCase().includes(keyword))
-                    );
-                });
-                return matchName || matchSub;
-            });
-
-            if (targetItems.length === 0) {
-                alert('目前沒有符合條件的項目可供匯出標籤！');
-                return;
-            }
-
-            const container = document.getElementById('print-labels-container');
-            container.innerHTML = '';
-            container.classList.remove('hidden');
-
-            targetItems.forEach((item, index) => {
-                const cardId = `label-qr-${index}`;
-                const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
-                
-                const cardDiv = document.createElement('div');
-                cardDiv.className = "label-card bg-white p-4 rounded-xl border-2 border-dashed border-zinc-400 flex justify-between items-center w-full max-w-[380px] h-[150px] mx-auto shadow-sm";
-                cardDiv.innerHTML = `
-                    <div class="space-y-1 pr-2 overflow-hidden text-zinc-900">
-                        <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤卡</div>
-                        <h4 class="font-bold text-sm text-zinc-900 truncate" style="max-width: 180px;" title="${item.itemName}">${item.itemName}</h4>
-                        <p class="text-[10px] text-zinc-600">已核准危害：${item.hazards.length} 項</p>
-                        <p class="text-[8px] text-zinc-400">請用手機掃描以檢視五大控制措施</p>
-                    </div>
-                    <div id="${cardId}" class="p-1 bg-white border rounded flex-shrink-0"></div>
-                `;
-                container.appendChild(cardDiv);
-
-                new QRCode(document.getElementById(cardId), {
-                    text: currentUrl,
-                    width: 80,
-                    height: 80
-                });
-            });
-
-            setTimeout(() => {
-                window.print();
-                container.classList.add('hidden');
-                container.innerHTML = '';
-            }, 500);
         }
     </script>
 </body>
