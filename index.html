@@ -108,27 +108,28 @@
 
     // 專門用來處理掃描 QR Code 後直接開窗的函式
     async function loadAndShowDetailDirectly(id) {
-      try {
-        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
-        let json = await res.json();
-        
-        if (json.status === "success" && json.results && json.results.length > 0) {
-          // 精準比對找出對應的那一筆
-          let matched = json.results.find(item => item.assessment_id === id) || json.results[0];
-          
-          if (matched) {
-            showDetailModal(matched);
-          } else {
-            alert("找不到此評估編號的詳細資料：" + id);
-          }
-        } else {
-          alert("找不到此評估編號的詳細資料：" + id);
-        }
-      } catch (err) {
-        console.error("載入詳細資料失敗：", err);
-        alert("連線後端發生錯誤");
+  try {
+    // 改用搜尋全部或確保關鍵字能直接對應到 assessment_id
+    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
+    let json = await res.json();
+    
+    if (json.status === "success" && json.results && json.results.length > 0) {
+      // 嚴格用 assessment_id 進行過濾
+      let matched = json.results.find(item => item.assessment_id === id);
+      
+      if (matched) {
+        showDetailModal(matched);
+      } else {
+        alert("找不到此評估編號的詳細資料：" + id);
       }
+    } else {
+      alert("找不到此評估編號的詳細資料：" + id);
     }
+  } catch (err) {
+    console.error("載入詳細資料失敗：", err);
+    alert("連線後端發生錯誤");
+  }
+}
 
     function switchTab(tabName) {
       if (tabName === 'create') {
