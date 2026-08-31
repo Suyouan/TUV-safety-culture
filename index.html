@@ -24,7 +24,7 @@
 
     <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
         
-        <!-- [MOD-F01] 視圖 1: 首頁與即時搜尋列表 -->
+        <!-- 視圖 1: 首頁列表 -->
         <div id="view-home" class="space-y-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex gap-2">
@@ -39,7 +39,7 @@
                 </div>
                 <div class="flex justify-between items-center pt-2">
                     <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-                        <i class="fa-solid fa-plus"></i> 新增項目/危害與控制措施
+                        <i class="fa-solid fa-plus"></i> 新增儀器與危害控制評估
                     </button>
                     <button onclick="window.print()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
                         <i class="fa-solid fa-file-pdf"></i> 匯出標籤 PDF
@@ -50,7 +50,7 @@
             <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
-        <!-- [MOD-F04] 視圖 2: 詳細檢視 (多層次巢狀展開) -->
+        <!-- 視圖 2: 詳細檢視 (完整呈現五大控制措施) -->
         <div id="view-detail" class="hidden space-y-4">
             <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                 <i class="fa-solid fa-arrow-left"></i> 返回清單
@@ -58,7 +58,7 @@
             <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6"></div>
         </div>
 
-        <!-- [MOD-F07/F08] 視圖 3: 管理員後台 -->
+        <!-- 視圖 3: 管理員後台 -->
         <div id="view-admin" class="hidden space-y-4">
             <div class="flex justify-between items-center">
                 <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
@@ -83,11 +83,11 @@
 
     </main>
 
-    <!-- [MOD-F05/F06] 新增/提報 Modal (支援歷史知識庫複用 + 動態多控制方法) -->
+    <!-- 新增/提報 Modal (內含五大控制措施必要填寫區塊) -->
     <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold">新增儀器/動作與風險控制</h3>
+                <h3 class="text-lg font-bold text-slate-800">新增風險評估與五大控制措施</h3>
                 <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
@@ -122,25 +122,56 @@
                         </select>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">五大危害控制措施分類 <span class="text-red-500">*</span></label>
-                    <select id="formControlType" class="w-full px-3 py-2 border rounded-lg">
-                        <option value="1. 消除 (Elimination)">1. 消除 (Elimination)</option>
-                        <option value="2. 取代 (Substitution)">2. 取代 (Substitution)</option>
-                        <option value="3. 工程控制 (Engineering Controls)" selected>3. 工程控制 (Engineering Controls)</option>
-                        <option value="4. 管理控制 (Administrative Controls)">4. 管理控制 (Administrative Controls)</option>
-                        <option value="5. 個人防護具 (PPE)">5. 個人防護具 (PPE)</option>
-                    </select>
-                </div>
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-sm font-medium">具體控制方法項目（可新增多個方法）</label>
-                        <button type="button" onclick="addControlMethodField()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"><i class="fa-solid fa-plus mr-1"></i>新增方法欄位</button>
+
+                <!-- 五大危害控制措施必要填寫區塊 -->
+                <div class="border-t pt-4 space-y-3">
+                    <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-list-check mr-1"></i> 五大危害控制措施（必要填寫）</h4>
+                    <p class="text-xs text-slate-500">請針對上述危害，於以下五大層級分別填入對應的具體控制方法（若無對應可填「無」）：</p>
+                    
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border">
+                        <!-- 1. 消除 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-700">1. 消除 (Elimination)</label>
+                                <button type="button" onclick="addControlRow('elimination')" class="text-xs text-indigo-600 hover:underline">+ 新增方法</button>
+                            </div>
+                            <div id="container-elimination" class="space-y-2"></div>
+                        </div>
+                        <!-- 2. 取代 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-700">2. 取代 (Substitution)</label>
+                                <button type="button" onclick="addControlRow('substitution')" class="text-xs text-indigo-600 hover:underline">+ 新增方法</button>
+                            </div>
+                            <div id="container-substitution" class="space-y-2"></div>
+                        </div>
+                        <!-- 3. 工程控制 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-700">3. 工程控制 (Engineering Controls)</label>
+                                <button type="button" onclick="addControlRow('engineering')" class="text-xs text-indigo-600 hover:underline">+ 新增方法</button>
+                            </div>
+                            <div id="container-engineering" class="space-y-2"></div>
+                        </div>
+                        <!-- 4. 管理控制 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-700">4. 管理控制 (Administrative Controls)</label>
+                                <button type="button" onclick="addControlRow('administrative')" class="text-xs text-indigo-600 hover:underline">+ 新增方法</button>
+                            </div>
+                            <div id="container-administrative" class="space-y-2"></div>
+                        </div>
+                        <!-- 5. 個人防護具 -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-700">5. 個人防護具 (PPE)</label>
+                                <button type="button" onclick="addControlRow('ppe')" class="text-xs text-indigo-600 hover:underline">+ 新增方法</button>
+                            </div>
+                            <div id="container-ppe" class="space-y-2"></div>
+                        </div>
                     </div>
-                    <div id="controlMethodsContainer" class="space-y-2">
-                        <!-- 動態插入控制方法列 -->
-                    </div>
                 </div>
+
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-lg text-sm">取消</button>
                     <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出儲存</button>
@@ -165,10 +196,13 @@
         let globalData = { items: [], masterHazards: [], masterControls: [] };
         let html5QrCode = null;
 
+        const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
+
         window.addEventListener('DOMContentLoaded', () => {
             fetchData();
             checkUrlParams();
-            addControlMethodField(); // 初始化第一個控制方法輸入行
+            // 初始化五大類別各給一個輸入行
+            controlTypes.forEach(type => addControlRow(type, ''));
         });
 
         const router = {
@@ -217,10 +251,12 @@
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const filtered = globalData.items.filter(item => {
                 const matchName = item.itemName.toLowerCase().includes(keyword);
-                const matchSub = item.hazards.some(h => 
-                    h.hazard.toLowerCase().includes(keyword) || 
-                    h.controlMethods.some(m => m.toLowerCase().includes(keyword))
-                );
+                const matchSub = item.hazards.some(h => {
+                    if (h.hazard.toLowerCase().includes(keyword)) return true;
+                    return Object.values(h.controlHierarchy).some(methods => 
+                        methods.some(m => m.toLowerCase().includes(keyword))
+                    );
+                });
                 return matchName || matchSub;
             });
             renderItemList(filtered);
@@ -237,7 +273,7 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
                     <div>
                         <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">包含 ${item.hazards.length} 項危害種類評估</p>
+                        <p class="text-xs text-slate-500 mt-0.5">包含 ${item.hazards.length} 項危害種類評估（皆配置五大控制措施）</p>
                     </div>
                     <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
                         查看詳情 <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
@@ -253,11 +289,19 @@
 
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
+            const controlLabels = {
+                elimination: '1. 消除 (Elimination)',
+                substitution: '2. 取代 (Substitution)',
+                engineering: '3. 工程控制 (Engineering Controls)',
+                administrative: '4. 管理控制 (Administrative Controls)',
+                ppe: '5. 個人防護具 (PPE)'
+            };
+
             container.innerHTML = `
                 <div class="flex justify-between items-start border-b pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
-                        <p class="text-xs text-slate-500 mt-1">多層次風險評估與五大危害控制對應表</p>
+                        <p class="text-xs text-slate-500 mt-1">完整風險評估與五大危害控制措施矩陣</p>
                     </div>
                     <div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm"></div>
                 </div>
@@ -268,12 +312,20 @@
                                 <span class="font-bold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
                                 <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
-                            <div class="text-xs font-bold text-slate-700">控制措施分類：<span class="text-indigo-700">${h.controlType}</span></div>
-                            <div class="space-y-1 bg-white p-3 rounded border border-slate-100">
-                                <div class="text-xs font-bold text-slate-500 mb-1">具體控制方法項目：</div>
-                                <ul class="list-disc list-inside text-sm text-slate-700 space-y-1">
-                                    ${h.controlMethods.map(m => `<li>${m}</li>`).join('')}
-                                </ul>
+                            
+                            <div class="space-y-2 pt-1">
+                                <div class="text-xs font-bold text-slate-700">五大危害控制措施明細：</div>
+                                ${Object.keys(controlLabels).map(key => {
+                                    const methods = (h.controlHierarchy && h.controlHierarchy[key]) ? h.controlHierarchy[key] : ['無'];
+                                    return `
+                                        <div class="bg-white p-2.5 rounded border border-slate-100 text-xs">
+                                            <span class="font-bold text-indigo-800 block mb-1">${controlLabels[key]}</span>
+                                            <ul class="list-disc list-inside text-slate-600 space-y-0.5">
+                                                ${methods.map(m => `<li>${m}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `).join('')}
@@ -290,28 +342,20 @@
         function populateMasterSelectors() {
             document.getElementById('selectHazardMaster').innerHTML = `<option value="">-- 從歷史常用危害詞庫快速選擇 --</option>` +
                 globalData.masterHazards.map(h => `<option value="${h}">${h}</option>`).join('');
-            updateControlMethodSelects();
         }
 
-        function updateControlMethodSelects() {
-            const controlOptions = `<option value="">-- 從歷史常用控制詞庫選擇 --</option>` +
-                globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.querySelectorAll('.control-method-row select').forEach(sel => {
-                sel.innerHTML = controlOptions;
-            });
-        }
-
-        function addControlMethodField() {
-            const container = document.getElementById('controlMethodsContainer');
+        function addControlRow(type, val = '') {
+            const container = document.getElementById(`container-${type}`);
             const row = document.createElement('div');
-            row.className = "flex gap-2 control-method-row items-center";
-            const controlOptions = `<option value="">-- 從歷史常用控制詞庫選擇 --</option>` +
+            row.className = "flex gap-2 items-center control-row-" + type;
+            
+            const controlOptions = `<option value="">-- 從歷史詞庫選擇 --</option>` +
                 (globalData.masterControls ? globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('') : '');
             
             row.innerHTML = `
-                <select onchange="this.nextElementSibling.value = this.value" class="w-1/3 px-2 py-1.5 border rounded text-xs bg-slate-50">${controlOptions}</select>
-                <input type="text" required class="flex-grow px-3 py-1.5 border rounded text-sm" placeholder="請輸入具體控制方法">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 px-2"><i class="fa-solid fa-trash"></i></button>
+                <select onchange="this.nextElementSibling.value = this.value" class="w-1/3 px-2 py-1 border rounded text-xs bg-white">${controlOptions}</select>
+                <input type="text" value="${val}" required class="flex-grow px-3 py-1 border rounded text-xs" placeholder="請輸入控制方法">
+                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 px-1 text-xs"><i class="fa-solid fa-trash"></i></button>
             `;
             container.appendChild(row);
         }
@@ -320,13 +364,22 @@
         function closeAddModal() { 
             document.getElementById('addModal').classList.add('hidden'); 
             document.getElementById('addItemForm').reset();
-            document.getElementById('controlMethodsContainer').innerHTML = '';
-            addControlMethodField();
+            controlTypes.forEach(type => {
+                document.getElementById(`container-${type}`).innerHTML = '';
+                addControlRow(type, '');
+            });
         }
 
         async function submitItemForm(e) {
             e.preventDefault();
-            const methods = Array.from(document.querySelectorAll('#controlMethodsContainer input')).map(input => input.value).filter(Boolean);
+            
+            // 收集五大控制措施各欄位資料
+            const controlHierarchy = {};
+            controlTypes.forEach(type => {
+                const inputs = document.querySelectorAll(`#container-${type} input`);
+                controlHierarchy[type] = Array.from(inputs).map(input => input.value).filter(Boolean);
+                if (controlHierarchy[type].length === 0) controlHierarchy[type] = ['無'];
+            });
 
             const payload = {
                 action: 'addItem',
@@ -334,8 +387,7 @@
                 hazard: document.getElementById('formHazard').value,
                 severity: document.getElementById('formSeverity').value,
                 frequency: document.getElementById('formFrequency').value,
-                controlType: document.getElementById('formControlType').value,
-                controlMethods: methods,
+                controlHierarchy: controlHierarchy,
                 isUserSubmit: true
             };
 
@@ -398,7 +450,6 @@
                 <div class="p-4 border rounded-lg bg-slate-50 space-y-2">
                     <div class="font-bold text-sm text-indigo-600">${p.itemName}</div>
                     <div class="text-xs text-slate-600"><strong>危害：</strong>${p.hazard} (風險等級: ${p.riskLevel}級)</div>
-                    <div class="text-xs text-slate-600"><strong>控制措施：</strong>[${p.controlType}] ${p.controlMethods.join('、')}</div>
                     <div class="flex justify-end gap-2 pt-1">
                         <button onclick="approveItem('${p.id}')" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium">核准</button>
                     </div>
@@ -406,11 +457,6 @@
             `).join('');
         }
 
-        async function approveItem(id) {
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'approveItem', id }) });
-            const json = await res.json();
-            if (json.status === 'success') { alert('已核准'); fetchData(); loadPendingItems(); }
-        }
     </script>
     <style>
         @media print {
