@@ -4,32 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>儀器與動作風險評估暨五大危害控制管理系統</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QR Code Library (QRCode.js) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Html5-qrcode for scanning -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 頂部導覽列 -->
     <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
                 <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
-            <div class="flex items-center gap-3">
-                <button onclick="router.goAdmin()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition">
-                    <i class="fa-solid fa-lock mr-1"></i> 管理後台
-                </button>
-            </div>
+            <button onclick="router.goAdmin()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition">
+                <i class="fa-solid fa-lock mr-1"></i> 管理後台
+            </button>
         </div>
     </header>
 
-    <!-- 主容器 -->
     <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
         
         <!-- [MOD-F01] 視圖 1: 首頁與即時搜尋列表 -->
@@ -55,20 +47,15 @@
                 </div>
             </div>
 
-            <!-- 項目清單容器 -->
-            <div id="itemListContainer" class="space-y-3">
-                <!-- 動態載入 -->
-            </div>
+            <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
-        <!-- [MOD-F04] 視圖 2: 單一項目詳細檢視 (QR Code 掃描進入點) -->
+        <!-- [MOD-F04] 視圖 2: 詳細檢視 -->
         <div id="view-detail" class="hidden space-y-4">
             <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                 <i class="fa-solid fa-arrow-left"></i> 返回清單
             </button>
-            <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6">
-                <!-- 動態載入詳細資料 -->
-            </div>
+            <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6"></div>
         </div>
 
         <!-- [MOD-F07/F08] 視圖 3: 管理員後台 -->
@@ -80,37 +67,33 @@
                 <h2 class="text-xl font-bold text-slate-800">管理員控制台</h2>
             </div>
             
-            <!-- 登入卡片 -->
             <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
                 <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
                 <input type="password" id="adminPasswordInput" placeholder="預設密碼: 8888" class="w-full px-4 py-2 border rounded-lg">
                 <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
-            <!-- 管理面板 (登入後顯示) -->
             <div id="adminPanel" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
                     <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
-                    <div id="pendingListContainer" class="space-y-3">
-                        <!-- 動態載入待審核 -->
-                    </div>
+                    <div id="pendingListContainer" class="space-y-3"></div>
                 </div>
             </div>
         </div>
 
     </main>
 
-    <!-- [MOD-F05/F06] 新增/提報 Modal -->
+    <!-- [MOD-F05/F06] 新增/提報 Modal (含嚴重度、發生頻率與控制措施分類) -->
     <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold" id="modalTitle">新增儀器/動作與風險控制</h3>
+                <h3 class="text-lg font-bold">新增儀器/動作與風險控制</h3>
                 <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">儀器 / 動作名稱 <span class="text-red-500">*</span></label>
-                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="例如：CNC 操作機台">
+                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg" placeholder="例如：CNC 操作機台">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
@@ -119,12 +102,42 @@
                     </select>
                     <input type="text" id="formHazard" required class="w-full px-3 py-2 border rounded-lg" placeholder="或自行輸入危害描述">
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">嚴重度 (1~4 級)</label>
+                        <select id="formSeverity" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="1">1 級 (輕微)</option>
+                            <option value="2">2 級 (中等)</option>
+                            <option value="3">3 級 (嚴重)</option>
+                            <option value="4">4 級 (極嚴重)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">發生頻率 (1~4 級)</label>
+                        <select id="formFrequency" class="w-full px-3 py-2 border rounded-lg">
+                            <option value="1">1 級 (極低)</option>
+                            <option value="2">2 級 (偶發)</option>
+                            <option value="3">3 級 (經常)</option>
+                            <option value="4">4 級 (極高)</option>
+                        </select>
+                    </div>
+                </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">五大危害控制措施 <span class="text-red-500">*</span></label>
+                    <label class="block text-sm font-medium mb-1">五大危害控制措施分類 <span class="text-red-500">*</span></label>
+                    <select id="formControlType" class="w-full px-3 py-2 border rounded-lg mb-2">
+                        <option value="1. 消除 (Elimination)">1. 消除 (Elimination)</option>
+                        <option value="2. 取代 (Substitution)">2. 取代 (Substitution)</option>
+                        <option value="3. 工程控制 (Engineering Controls)" selected>3. 工程控制 (Engineering Controls)</option>
+                        <option value="4. 管理控制 (Administrative Controls)">4. 管理控制 (Administrative Controls)</option>
+                        <option value="5. 個人防護具 (PPE)">5. 個人防護具 (PPE)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">控制措施詳細說明 <span class="text-red-500">*</span></label>
                     <select id="selectControlMaster" onchange="document.getElementById('formControl').value = this.value" class="w-full px-3 py-2 border rounded-lg mb-2 text-sm bg-slate-50">
                         <option value="">-- 從歷史常用控制措施詞庫快速選擇 --</option>
                     </select>
-                    <textarea id="formControl" rows="3" required class="w-full px-3 py-2 border rounded-lg" placeholder="說明工程控制、管理控制或個防具(PPE)細節"></textarea>
+                    <textarea id="formControl" rows="3" required class="w-full px-3 py-2 border rounded-lg" placeholder="說明具體執行的防護與控制作法"></textarea>
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-lg text-sm">取消</button>
@@ -142,28 +155,19 @@
                 <button onclick="closeScanModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div id="reader" class="w-full"></div>
-            <p class="text-xs text-slate-500 text-center">請將鏡頭對準專屬 QR Code 進行掃描</p>
         </div>
     </div>
 
-    <!-- PDF 預/匯出隱藏容器 -->
-    <div id="pdfExportContainer" class="hidden"></div>
-
-    <!-- JavaScript 邏輯主程式 -->
     <script>
-        // ⚠️ 請替換為您的 Google Apps Script 部署網址
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
-
         let globalData = { items: [], masterHazards: [], masterControls: [] };
         let html5QrCode = null;
 
-        // 初始化
         window.addEventListener('DOMContentLoaded', () => {
             fetchData();
             checkUrlParams();
         });
 
-        // [MOD-F01] 路由控制
         const router = {
             goHome() {
                 document.getElementById('view-home').classList.remove('hidden');
@@ -184,7 +188,6 @@
             }
         };
 
-        // 檢查網址參數 (QR Code 進入點)
         function checkUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             const item = urlParams.get('item');
@@ -193,7 +196,6 @@
             }
         }
 
-        // 資料抓取
         async function fetchData() {
             try {
                 const res = await fetch(`${API_URL}?action=getData`);
@@ -208,7 +210,6 @@
             }
         }
 
-        // [MOD-F03] 即時關鍵字搜尋
         function handleSearch() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const filtered = globalData.items.filter(item => {
@@ -219,7 +220,6 @@
             renderItemList(filtered);
         }
 
-        // [MOD-F04] 渲染項目清單
         function renderItemList(items) {
             const container = document.getElementById('itemListContainer');
             if (items.length === 0) {
@@ -231,26 +231,19 @@
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
                     <div>
                         <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">包含 ${item.hazards.length} 項風險與控制措施</p>
+                        <p class="text-xs text-slate-500 mt-0.5">包含 ${item.hazards.length} 項風險評估與控制措施</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
-                            查看詳情 <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
-                        </button>
-                    </div>
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition">
+                        查看詳情 <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
+                    </button>
                 </div>
             `).join('');
         }
 
-        // 渲染詳細頁面
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
-            
-            if (!item) {
-                container.innerHTML = `<p class="text-red-500">找不到此項目的詳細資料</p>`;
-                return;
-            }
+            if (!item) return;
 
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
@@ -258,26 +251,26 @@
                 <div class="flex justify-between items-start border-b pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
-                        <p class="text-xs text-slate-500 mt-1">專屬安全規範與五大危害控制對應表</p>
+                        <p class="text-xs text-slate-500 mt-1">風險評估與五大危害控制對應表</p>
                     </div>
                     <div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm"></div>
                 </div>
                 <div class="space-y-4">
-                    <h3 class="font-bold text-slate-700 text-sm tracking-wide uppercase">危害與五大控制措施明細</h3>
                     ${item.hazards.map((h, idx) => `
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                             <div class="flex justify-between items-center">
-                                <span class="font-semibold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
+                                <span class="font-semibold text-indigo-600 text-sm">#${idx + 1} 危害：${h.hazard}</span>
+                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
+                            <div class="text-xs font-bold text-slate-600">控制措施分類：${h.controlType}</div>
                             <div class="text-sm text-slate-700 whitespace-pre-line bg-white p-3 rounded border border-slate-100">
-                                <strong>控制措施：</strong><br>${h.control}
+                                ${h.control}
                             </div>
                         </div>
                     `).join('')}
                 </div>
             `;
 
-            // 產生 QR Code
             new QRCode(document.getElementById("qrcode-box"), {
                 text: currentUrl,
                 width: 100,
@@ -285,19 +278,13 @@
             });
         }
 
-        // [MOD-F05] 填入知識庫下拉選單
         function populateMasterSelectors() {
-            const hazardSelect = document.getElementById('selectHazardMaster');
-            const controlSelect = document.getElementById('selectControlMaster');
-            
-            hazardSelect.innerHTML = `<option value="">-- 從歷史常用危害詞庫快速選擇 --</option>` +
+            document.getElementById('selectHazardMaster').innerHTML = `<option value="">-- 從歷史常用危害詞庫快速選擇 --</option>` +
                 globalData.masterHazards.map(h => `<option value="${h}">${h}</option>`).join('');
-
-            controlSelect.innerHTML = `<option value="">-- 從歷史常用控制措施詞庫快速選擇 --</option>` +
+            document.getElementById('selectControlMaster').innerHTML = `<option value="">-- 從歷史常用控制措施詞庫快速選擇 --</option>` +
                 globalData.masterControls.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
-        // 新增 Modal 控制
         function openAddModal() { document.getElementById('addModal').classList.remove('hidden'); }
         function closeAddModal() { document.getElementById('addModal').classList.add('hidden'); document.getElementById('addItemForm').reset(); }
 
@@ -307,6 +294,9 @@
                 action: 'addItem',
                 itemName: document.getElementById('formItemName').value,
                 hazard: document.getElementById('formHazard').value,
+                severity: document.getElementById('formSeverity').value,
+                frequency: document.getElementById('formFrequency').value,
+                controlType: document.getElementById('formControlType').value,
                 control: document.getElementById('formControl').value,
                 isUserSubmit: true
             };
@@ -317,37 +307,28 @@
                 alert('已成功送出！若由一般人員新增將進入待審核狀態。');
                 closeAddModal();
                 fetchData();
-            } else {
-                alert('送出失敗：' + json.message);
             }
         }
 
-        // [MOD-F02] QR Code 掃描器
         function openScanModal() {
             document.getElementById('scanModal').classList.remove('hidden');
             html5QrCode = new Html5Qrcode("reader");
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
-                decodedText => {
-                    closeScanModal();
-                    window.location.href = decodedText;
-                },
+                decodedText => { closeScanModal(); window.location.href = decodedText; },
                 error => {}
-            ).catch(err => console.error("無法開啟相機", err));
+            ).catch(err => console.error(err));
         }
 
         function closeScanModal() {
             if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('scanModal').classList.add('hidden');
-                }).catch(err => console.error(err));
+                html5QrCode.stop().then(() => document.getElementById('scanModal').classList.add('hidden'));
             } else {
                 document.getElementById('scanModal').classList.add('hidden');
             }
         }
 
-        // [MOD-F07/F08] 管理員登入與審核
         async function verifyAdmin() {
             const pass = document.getElementById('adminPasswordInput').value;
             const res = await fetch(`${API_URL}?action=verifyAdmin&password=${encodeURIComponent(pass)}`);
@@ -366,9 +347,7 @@
             const pendingItems = [];
             globalData.items.forEach(item => {
                 item.hazards.forEach(h => {
-                    if (h.status === 'Pending') {
-                        pendingItems.push({ ...h, itemName: item.itemName });
-                    }
+                    if (h.status === 'Pending') pendingItems.push({ ...h, itemName: item.itemName });
                 });
             });
 
@@ -380,8 +359,8 @@
             container.innerHTML = pendingItems.map(p => `
                 <div class="p-4 border rounded-lg bg-slate-50 space-y-2">
                     <div class="font-bold text-sm text-indigo-600">${p.itemName}</div>
-                    <div class="text-xs text-slate-600"><strong>危害：</strong>${p.hazard}</div>
-                    <div class="text-xs text-slate-600"><strong>控制措施：</strong>${p.control}</div>
+                    <div class="text-xs text-slate-600"><strong>危害：</strong>${p.hazard} (風險等級: ${p.riskLevel}級)</div>
+                    <div class="text-xs text-slate-600"><strong>控制措施：</strong>[${p.controlType}] ${p.control}</div>
                     <div class="flex justify-end gap-2 pt-1">
                         <button onclick="approveItem('${p.id}')" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-medium">核准</button>
                     </div>
@@ -392,20 +371,11 @@
         async function approveItem(id) {
             const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'approveItem', id }) });
             const json = await res.json();
-            if (json.status === 'success') {
-                alert('已核准');
-                fetchData();
-                loadPendingItems();
-            }
+            if (json.status === 'success') { alert('已核准'); fetchData(); loadPendingItems(); }
         }
 
-        // [MOD-F09] 匯出標籤 PDF (適宜裁切大小)
-        function exportPDF() {
-            window.print();
-        }
+        function exportPDF() { window.print(); }
     </script>
-
-    <!-- 列印專屬樣式 (確保標籤大小適中並可完美裁切) -->
     <style>
         @media print {
             body * { visibility: hidden; }
