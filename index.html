@@ -84,17 +84,11 @@
 
     window.onload = async function() {
       // 1. 初始化檢查待審批數量
-      if (typeof checkPendingCount === 'function') {
-        checkPendingCount();
-      }
+      checkPendingCount();
 
       // 2. 抓取遠端選單設定與初始化第一張危害卡片
-      if (typeof fetchSettings === 'function') {
-        await fetchSettings();
-      }
-      if (typeof addHazardCard === 'function') {
-        addHazardCard(); // 確保剛進畫面時就會自動長出第一張危害卡片
-      }
+      await fetchSettings();
+      addHazardCard(); 
 
       // 3. 抓取網址中的 assessment_id 參數（支援 QR Code 掃描直接開窗）
       const urlParams = new URLSearchParams(window.location.search);
@@ -108,28 +102,26 @@
 
     // 專門用來處理掃描 QR Code 後直接開窗的函式
     async function loadAndShowDetailDirectly(id) {
-  try {
-    // 改用搜尋全部或確保關鍵字能直接對應到 assessment_id
-    let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
-    let json = await res.json();
-    
-    if (json.status === "success" && json.results && json.results.length > 0) {
-      // 嚴格用 assessment_id 進行過濾
-      let matched = json.results.find(item => item.assessment_id === id);
-      
-      if (matched) {
-        showDetailModal(matched);
-      } else {
-        alert("找不到此評估編號的詳細資料：" + id);
+      try {
+        let res = await fetch(`${GAS_API_URL}?action=search&keyword=${encodeURIComponent(id)}`);
+        let json = await res.json();
+        
+        if (json.status === "success" && json.results && json.results.length > 0) {
+          let matched = json.results.find(item => item.assessment_id === id);
+          
+          if (matched) {
+            showDetailModal(matched);
+          } else {
+            alert("找不到此評估編號的詳細資料：" + id);
+          }
+        } else {
+          alert("找不到此評估編號的詳細資料：" + id);
+        }
+      } catch (err) {
+        console.error("載入詳細資料失敗：", err);
+        alert("連線後端發生錯誤");
       }
-    } else {
-      alert("找不到此評估編號的詳細資料：" + id);
     }
-  } catch (err) {
-    console.error("載入詳細資料失敗：", err);
-    alert("連線後端發生錯誤");
-  }
-}
 
     function switchTab(tabName) {
       if (tabName === 'create') {
@@ -150,29 +142,33 @@
       try {
         let res = await fetch(`${GAS_API_URL}?action=getSettings`);
         let json = await res.json();
-        if (json.status === "success") {
+        
+        if (json.status === "success" && json.data) {
           window.globalSettings = json.data;
-          
-          let settings = window.globalSettings;
-          let hazardOpts = (settings.hazards || []).map(h => `<option value="${h}">${h}</option>`).join('');
-          
-          document.querySelectorAll('select[name="hazard_type"]').forEach(sel => {
+        } else {
+          window.globalSettings = { hazards: [], controls: { elimination: [], substitution: [], engineering: [], administrative: [], ppe: [] } };
+        }
+        
+        let settings = window.globalSettings;
+        let hazardOpts = (settings.hazards || []).map(h => `<option value="${h}">${h}</option>`).join('');
+        
+        document.querySelectorAll('select[name="hazard_type"]').forEach(sel => {
+          let currentVal = sel.value;
+          sel.innerHTML = `<option value="">-- 請選擇現有危害種類 --</option>` + hazardOpts;
+          sel.value = currentVal;
+        });
+
+        ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'].forEach(cat => {
+          let opts = (settings.controls?.[cat] || []).map(i => `<option value="${i}">${i}</option>`).join('');
+          document.querySelectorAll(`select[name="control_${cat}"]`).forEach(sel => {
             let currentVal = sel.value;
-            sel.innerHTML = `<option value="">-- 請選擇現有危害種類 --</option>` + hazardOpts;
+            sel.innerHTML = `<option value="">-- 請選擇或點右上方自訂 --</option>` + opts;
             sel.value = currentVal;
           });
-
-          ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'].forEach(cat => {
-            let opts = (settings.controls?.[cat] || []).map(i => `<option value="${i}">${i}</option>`).join('');
-            document.querySelectorAll(`select[name="control_${cat}"]`).forEach(sel => {
-              let currentVal = sel.value;
-              sel.innerHTML = `<option value="">-- 請選擇或點右上方自訂 --</option>` + opts;
-              sel.value = currentVal;
-            });
-          });
-        }
+        });
       } catch (err) { 
         console.error("取得設定失敗", err); 
+        window.globalSettings = { hazards: [], controls: {} };
       }
     }
 
@@ -318,7 +314,11 @@
       };
 
       try {
-        let res = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify(payload) });
+        let res = await fetch(GAS_API_URL, { 
+          method: "POST", 
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload) 
+        });
         let json = await res.json();
         if (json.status === "success") {
           alert("提案已送出！等待管理員審批通過後即會生成 QR Code。");
@@ -438,6 +438,7 @@
             `;
           }).join('');
         } else { 
+          // ⚠️ 此處已修復原先引號未閉合的問題
           container.innerHTML = `<p class="text-gray-500 text-center py-4">目前無待審批項目。</p>`; 
         }
         
@@ -453,6 +454,7 @@
     async function approveAction(id, isApproved) {
       let res = await fetch(GAS_API_URL, { 
         method: "POST", 
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "approveAssessment", assessment_id: id, approve: isApproved }) 
       });
       let json = await res.json();
@@ -460,8 +462,8 @@
       if (json.status === "success") {
         alert(isApproved ? "已核准並自動生成 QR Code！" : "已拒絕。");
         loadPendingModal();
-        if (typeof checkPendingCount === 'function') checkPendingCount();
-        if (typeof performSearch === 'function') performSearch();
+        checkPendingCount();
+        performSearch();
       }
     }
 
