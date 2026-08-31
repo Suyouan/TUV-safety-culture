@@ -8,6 +8,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-labels-container, #print-labels-container * {
+                visibility: visible;
+            }
+            #print-labels-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 10px;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .label-card {
+                border: 2px dashed #cbd5e1 !important;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
@@ -41,12 +68,18 @@
                     <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
                         <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
+                    <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+        <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
+    </button>
                 </div>
             </div>
 
             <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
+        <!-- 專門用來放列印標籤的隱藏/動態容器 -->
+<div id="print-labels-container" class="hidden"></div>
+        
         <!-- 詳細檢視 (呈現所有危害與五大控制細項，具備 QR Code) -->
         <div id="view-detail" class="hidden space-y-4">
             <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
@@ -195,6 +228,69 @@
             }
         }
 
+        function exportLabelsPdf() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            // 依據是否有搜尋關鍵字進行過濾（支援動態過濾與全量匯出）
+            const targetItems = approvedItems.filter(item => {
+                if (!keyword) return true;
+                const matchName = item.itemName.toLowerCase().includes(keyword);
+                const matchSub = item.hazards.some(h => {
+                    if (h.hazard.toLowerCase().includes(keyword)) return true;
+                    return Object.values(h.controlHierarchy).some(methods => 
+                        methods.some(m => m.toLowerCase().includes(keyword))
+                    );
+                });
+                return matchName || matchSub;
+            });
+
+            if (targetItems.length === 0) {
+                alert('目前沒有符合條件的項目可供匯出標籤！');
+                return;
+            }
+
+            const container = document.getElementById('print-labels-container');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            // 建立卡片
+            targetItems.forEach((item, index) => {
+                const cardId = `label-qr-${index}`;
+                const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
+                
+                const cardDiv = document.createElement('div');
+                cardDiv.className = "label-card bg-white p-4 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[380px] h-[160px] mx-auto shadow-sm";
+                cardDiv.innerHTML = `
+                    <div class="space-y-1 pr-2 overflow-hidden">
+                        <div class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
+                        <h4 class="font-bold text-base text-slate-900 truncate" style="max-width: 180px;" title="${item.itemName}">${item.itemName}</h4>
+                        <p class="text-[11px] text-slate-500">已核准危害：${item.hazards.length} 項</p>
+                        <p class="text-[9px] text-slate-400">請用手機掃描以檢視五大控制措施</p>
+                    </div>
+                    <div id="${cardId}" class="p-1 bg-white border rounded flex-shrink-0"></div>
+                `;
+                container.appendChild(cardDiv);
+
+                // 產生對應的 QR Code
+                new QRCode(document.getElementById(cardId), {
+                    text: currentUrl,
+                    width: 90,
+                    height: 90
+                });
+            });
+
+            // 延遲一下確保 QR Code 渲染完成後觸發列印
+            setTimeout(() => {
+                window.print();
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 500);
+        }
+        
         function handleSearch() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const approvedItems = globalData.items.map(item => {
