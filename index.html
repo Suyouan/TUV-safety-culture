@@ -43,9 +43,13 @@
             <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
                 <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
-            <button onclick="router.goAdmin()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition">
-                <i class="fa-solid fa-lock mr-1"></i> 管理後台
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- 待審核數量徽章按鈕 (紅圈處) -->
+                <button onclick="router.goAdmin()" class="relative bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-lock"></i> 管理後台
+                    <span id="pendingBadge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
+                </button>
+            </div>
         </div>
     </header>
 
@@ -214,6 +218,7 @@
                 if (json.status === 'success') {
                     globalData = json;
                     buildHazardControlHistory();
+                    updatePendingBadgeCount(); // 更新待審核數量紅點
 
                     const approvedItems = globalData.items.map(item => {
                         const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -224,6 +229,26 @@
                 }
             } catch (err) {
                 console.error("資料載入失敗", err);
+            }
+        }
+
+        // 計算並更新頂部紅圈處的待審核數量
+        function updatePendingBadgeCount() {
+            let pendingCount = 0;
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        if (h.status === 'Pending') pendingCount++;
+                    });
+                }
+            });
+
+            const badge = document.getElementById('pendingBadge');
+            if (pendingCount > 0) {
+                badge.textContent = pendingCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
         }
 
@@ -428,12 +453,10 @@
             }
         }
 
-        // 動態新增危害種類區塊（新加入的會收合舊的、並排在最上方）
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
             
-            // 1. 將所有現存的危害區塊收合成「縮圖/摘要」模式
             const existingBlocks = container.querySelectorAll('.hazard-block');
             existingBlocks.forEach(b => {
                 collapseHazardBlock(b);
@@ -496,12 +519,10 @@
                 </div>
             `;
             
-            // 2. 將新區塊插入到 container 的「最上方」
             container.prepend(div);
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
-        // 切換區塊展開與收合（縮圖模式）
         function toggleHazardBlock(blockId) {
             const block = document.getElementById(blockId);
             const isExpanded = block.getAttribute('data-expanded') === 'true';
@@ -517,7 +538,6 @@
             block.querySelector('.block-content').classList.add('hidden');
             block.querySelector('.toggle-icon').className = "fa-solid fa-chevron-right mr-1 toggle-icon";
             
-            // 更新縮圖標題文字
             const hazardInput = block.querySelector('input[name="hazardName"]');
             const previewSpan = block.querySelector('.preview-title');
             const hName = hazardInput ? hazardInput.value.trim() : '';
@@ -741,6 +761,7 @@
             });
 
             loadPendingItems();
+            updatePendingBadgeCount(); // 審核後立即更新頂部數量徽章
 
             try {
                 const res = await fetch(API_URL, { 
