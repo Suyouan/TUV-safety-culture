@@ -38,6 +38,14 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
+    <!-- 全螢幕 Loading 提示遮罩 (防止重複操作並提示正在等待什麼) -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
+        <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
+            <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
+            <span id="loadingText" class="font-bold text-slate-700 text-sm">正在處理中，請稍候...</span>
+        </div>
+    </div>
+
     <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
@@ -177,6 +185,17 @@
             checkUrlParams();
         });
 
+        // 顯示載入提示
+        function showLoading(text = "正在處理中，請稍候...") {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        // 隱藏載入提示
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
         const router = {
             goHome() {
                 document.getElementById('view-home').classList.remove('hidden');
@@ -212,13 +231,14 @@
         }
 
         async function fetchData() {
+            showLoading("正在載入風險評估資料，請稍候...");
             try {
                 const res = await fetch(`${API_URL}?action=getData`);
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
                     buildHazardControlHistory();
-                    updatePendingBadgeCount(); // 更新待審核數量紅點
+                    updatePendingBadgeCount();
 
                     const approvedItems = globalData.items.map(item => {
                         const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -229,10 +249,12 @@
                 }
             } catch (err) {
                 console.error("資料載入失敗", err);
+                alert("資料載入失敗，請檢查網路連線或稍後再試。");
+            } finally {
+                hideLoading();
             }
         }
 
-        // 計算並更新頂部紅圈處的待審核數量
         function updatePendingBadgeCount() {
             let pendingCount = 0;
             globalData.items.forEach(item => {
@@ -653,19 +675,29 @@
                 hazardsList.push({ hazard, severity, frequency, controlHierarchy });
             });
 
-            const payload = {
-                action: 'addItem',
-                itemName: itemName,
-                hazardsList: hazardsList,
-                isUserSubmit: true
-            };
+            showLoading("正在送出自主提報資料，請稍候...");
+            try {
+                const payload = {
+                    action: 'addItem',
+                    itemName: itemName,
+                    hazardsList: hazardsList,
+                    isUserSubmit: true
+                };
 
-            const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const json = await res.json();
-            if (json.status === 'success') {
-                alert('已成功送出自主提報！將等待管理員審核。');
-                closeAddModal();
-                fetchData();
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    alert('已成功送出自主提報！將等待管理員審核。');
+                    closeAddModal();
+                    fetchData();
+                } else {
+                    alert('送出失敗，請稍後再試。');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('送出發生錯誤，請檢查網路連線。');
+            } finally {
+                hideLoading();
             }
         }
 
@@ -693,14 +725,22 @@
 
         async function verifyAdmin() {
             const pass = document.getElementById('adminPasswordInput').value;
-            const res = await fetch(`${API_URL}?action=verifyAdmin&password=${encodeURIComponent(pass)}`);
-            const json = await res.json();
-            if (json.authorized) {
-                document.getElementById('adminLoginCard').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                loadPendingItems();
-            } else {
-                alert('密碼錯誤！');
+            showLoading("正在驗證管理員密碼...");
+            try {
+                const res = await fetch(`${API_URL}?action=verifyAdmin&password=${encodeURIComponent(pass)}`);
+                const json = await res.json();
+                if (json.authorized) {
+                    document.getElementById('adminLoginCard').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    loadPendingItems();
+                } else {
+                    alert('密碼錯誤！');
+                }
+            } catch (err) {
+                console.error(err);
+                alert("驗證發生錯誤，請稍後再試。");
+            } finally {
+                hideLoading();
             }
         }
 
@@ -752,6 +792,9 @@
         }
 
         async function updateStatus(id, status) {
+            const actionText = status === 'Approved' ? '核准' : '拒絕';
+            showLoading(`正在${actionText}該筆審核項目，請稍候...`);
+
             globalData.items.forEach(item => {
                 item.hazards.forEach(h => {
                     if (h.id === id) {
@@ -761,7 +804,7 @@
             });
 
             loadPendingItems();
-            updatePendingBadgeCount(); // 審核後立即更新頂部數量徽章
+            updatePendingBadgeCount();
 
             try {
                 const res = await fetch(API_URL, { 
@@ -775,6 +818,9 @@
                 }
             } catch (err) {
                 console.error("更新狀態發生錯誤", err);
+                alert('更新狀態發生網路錯誤。');
+            } finally {
+                hideLoading();
             }
         }
     </script>
