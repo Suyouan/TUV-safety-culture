@@ -133,7 +133,7 @@
                             <i class="fa-solid fa-plus mr-1"></i> 新增另一個危害種類
                         </button>
                     </div>
-                    <div id="hazardsContainer" class="space-y-4"></div>
+                    <div id="hazardsContainer" class="space-y-3"></div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t">
@@ -213,8 +213,6 @@
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
-                    
-                    // 建立嚴格隔離的詞庫對應表：hazardControlHistory[hazardName][controlType] = Set/Array
                     buildHazardControlHistory();
 
                     const approvedItems = globalData.items.map(item => {
@@ -229,15 +227,11 @@
             }
         }
 
-        // 核心邏輯：建立「危害種類」與「五大控制措施類別」的雙重隔離歷史紀錄字典
         function buildHazardControlHistory() {
             const historyMap = {};
-            
-            // 從所有已存在的項目與歷史資料中萃取
             globalData.items.forEach(item => {
                 if (item.hazards) {
                     item.hazards.forEach(h => {
-                        // 僅採納已核准或現有紀錄來建立精準詞庫
                         const hName = h.hazard ? h.hazard.trim() : '';
                         if (!hName) return;
 
@@ -266,7 +260,6 @@
                 }
             });
 
-            // 轉成 Array 方便前端 select 渲染
             globalData.hazardControlHistory = {};
             Object.keys(historyMap).forEach(hName => {
                 globalData.hazardControlHistory[hName] = {};
@@ -435,65 +428,111 @@
             }
         }
 
-        // 動態新增危害種類區塊
+        // 動態新增危害種類區塊（新加入的會收合舊的、並排在最上方）
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
+            
+            // 1. 將所有現存的危害區塊收合成「縮圖/摘要」模式
+            const existingBlocks = container.querySelectorAll('.hazard-block');
+            existingBlocks.forEach(b => {
+                collapseHazardBlock(b);
+            });
+
             const hazardOptions = `<option value="">-- 從歷史常用危害詞庫選擇 --</option>` +
                 (globalData.masterHazards ? globalData.masterHazards.map(h => `<option value="${h}">${h}</option>`).join('') : '');
 
             const div = document.createElement('div');
-            div.className = "p-4 bg-slate-50 border rounded-xl space-relative space-y-3 hazard-block";
+            div.className = "p-4 bg-slate-50 border rounded-xl space-y-3 hazard-block transition-all shadow-sm";
             div.id = blockId;
+            div.setAttribute('data-expanded', 'true');
             
             div.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-indigo-600">危害種類區塊</span>
-                    <button type="button" onclick="document.getElementById('${blockId}').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash mr-1"></i>刪除此危害</button>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
-                    <select onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
-                    <input type="text" name="hazardName" oninput="onHazardInputChange('${blockId}', this.value)" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-medium mb-1">嚴重度 (1~4)</label>
-                        <select name="severity" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
-                            <option value="1">1 級 (輕微)</option>
-                            <option value="2">2 級 (中等)</option>
-                            <option value="3">3 級 (嚴重)</option>
-                            <option value="4">4 級 (極嚴重)</option>
-                        </select>
+                <div class="flex justify-between items-center cursor-pointer block-header" onclick="toggleHazardBlock('${blockId}')">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-indigo-600"><i class="fa-solid fa-chevron-down mr-1 toggle-icon"></i> 危害種類區塊 (編輯中)</span>
+                        <span class="text-xs font-semibold text-slate-500 preview-title"></span>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium mb-1">發生頻率 (1~4)</label>
-                        <select name="frequency" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
-                            <option value="1">1 級 (極低)</option>
-                            <option value="2">2 級 (偶發)</option>
-                            <option value="3">3 級 (經常)</option>
-                            <option value="4">4 級 (極高)</option>
-                        </select>
-                    </div>
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('${blockId}').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
                 </div>
-                <div class="space-y-2 pt-2 border-t">
-                    <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
-                    ${controlTypes.map(type => `
-                        <div class="space-y-1" data-control-type="${type}">
-                            <div class="flex justify-between items-center">
-                                <label class="text-[11px] font-semibold text-slate-600">${controlLabels[type]}</label>
-                                <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-indigo-600 hover:underline">+ 方法</button>
-                            </div>
-                            <div class="sub-container-${type} space-y-1"></div>
+                <div class="block-content space-y-3 pt-2">
+                    <div>
+                        <label class="block text-xs font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
+                        <select onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
+                        <input type="text" name="hazardName" oninput="onHazardInputChange('${blockId}', this.value)" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium mb-1">嚴重度 (1~4)</label>
+                            <select name="severity" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
+                                <option value="1">1 級 (輕微)</option>
+                                <option value="2">2 級 (中等)</option>
+                                <option value="3">3 級 (嚴重)</option>
+                                <option value="4">4 級 (極嚴重)</option>
+                            </select>
                         </div>
-                    `).join('')}
+                        <div>
+                            <label class="block text-xs font-medium mb-1">發生頻率 (1~4)</label>
+                            <select name="frequency" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
+                                <option value="1">1 級 (極低)</option>
+                                <option value="2">2 級 (偶發)</option>
+                                <option value="3">3 級 (經常)</option>
+                                <option value="4">4 級 (極高)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="space-y-2 pt-2 border-t">
+                        <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
+                        ${controlTypes.map(type => `
+                            <div class="space-y-1" data-control-type="${type}">
+                                <div class="flex justify-between items-center">
+                                    <label class="text-[11px] font-semibold text-slate-600">${controlLabels[type]}</label>
+                                    <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-indigo-600 hover:underline">+ 方法</button>
+                                </div>
+                                <div class="sub-container-${type} space-y-1"></div>
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
             `;
-            container.appendChild(div);
+            
+            // 2. 將新區塊插入到 container 的「最上方」
+            container.prepend(div);
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
-        // 當使用者從下拉選單選擇危害種類時，連動更新文字框並重新整理該危害底下的五大控制措施選單
+        // 切換區塊展開與收合（縮圖模式）
+        function toggleHazardBlock(blockId) {
+            const block = document.getElementById(blockId);
+            const isExpanded = block.getAttribute('data-expanded') === 'true';
+            if (isExpanded) {
+                collapseHazardBlock(block);
+            } else {
+                expandHazardBlock(block);
+            }
+        }
+
+        function collapseHazardBlock(block) {
+            block.setAttribute('data-expanded', 'false');
+            block.querySelector('.block-content').classList.add('hidden');
+            block.querySelector('.toggle-icon').className = "fa-solid fa-chevron-right mr-1 toggle-icon";
+            
+            // 更新縮圖標題文字
+            const hazardInput = block.querySelector('input[name="hazardName"]');
+            const previewSpan = block.querySelector('.preview-title');
+            const hName = hazardInput ? hazardInput.value.trim() : '';
+            previewSpan.textContent = hName ? `(已填寫: ${hName})` : '(尚未填寫危害名稱)';
+            block.classList.add('bg-slate-100');
+        }
+
+        function expandHazardBlock(block) {
+            block.setAttribute('data-expanded', 'true');
+            block.querySelector('.block-content').classList.remove('hidden');
+            block.querySelector('.toggle-icon').className = "fa-solid fa-chevron-down mr-1 toggle-icon";
+            block.querySelector('.preview-title').textContent = '';
+            block.classList.remove('bg-slate-100');
+        }
+
         function onHazardSelectChange(blockId, selectedValue) {
             const block = document.getElementById(blockId);
             const input = block.querySelector('input[name="hazardName"]');
@@ -501,12 +540,10 @@
             updateControlDropdownsForBlock(blockId, selectedValue);
         }
 
-        // 當使用者手動在文字框輸入危害種類時，也同步動態過濾對應的控制措施詞庫
         function onHazardInputChange(blockId, typedValue) {
             updateControlDropdownsForBlock(blockId, typedValue.trim());
         }
 
-        // 嚴格隔離核心：根據當前填寫的「危害種類」，只抓取屬於該危害種類且屬於該控制類別的歷史紀錄
         function updateControlDropdownsForBlock(blockId, hazardName) {
             const block = document.getElementById(blockId);
             
@@ -514,7 +551,6 @@
                 const subContainer = block.querySelector(`.sub-container-${type}`);
                 if (!subContainer) return;
 
-                // 取得該危害種類、該控制類別專屬的歷史詞庫
                 let availableMethods = [];
                 if (globalData.hazardControlHistory && 
                     globalData.hazardControlHistory[hazardName] && 
@@ -525,12 +561,11 @@
                 const controlOptionsHtml = `<option value="">-- 歷史詞庫 --</option>` +
                     availableMethods.map(c => `<option value="${c}">${c}</option>`).join('');
 
-                // 更新該控制類別底下所有現存 row 的 select 選單內容
                 const selects = subContainer.querySelectorAll('select.control-history-select');
                 selects.forEach(sel => {
                     const currentVal = sel.value;
                     sel.innerHTML = controlOptionsHtml;
-                    sel.value = currentVal; // 保持原本選中的值
+                    sel.value = currentVal;
                 });
             });
         }
@@ -541,7 +576,6 @@
             const hazardNameInput = block.querySelector('input[name="hazardName"]');
             const currentHazard = hazardNameInput ? hazardNameInput.value.trim() : '';
 
-            // 嚴格隔離：只撈取該危害種類底下的該控制措施歷史紀錄
             let availableMethods = [];
             if (globalData.hazardControlHistory && 
                 globalData.hazardControlHistory[currentHazard] && 
