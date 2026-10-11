@@ -60,7 +60,7 @@
                 <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
             <div class="flex items-center gap-2">
-                <button onclick="openQuizModal()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
+                <button onclick="openQuizModal()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5" title="常態自主練習">
                     <i class="fa-solid fa-graduation-cap"></i> 安全隨堂考
                 </button>
                 <button onclick="router.goAdmin()" class="relative bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
@@ -76,15 +76,15 @@
         <!-- 首頁列表 -->
         <div id="view-home" class="space-y-4">
             
-            <!-- 首頁醒目隨堂考宣傳橫幅 -->
-            <div class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
+            <!-- 管理員發起活動時才會自動顯示的首頁宣傳橫幅 -->
+            <div id="activeQuizBanner" class="hidden bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="space-y-1 text-center sm:text-left">
-                    <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">安全文化挑戰</div>
-                    <h3 class="font-bold text-base">廠內安全知識隨堂考上線囉！</h3>
-                    <p class="text-xs text-indigo-100">立即進行互動測驗，隨機檢驗您對設備危害與五大控制措施的掌握度。</p>
+                    <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">全廠安全測驗活動</div>
+                    <h3 class="font-bold text-base">廠內安全知識測驗活動進行中！</h3>
+                    <p id="quizBannerTimeDesc" class="text-xs text-indigo-100">立即進行互動測驗，隨機檢驗您對設備危害與五大控制措施的掌握度。</p>
                 </div>
                 <button onclick="openQuizModal()" class="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex-shrink-0 flex items-center gap-2">
-                    <i class="fa-solid fa-play"></i> 開始隨堂考挑戰
+                    <i class="fa-solid fa-play"></i> 立即參加測驗
                 </button>
             </div>
 
@@ -95,7 +95,6 @@
                         <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜尋儀器/動作名稱、危害或控制方法..." 
                             class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                     </div>
-                    <!-- 風險等級篩選下拉選單 -->
                     <div class="sm:w-48">
                         <select id="riskFilterSelect" onchange="handleSearch()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                             <option value="">-- 篩選風險等級 --</option>
@@ -127,7 +126,6 @@
             <div id="itemListContainer" class="space-y-3"></div>
         </div>
 
-        <!-- 專門用來放列印標籤的隱藏/動態容器 -->
         <div id="print-labels-container" class="hidden"></div>
         
         <!-- 詳細檢視 -->
@@ -191,11 +189,11 @@
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
                                 <i class="fa-solid fa-graduation-cap"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">安全測驗管理</h3>
-                            <p class="text-xs text-slate-500">抽查與預覽系統自動組題內容，確保題庫正確性。</p>
+                            <h3 class="font-bold text-base text-slate-800">安全測驗發起與管理</h3>
+                            <p class="text-xs text-slate-500">設定測驗開放時段、發起首頁橫幅活動與題目預覽。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
-                            <span class="text-indigo-600 font-bold">自動組題預覽</span>
+                            <span id="dashboardQuizStatus" class="text-indigo-600 font-bold">狀態：未開放</span>
                             <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
@@ -230,16 +228,43 @@
                         <div id="adminManageListContainer" class="space-y-3"></div>
                     </div>
 
-                    <!-- 管理員專用：安全測驗管理預覽分頁 -->
-                    <div id="subView-quiz" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <div class="flex justify-between items-center border-b pb-3">
-                            <h3 class="font-bold text-lg text-slate-700">安全測驗題目自動組題預覽</h3>
-                            <button onclick="renderAdminQuizPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
-                                <i class="fa-solid fa-rotate"></i> 重新隨機換題
-                            </button>
+                    <!-- 管理員專用：安全測驗管理發起與檔期設定 -->
+                    <div id="subView-quiz" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6">
+                        <div class="border-b pb-3">
+                            <h3 class="font-bold text-lg text-slate-700">全廠安全測驗活動發起與檔期設定</h3>
+                            <p class="text-xs text-slate-500 mt-1">此處設定的檔期將會連動首頁的醒目隨堂考橫幅。檔期過期後，首頁橫幅會自動隱藏。</p>
                         </div>
-                        <p class="text-xs text-slate-500">此處顯示系統根據目前所有已核准資料自動產生的隨堂考題庫，供管理員抽查正確性。若發現題目有誤，可至「現有風險評估管理」進行修正。</p>
-                        <div id="adminQuizPreviewContainer" class="space-y-3"></div>
+
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 max-w-lg">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">活動開始時間</label>
+                                    <input type="datetime-local" id="adminQuizStartTime" class="w-full px-3 py-2 border rounded-lg bg-white">
+                                </div>
+                                <div>
+                                    <label class="block font-bold text-slate-700 mb-1">活動結束時間</label>
+                                    <input type="datetime-local" id="adminQuizEndTime" class="w-full px-3 py-2 border rounded-lg bg-white">
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="saveAdminQuizConfig(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs shadow-sm transition">
+                                    <i class="fa-solid fa-play mr-1"></i> 儲存檔期並立即發起
+                                </button>
+                                <button onclick="saveAdminQuizConfig(false)" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition">
+                                    <i class="fa-solid fa-stop mr-1"></i> 手動結束活動
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-bold text-sm text-slate-700">自動組題題目預覽與抽查</h4>
+                                <button onclick="renderAdminQuizPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-rotate"></i> 重新隨機換題
+                                </button>
+                            </div>
+                            <div id="adminQuizPreviewContainer" class="space-y-3"></div>
+                        </div>
                     </div>
 
                     <div id="subView-password" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md mx-auto">
@@ -324,7 +349,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
-        let globalData = { items: [], hazardControlHistory: {} };
+        let globalData = { items: [], hazardControlHistory: {}, quizConfig: { active: false, startTime: '', endTime: '' } };
         let html5QrCode = null;
         let quizState = { questions: [], currentIndex: 0, userAnswers: [] };
         let adminQuizQuestions = [];
@@ -455,6 +480,7 @@
             buildHazardControlHistory();
             updatePendingBadgeCount();
             updateDashboardCounts();
+            checkAndRenderQuizBanner();
 
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -464,6 +490,39 @@
             renderItemList(approvedItems);
             renderAdminPendingList();
             renderAdminManageList();
+        }
+
+        // --- 首頁宣傳橫幅檔期判斷與動態顯示 ---
+        function checkAndRenderQuizBanner() {
+            const banner = document.getElementById('activeQuizBanner');
+            const descEl = document.getElementById('quizBannerTimeDesc');
+            if (!banner) return;
+
+            const cfg = globalData.quizConfig;
+            if (!cfg || !cfg.active) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            const now = new Date();
+            const start = cfg.startTime ? new Date(cfg.startTime) : null;
+            const end = cfg.endTime ? new Date(cfg.endTime) : null;
+
+            let isWithinRange = true;
+            if (start && now < start) isWithinRange = false;
+            if (end && now > end) isWithinRange = false;
+
+            if (isWithinRange) {
+                banner.classList.remove('hidden');
+                if (end) {
+                    const endStr = `${end.getMonth() + 1}/${end.getDate()} ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+                    descEl.textContent = `測驗活動進行中！預計於 ${endStr} 截止，快來挑戰！`;
+                } else {
+                    descEl.textContent = `全廠安全知識測驗活動進行中！歡迎同仁踴躍參加。`;
+                }
+            } else {
+                banner.classList.add('hidden');
+            }
         }
 
         function updatePendingBadgeCount() {
@@ -511,6 +570,18 @@
                 const totalItems = globalData.items ? globalData.items.length : 0;
                 itemCountSpan.textContent = `共 ${totalItems} 個設備評估項目`;
             }
+
+            const quizStatusSpan = document.getElementById('dashboardQuizStatus');
+            if (quizStatusSpan) {
+                const cfg = globalData.quizConfig;
+                if (cfg && cfg.active) {
+                    quizStatusSpan.textContent = "狀態：活動進行中";
+                    quizStatusSpan.className = "text-emerald-600 font-bold";
+                } else {
+                    quizStatusSpan.textContent = "狀態：未開放";
+                    quizStatusSpan.className = "text-slate-400 font-bold";
+                }
+            }
         }
 
         function buildHazardControlHistory() {
@@ -555,7 +626,7 @@
             });
         }
 
-        // --- 核心組題產生器 (支援嚴格過濾與唯一性檢查) ---
+        // --- 核心組題產生器 ---
         function generateQuizQuestionsPool() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -772,7 +843,7 @@
                             const isCorrect = userAns === q.correctAnswer;
                             return `
                                 <div class="p-2.5 rounded-lg border text-xs space-y-1 ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
-                                    <div class="font-bold text-slate-800">Q${idx + 1}:${q.question}</div>
+                                    <div class="font-bold text-slate-800">Q${idx + 1}: ${q.question}</div>
                                     <div class="text-[11px] ${isCorrect ? 'text-emerald-700 font-semibold' : 'text-rose-700'}">您的作答：${userAns || '未作答'}</div>
                                     ${!isCorrect ? `<div class="text-[11px] text-emerald-700 font-semibold">正確解答：${q.correctAnswer}</div>` : ''}
                                 </div>
@@ -792,7 +863,7 @@
             `;
         }
 
-        // --- 新增功能：匯出風險評估總表 (CSV) ---
+        // --- 匯出風險評估總表 (CSV) ---
         function exportRiskReportCsv() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -876,6 +947,7 @@
             } else if (viewType === 'manage') {
                 renderAdminManageList();
             } else if (viewType === 'quiz') {
+                initAdminQuizConfigFields();
                 renderAdminQuizPreview();
             }
         }
@@ -886,7 +958,45 @@
             updateDashboardCounts();
         }
 
-        // --- 管理員後台：安全測驗管理預覽渲染 ---
+        // --- 管理員後台：測驗檔期與預覽設定 ---
+        function initAdminQuizConfigFields() {
+            const cfg = globalData.quizConfig;
+            if (cfg) {
+                if (cfg.startTime) document.getElementById('adminQuizStartTime').value = cfg.startTime;
+                if (cfg.endTime) document.getElementById('adminQuizEndTime').value = cfg.endTime;
+            }
+        }
+
+        async function saveAdminQuizConfig(active) {
+            const startTime = document.getElementById('adminQuizStartTime').value;
+            const endTime = document.getElementById('adminQuizEndTime').value;
+
+            showLoading("更新測驗檔期中...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'updateQuizConfig',
+                        startTime,
+                        endTime,
+                        active
+                    })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    alert(active ? '已成功發起全廠安全測驗活動！首頁橫幅已更新。' : '已手動結束安全測驗活動！首頁橫幅已隱藏。');
+                    sessionStorage.removeItem('safety_culture_cache');
+                    fetchData(false);
+                } else {
+                    alert(json.message || '更新失敗');
+                }
+            } catch (err) {
+                hideLoading();
+                alert('網路連線失敗');
+            }
+        }
+
         function renderAdminQuizPreview() {
             const container = document.getElementById('adminQuizPreviewContainer');
             if (!container) return;
@@ -1399,7 +1509,6 @@
                     </div>
                     
                     <div class="flex items-center gap-3 flex-shrink-0">
-                        <!-- 照片區塊 -->
                         <div class="flex flex-col items-center">
                             <div class="text-[10px] text-slate-400 mb-1">設備照片</div>
                             <div id="photo-box" class="w-[100px] h-[100px] bg-slate-50 border rounded-lg shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
@@ -1422,7 +1531,6 @@
                             </div>
                         </div>
 
-                        <!-- QR Code 區塊 -->
                         ${isFullyApproved ? `
                         <div class="flex flex-col items-center">
                             <div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>
