@@ -275,9 +275,9 @@
             ppe: '5. 個人防護具 (PPE)'
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initData();
-            checkUrlParams();
+        // 頁面載入時優先初始化資料與解析路由
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initDataAsync();
         });
 
         function showLoading(text = "正在處理中，請稍候...") {
@@ -320,21 +320,8 @@
             }
         };
 
-        function checkUrlParams() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const itemName = urlParams.get('item');
-            if (itemName) {
-                const decodedName = decodeURIComponent(itemName);
-                const checkInterval = setInterval(() => {
-                    if (globalData.items && globalData.items.length > 0) {
-                        clearInterval(checkInterval);
-                        router.goDetail(decodedName);
-                    }
-                }, 100);
-            }
-        }
-
-        function initData() {
+        // 確保資料載入完成後才去解析網址並跳轉詳細頁
+        async function initDataAsync() {
             const cached = sessionStorage.getItem('safety_culture_cache');
             if (cached) {
                 try {
@@ -344,7 +331,18 @@
                     console.error("快取解析失敗", e);
                 }
             }
-            fetchData(!cached);
+            // 強制從雲端抓取最新資料以確保手機端不會發生空白
+            await fetchData(true);
+            checkUrlParamsAfterLoad();
+        }
+
+        function checkUrlParamsAfterLoad() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const itemName = urlParams.get('item');
+            if (itemName) {
+                const decodedName = decodeURIComponent(itemName);
+                router.goDetail(decodedName);
+            }
         }
 
         async function fetchData(showLoader = true) {
@@ -699,29 +697,6 @@
                 if (json.status === 'success') {
                     sessionStorage.removeItem('safety_culture_cache');
                     fetchData(false);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        async function adminDeletePhotoDirect(itemName) {
-            if (!confirm('確定要直接刪除此設備的照片嗎？')) return;
-            showLoading("刪除中...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'adminDeletePhoto', itemName })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(false);
-                    router.goDetail(itemName);
                 } else {
                     alert(json.message);
                 }
