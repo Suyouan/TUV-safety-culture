@@ -128,9 +128,7 @@
             <!-- 管理員後台主面板 (三大功能選單儀表板) -->
             <div id="adminPanel" class="hidden space-y-6">
                 
-                <!-- 選單儀表板總覽 (三個精簡卡片模組) -->
                 <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- 卡片 1: 待審核項目 -->
                     <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
@@ -145,7 +143,6 @@
                         </div>
                     </div>
 
-                    <!-- 卡片 2: 現有項目管理 (刪除) -->
                     <div onclick="openAdminSubView('manage')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
@@ -160,7 +157,6 @@
                         </div>
                     </div>
 
-                    <!-- 卡片 3: 更改管理員密碼 -->
                     <div onclick="openAdminSubView('password')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
@@ -176,25 +172,21 @@
                     </div>
                 </div>
 
-                <!-- 子功能檢視容器 (預設隱藏，點擊卡片後展開) -->
                 <div id="adminSubViewContainer" class="hidden space-y-4">
                     <button onclick="backToAdminMenu()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
                         <i class="fa-solid fa-arrow-left"></i> 返回管理選單
                     </button>
                     
-                    <!-- 子畫面 1: 待審核項目詳細清單 -->
                     <div id="subView-pending" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
                         <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
                         <div id="pendingListContainer" class="space-y-3"></div>
                     </div>
 
-                    <!-- 子畫面 2: 現有項目管理與刪除清單 -->
                     <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
                         <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
                         <div id="adminManageListContainer" class="space-y-3"></div>
                     </div>
 
-                    <!-- 子畫面 3: 更改密碼表單 -->
                     <div id="subView-password" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md mx-auto">
                         <h3 class="font-bold text-lg text-slate-700 border-b pb-2">更改管理員密碼</h3>
                         <div class="space-y-3 text-sm">
@@ -230,7 +222,7 @@
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">儀器 / 動作名稱 <span class="text-red-500">*</span></label>
-                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg" placeholder="例如：CNC 操作機台">
+                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="例如：CNC 操作機台">
                 </div>
 
                 <div class="space-y-4">
@@ -725,8 +717,7 @@
                 container.innerHTML = '';
             }, 500);
         }
-        
-        // 搜尋與風險等級下拉篩選連動函式
+
         function handleSearch() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const riskFilter = document.getElementById('riskFilterSelect').value;
@@ -737,15 +728,11 @@
             }).filter(item => item.hazards.length > 0);
 
             const filtered = approvedItems.filter(item => {
-                // 計算此項目的最高風險等級
                 const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
-                
-                // 風險等級篩選
                 if (riskFilter && maxRisk.toString() !== riskFilter) {
                     return false;
                 }
 
-                // 關鍵字搜尋
                 if (!keyword) return true;
                 const matchName = item.itemName.toLowerCase().includes(keyword);
                 const matchSub = item.hazards.some(h => {
@@ -767,7 +754,6 @@
             }
 
             container.innerHTML = items.map(item => {
-                // 計算最高風險等級並取得對應樣式
                 const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
                 const badgeStyle = getRiskBadgeStyle(maxRisk);
 
@@ -901,9 +887,14 @@
                 </div>
                 <div class="block-content space-y-3 pt-2">
                     <div>
-                        <label class="block text-xs font-medium mb-1">危害種類 <span class="text-red-500">*</span></label>
-                        <select onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg mb-1 text-xs bg-white">${hazardOptions}</select>
-                        <input type="text" name="hazardName" oninput="onHazardInputChange('${blockId}', this.value)" required class="w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="或自行輸入危害種類描述">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-xs font-medium">危害種類 <span class="text-red-500">*</span></label>
+                            <button type="button" id="btn-toggle-hazard-${blockId}" onclick="toggleHazardInputMode('${blockId}')" class="text-[11px] text-indigo-600 hover:underline font-medium">
+                                + 沒有想要的？手動輸入
+                            </button>
+                        </div>
+                        <select id="hazard-select-${blockId}" onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">${hazardOptions}</select>
+                        <input type="text" id="hazard-input-${blockId}" oninput="onHazardInputChange('${blockId}', this.value)" class="hidden w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="請輸入自訂危害種類描述...">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -944,6 +935,29 @@
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
+        // 危害種類選單與自訂輸入動態切換
+        function toggleHazardInputMode(blockId) {
+            const selectEl = document.getElementById(`hazard-select-${blockId}`);
+            const inputEl = document.getElementById(`hazard-input-${blockId}`);
+            const btnEl = document.getElementById(`btn-toggle-hazard-${blockId}`);
+
+            if (inputEl.classList.contains('hidden')) {
+                // 切換為手動輸入模式
+                selectEl.classList.add('hidden');
+                selectEl.value = '';
+                inputEl.classList.remove('hidden');
+                inputEl.focus();
+                btnEl.textContent = "↩️ 選回歷史詞庫";
+            } else {
+                // 切換為下拉選單模式
+                inputEl.classList.add('hidden');
+                inputEl.value = '';
+                selectEl.classList.remove('hidden');
+                btnEl.textContent = "+ 沒有想要的？手動輸入";
+            }
+            updateControlDropdownsForBlock(blockId, '');
+        }
+
         function toggleHazardBlock(blockId) {
             const block = document.getElementById(blockId);
             const isExpanded = block.getAttribute('data-expanded') === 'true';
@@ -959,9 +973,16 @@
             block.querySelector('.block-content').classList.add('hidden');
             block.querySelector('.toggle-icon').className = "fa-solid fa-chevron-right mr-1 toggle-icon";
             
-            const hazardInput = block.querySelector('input[name="hazardName"]');
+            const selectEl = block.querySelector(`#hazard-select-${block.id}`);
+            const inputEl = block.querySelector(`#hazard-input-${block.id}`);
+            let hName = '';
+            if (inputEl && !inputEl.classList.contains('hidden')) {
+                hName = inputEl.value.trim();
+            } else if (selectEl) {
+                hName = selectEl.value.trim();
+            }
+
             const previewSpan = block.querySelector('.preview-title');
-            const hName = hazardInput ? hazardInput.value.trim() : '';
             previewSpan.textContent = hName ? `(已填寫: ${hName})` : '(尚未填寫危害名稱)';
             block.classList.add('bg-slate-100');
         }
@@ -975,9 +996,6 @@
         }
 
         function onHazardSelectChange(blockId, selectedValue) {
-            const block = document.getElementById(blockId);
-            const input = block.querySelector('input[name="hazardName"]');
-            input.value = selectedValue;
             updateControlDropdownsForBlock(blockId, selectedValue);
         }
 
@@ -1013,8 +1031,15 @@
         function addControlRow(blockId, type, defaultValue = '') {
             const block = document.getElementById(blockId);
             const container = block.querySelector(`.sub-container-${type}`);
-            const hazardNameInput = block.querySelector('input[name="hazardName"]');
-            const currentHazard = hazardNameInput ? hazardNameInput.value.trim() : '';
+            
+            const selectEl = document.getElementById(`hazard-select-${blockId}`);
+            const inputEl = document.getElementById(`hazard-input-${blockId}`);
+            let currentHazard = '';
+            if (inputEl && !inputEl.classList.contains('hidden')) {
+                currentHazard = inputEl.value.trim();
+            } else if (selectEl) {
+                currentHazard = selectEl.value.trim();
+            }
 
             let availableMethods = [];
             if (globalData.hazardControlHistory && 
@@ -1031,19 +1056,31 @@
             div.className = "flex gap-1 items-center";
             div.id = rowId;
             div.innerHTML = `
-                <select onchange="onControlSelectChange('${rowId}')" class="control-history-select w-1/3 px-2 py-1 border rounded text-[11px] bg-white">${controlOptionsHtml}</select>
-                <input type="text" name="controlMethod_${type}" value="${defaultValue}" placeholder="請輸入控制方法..." class="flex-grow px-2 py-1 border rounded text-[11px]">
+                <select id="ctrl-select-${rowId}" class="control-history-select w-full px-2 py-1 border rounded text-[11px] bg-white">${controlOptionsHtml}</select>
+                <input type="text" id="ctrl-input-${rowId}" value="${defaultValue}" placeholder="請輸入自訂控制方法..." class="hidden w-full px-2 py-1 border rounded text-[11px]">
+                <button type="button" id="ctrl-btn-${rowId}" onclick="toggleControlInputMode('${rowId}')" class="text-[10px] text-indigo-600 hover:underline flex-shrink-0 px-1">＋手動輸入</button>
                 <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-500 hover:text-red-700 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(div);
         }
 
-        function onControlSelectChange(rowId) {
-            const row = document.getElementById(rowId);
-            const select = row.querySelector('select');
-            const input = row.querySelector('input');
-            if (select.value) {
-                input.value = select.value;
+        // 控制方法選單與自訂輸入動態切換
+        function toggleControlInputMode(rowId) {
+            const selectEl = document.getElementById(`ctrl-select-${rowId}`);
+            const inputEl = document.getElementById(`ctrl-input-${rowId}`);
+            const btnEl = document.getElementById(`ctrl-btn-${rowId}`);
+
+            if (inputEl.classList.contains('hidden')) {
+                selectEl.classList.add('hidden');
+                selectEl.value = '';
+                inputEl.classList.remove('hidden');
+                inputEl.focus();
+                btnEl.textContent = "↩️選歷史";
+            } else {
+                inputEl.classList.add('hidden');
+                inputEl.value = '';
+                selectEl.classList.remove('hidden');
+                btnEl.textContent = "＋手動輸入";
             }
         }
 
@@ -1063,23 +1100,47 @@
 
             let hazardsList = [];
             for (let block of hazardBlocks) {
-                const hazardName = block.querySelector('input[name="hazardName"]').value.trim();
+                const blockId = block.id;
+                const selectEl = document.getElementById(`hazard-select-${blockId}`);
+                const inputEl = document.getElementById(`hazard-input-${blockId}`);
+                let hazardName = '';
+
+                if (inputEl && !inputEl.classList.contains('hidden')) {
+                    hazardName = inputEl.value.trim();
+                } else if (selectEl) {
+                    hazardName = selectEl.value.trim();
+                }
+
                 if (!hazardName) {
-                    alert('尚有危害種類未填寫名稱！');
+                    alert('尚有危害種類未選擇或填寫名稱！');
                     expandHazardBlock(block);
                     return;
                 }
+
                 const severity = block.querySelector('select[name="severity"]').value;
                 const frequency = block.querySelector('select[name="frequency"]').value;
 
                 let controlHierarchy = {};
                 for (let type of controlTypes) {
                     const subContainer = block.querySelector(`.sub-container-${type}`);
-                    const inputs = subContainer.querySelectorAll(`input[name="controlMethod_${type}"]`);
+                    const rows = subContainer.querySelectorAll('.flex');
                     let methods = [];
-                    inputs.forEach(inp => {
-                        if (inp.value.trim()) methods.push(inp.value.trim());
+
+                    rows.forEach(row => {
+                        const rowId = row.id;
+                        const ctrlSelect = document.getElementById(`ctrl-select-${rowId}`);
+                        const ctrlInput = document.getElementById(`ctrl-input-${rowId}`);
+                        let val = '';
+
+                        if (ctrlInput && !ctrlInput.classList.contains('hidden')) {
+                            val = ctrlInput.value.trim();
+                        } else if (ctrlSelect) {
+                            val = ctrlSelect.value.trim();
+                        }
+
+                        if (val) methods.push(val);
                     });
+
                     controlHierarchy[type] = methods.length > 0 ? methods : ['無'];
                 }
 
