@@ -438,7 +438,7 @@
                     document.getElementById('adminLoginCard').classList.add('hidden');
                     document.getElementById('adminPanel').classList.remove('hidden');
                     updateDashboardCounts();
-                    renderAdminPendingList(); // 補回渲染待審核清單
+                    renderAdminPendingList();
                     renderAdminManageList();
                 } else {
                     alert(json.message || '密碼錯誤');
@@ -732,6 +732,22 @@
             `).join('');
         }
         
+        // 根據風險等級 (1~4) 產生對應的漸進式強烈警示配色
+        function getRiskBadgeStyle(level) {
+            const lvl = parseInt(level) || 1;
+            switch(lvl) {
+                case 4:
+                    return 'bg-rose-600 text-white border border-rose-700 shadow-sm animate-pulse'; // 第4級：鮮紅閃爍強烈警示
+                case 3:
+                    return 'bg-orange-500 text-white border border-orange-600'; // 第3級：鮮明橘色警示
+                case 2:
+                    return 'bg-amber-100 text-amber-800 border border-amber-300'; // 第2級：黃/琥珀色注意
+                case 1:
+                default:
+                    return 'bg-blue-50 text-blue-700 border border-blue-200'; // 第1級：柔和藍色低風險
+            }
+        }
+
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
@@ -755,11 +771,13 @@
                 </div>
                 
                 <div class="space-y-6">
-                    ${approvedHazards.map((h, idx) => `
+                    ${approvedHazards.map((h, idx) => {
+                        const badgeStyle = getRiskBadgeStyle(h.riskLevel);
+                        return `
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
                             <div class="flex justify-between items-center border-b pb-2">
                                 <span class="font-bold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
-                                <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
+                                <span class="px-2.5 py-1 rounded text-xs font-bold ${badgeStyle}">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
                             
                             <div class="space-y-2 pt-1">
@@ -777,7 +795,7 @@
                                 }).join('')}
                             </div>
                         </div>
-                    `).join('')}
+                    `;}).join('')}
                 </div>
             `;
 
