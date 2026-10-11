@@ -108,44 +108,103 @@
                 <h2 class="text-xl font-bold text-slate-800">管理員控制台</h2>
             </div>
             
+            <!-- 登入卡片 -->
             <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
                 <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
                 <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼" class="w-full px-4 py-2 border rounded-lg">
                 <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
+            <!-- 管理員後台主面板 (三大功能選單儀表板) -->
             <div id="adminPanel" class="hidden space-y-6">
-                <!-- 待審核項目區塊 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
-                    <div id="pendingListContainer" class="space-y-3"></div>
-                </div>
+                
+                <!-- 選單儀表板總覽 (三個精簡卡片模組) -->
+                <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- 卡片 1: 待審核項目 -->
+                    <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-clipboard-check"></i>
+                            </div>
+                            <h3 class="font-bold text-base text-slate-800">待審核的自主提報</h3>
+                            <p class="text-xs text-slate-500">審核同仁自主提報且尚未核准的風險評估項目。</p>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t text-xs">
+                            <span id="dashboardPendingCount" class="font-bold text-indigo-600">載入中...</span>
+                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                        </div>
+                    </div>
 
-                <!-- 已核准項目管理與刪除區塊 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
-                    <div id="adminManageListContainer" class="space-y-3"></div>
-                </div>
+                    <!-- 卡片 2: 現有項目管理 (刪除) -->
+                    <div onclick="openAdminSubView('manage')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-folder-open"></i>
+                            </div>
+                            <h3 class="font-bold text-base text-slate-800">現有風險評估管理</h3>
+                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備與動作評估。</p>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t text-xs">
+                            <span id="dashboardItemCount" class="font-bold text-indigo-600">載入中...</span>
+                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                        </div>
+                    </div>
 
-                <!-- 更改密碼區塊 -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md">
-                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">更改管理員密碼</h3>
-                    <div class="space-y-3 text-sm">
-                        <div>
-                            <label class="block text-xs font-medium mb-1">原密碼</label>
-                            <input type="password" id="oldPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入原密碼">
+                    <!-- 卡片 3: 更改管理員密碼 -->
+                    <div onclick="openAdminSubView('password')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-key"></i>
+                            </div>
+                            <h3 class="font-bold text-base text-slate-800">更改管理員密碼</h3>
+                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至系統後端確保安全性。</p>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium mb-1">新密碼</label>
-                            <input type="password" id="newPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入新密碼">
+                        <div class="flex justify-between items-center pt-2 border-t text-xs">
+                            <span class="text-slate-400">系統設定</span>
+                            <span class="text-indigo-600 font-medium">變更密碼 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium mb-1">確認新密碼</label>
-                            <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請再次輸入新密碼">
-                        </div>
-                        <button onclick="changeAdminPassword()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-medium hover:bg-slate-900">更新密碼</button>
                     </div>
                 </div>
+
+                <!-- 子功能檢視容器 (預設隱藏，點擊卡片後展開) -->
+                <div id="adminSubViewContainer" class="hidden space-y-4">
+                    <button onclick="backToAdminMenu()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
+                        <i class="fa-solid fa-arrow-left"></i> 返回管理選單
+                    </button>
+                    
+                    <!-- 子畫面 1: 待審核項目詳細清單 -->
+                    <div id="subView-pending" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
+                        <div id="pendingListContainer" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 子畫面 2: 現有項目管理與刪除清單 -->
+                    <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
+                        <div id="adminManageListContainer" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 子畫面 3: 更改密碼表單 -->
+                    <div id="subView-password" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md mx-auto">
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">更改管理員密碼</h3>
+                        <div class="space-y-3 text-sm">
+                            <div>
+                                <label class="block text-xs font-medium mb-1">原密碼</label>
+                                <input type="password" id="oldPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入原密碼">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1">新密碼</label>
+                                <input type="password" id="newPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入新密碼">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium mb-1">確認新密碼</label>
+                                <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請再次輸入新密碼">
+                            </div>
+                            <button onclick="changeAdminPassword()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-medium hover:bg-slate-900">更新密碼</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -237,6 +296,8 @@
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('view-detail').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
+                // 每次回到後台時重置回選單首頁
+                backToAdminMenu();
             }
         };
 
@@ -263,6 +324,7 @@
                     globalData = json;
                     buildHazardControlHistory();
                     updatePendingBadgeCount();
+                    updateDashboardCounts();
 
                     const approvedItems = globalData.items.map(item => {
                         const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -295,6 +357,28 @@
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
+            }
+        }
+
+        function updateDashboardCounts() {
+            let pendingCount = 0;
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        if (h.status === 'Pending') pendingCount++;
+                    });
+                }
+            });
+
+            const pendingSpan = document.getElementById('dashboardPendingCount');
+            if (pendingSpan) {
+                pendingSpan.textContent = pendingCount > 0 ? `有 ${pendingCount} 項待審核` : '目前無待審核';
+            }
+
+            const itemCountSpan = document.getElementById('dashboardItemCount');
+            if (itemCountSpan) {
+                const totalItems = globalData.items ? globalData.items.length : 0;
+                itemCountSpan.textContent = `共 ${totalItems} 個設備評估項目`;
             }
         }
 
@@ -354,6 +438,7 @@
                 if (json.status === 'success' && json.authorized) {
                     document.getElementById('adminLoginCard').classList.add('hidden');
                     document.getElementById('adminPanel').classList.remove('hidden');
+                    updateDashboardCounts();
                     renderAdminPendingList();
                     renderAdminManageList();
                 } else {
@@ -363,6 +448,25 @@
                 hideLoading();
                 alert('驗證連線失敗');
             }
+        }
+
+        // 卡片點擊切換進入子功能頁面
+        function openAdminSubView(viewType) {
+            document.getElementById('adminDashboardMenu').classList.add('hidden');
+            document.getElementById('adminSubViewContainer').classList.remove('hidden');
+
+            document.getElementById('subView-pending').classList.add('hidden');
+            document.getElementById('subView-manage').classList.add('hidden');
+            document.getElementById('subView-password').classList.add('hidden');
+
+            document.getElementById(`subView-${viewType}`).classList.remove('hidden');
+        }
+
+        // 返回管理選單儀表板
+        function backToAdminMenu() {
+            document.getElementById('adminDashboardMenu').classList.remove('hidden');
+            document.getElementById('adminSubViewContainer').classList.add('hidden');
+            updateDashboardCounts();
         }
 
         async function changeAdminPassword() {
@@ -392,6 +496,7 @@
                     document.getElementById('oldPasswordInput').value = '';
                     document.getElementById('newPasswordInput').value = '';
                     document.getElementById('confirmPasswordInput').value = '';
+                    backToAdminMenu();
                 } else {
                     alert(json.message || '更新失敗');
                 }
@@ -415,7 +520,7 @@
             });
 
             if (pendingItems.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-2">目前沒有待審核的項目</div>`;
+                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前沒有待審核的項目</div>`;
                 return;
             }
 
@@ -436,7 +541,7 @@
         function renderAdminManageList() {
             const container = document.getElementById('adminManageListContainer');
             if (!globalData.items || globalData.items.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-2">目前尚無任何風險評估項目</div>`;
+                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前尚無任何風險評估項目</div>`;
                 return;
             }
 
@@ -467,6 +572,7 @@
                 hideLoading();
                 if (json.status === 'success') {
                     fetchData().then(() => {
+                        updateDashboardCounts();
                         renderAdminPendingList();
                         renderAdminManageList();
                     });
@@ -491,6 +597,7 @@
                 hideLoading();
                 if (json.status === 'success') {
                     fetchData().then(() => {
+                        updateDashboardCounts();
                         renderAdminPendingList();
                         renderAdminManageList();
                     });
@@ -516,6 +623,7 @@
                 if (json.status === 'success') {
                     alert('項目刪除成功！');
                     fetchData().then(() => {
+                        updateDashboardCounts();
                         renderAdminPendingList();
                         renderAdminManageList();
                     });
