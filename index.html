@@ -133,7 +133,7 @@
                 <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
-            <!-- 管理員後台主面板 -->
+            <!-- 管理員後台主面板 (三大功能選單儀表板) -->
             <div id="adminPanel" class="hidden space-y-6">
                 
                 <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -157,7 +157,7 @@
                                 <i class="fa-solid fa-folder-open"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">現有風險評估管理</h3>
-                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備評估。</p>
+                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備與動作評估。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span id="dashboardItemCount" class="font-bold text-indigo-600">載入中...</span>
@@ -171,7 +171,7 @@
                                 <i class="fa-solid fa-key"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">更改管理員密碼</h3>
-                            <p class="text-xs text-slate-500">變更後台登入密碼，確保系統安全性。</p>
+                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至系統後端確保安全性。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span class="text-slate-400">系統設定</span>
@@ -191,7 +191,7 @@
                     </div>
 
                     <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理</h3>
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
                         <div id="adminManageListContainer" class="space-y-3"></div>
                     </div>
 
@@ -275,7 +275,6 @@
             ppe: '5. 個人防護具 (PPE)'
         };
 
-        // 頁面載入時優先初始化資料與解析路由
         window.addEventListener('DOMContentLoaded', async () => {
             await initDataAsync();
         });
@@ -320,7 +319,6 @@
             }
         };
 
-        // 確保資料載入完成後才去解析網址並跳轉詳細頁
         async function initDataAsync() {
             const cached = sessionStorage.getItem('safety_culture_cache');
             if (cached) {
@@ -331,7 +329,6 @@
                     console.error("快取解析失敗", e);
                 }
             }
-            // 強制從雲端抓取最新資料以確保手機端不會發生空白
             await fetchData(true);
             checkUrlParamsAfterLoad();
         }
@@ -343,6 +340,10 @@
                 const decodedName = decodeURIComponent(itemName);
                 router.goDetail(decodedName);
             }
+        }
+
+        function initData() {
+            initDataAsync();
         }
 
         async function fetchData(showLoader = true) {
@@ -590,7 +591,7 @@
             if (pendingHazards.length > 0) {
                 html += `<div class="text-xs font-bold text-slate-500 mb-2 uppercase">危害與評估審核 (${pendingHazards.length})</div>`;
                 html += pendingHazards.map(p => `
-                    <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
+                    <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
                         <div>
                             <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
                         </div>
@@ -626,63 +627,6 @@
             }
 
             container.innerHTML = html;
-        }
-
-        function renderAdminManageList() {
-            const container = document.getElementById('adminManageListContainer');
-            if (!container) return;
-
-            if (!globalData.items || globalData.items.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前尚無任何風險評估項目</div>`;
-                return;
-            }
-
-            container.innerHTML = globalData.items.map(item => `
-                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
-                    <div>
-                        <span class="font-bold text-slate-900">${item.itemName}</span>
-                        <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
-                        <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-trash"></i> 刪除項目
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function updateStatus(id, status) {
-            globalData.items.forEach(item => {
-                if (item.hazards) {
-                    item.hazards.forEach(h => {
-                        if (h.id === id) h.status = status;
-                    });
-                }
-            });
-            
-            renderAdminPendingList();
-            updatePendingBadgeCount();
-            updateDashboardCounts();
-
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'updateItemStatus', id, status })
-                });
-                const json = await res.json();
-                if (json.status === 'success') {
-                    sessionStorage.removeItem('safety_culture_cache');
-                    fetchData(false);
-                } else {
-                    alert(json.message);
-                    fetchData(false);
-                }
-            } catch (err) {
-                console.error('更新失敗', err);
-                fetchData(false);
-            }
         }
 
         async function adminApprovePhoto(itemName, approve) {
@@ -790,6 +734,63 @@
                 };
             };
             reader.readAsDataURL(file);
+        }
+
+        function renderAdminManageList() {
+            const container = document.getElementById('adminManageListContainer');
+            if (!container) return;
+
+            if (!globalData.items || globalData.items.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前尚無任何風險評估項目</div>`;
+                return;
+            }
+
+            container.innerHTML = globalData.items.map(item => `
+                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                    <div>
+                        <span class="font-bold text-slate-900">${item.itemName}</span>
+                        <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
+                        <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> 刪除項目
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateStatus(id, status) {
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        if (h.id === id) h.status = status;
+                    });
+                }
+            });
+            
+            renderAdminPendingList();
+            updatePendingBadgeCount();
+            updateDashboardCounts();
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updateItemStatus', id, status })
+                });
+                const json = await res.json();
+                if (json.status === 'success') {
+                    sessionStorage.removeItem('safety_culture_cache');
+                    fetchData(false);
+                } else {
+                    alert(json.message);
+                    fetchData(false);
+                }
+            } catch (err) {
+                console.error('更新失敗', err);
+                fetchData(false);
+            }
         }
 
         async function deleteItemRecord(id) {
