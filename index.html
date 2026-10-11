@@ -820,7 +820,6 @@
             }
         }
 
-        // 詳細檢視頁面：改為全數預設折疊的手風琴式（Accordion）設計
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
@@ -898,7 +897,6 @@
             }
         }
 
-        // 單一詳細檢視手風琴收合與展開切換
         function toggleDetailAccordion(accordionId) {
             const contentEl = document.getElementById(accordionId);
             const iconEl = document.getElementById(`icon-${accordionId}`);
@@ -912,7 +910,6 @@
             }
         }
 
-        // 一鍵展開或收合全部詳細檢視項目
         function toggleAllDetailAccordions(expand) {
             const items = document.querySelectorAll('.detail-accordion-item');
             items.forEach((item, idx) => {
@@ -997,7 +994,10 @@
                         </div>
                     </div>
                     <div class="space-y-2 pt-2 border-t">
-                        <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
+                        <div class="flex items-baseline justify-between">
+                            <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
+                            <span class="text-[11px] text-slate-400 font-normal">*(若無對應措施可直接不選，系統將自動帶入「無」)*</span>
+                        </div>
                         ${controlTypes.map(type => `
                             <div class="space-y-1" data-control-type="${type}">
                                 <div class="flex justify-between items-center">
