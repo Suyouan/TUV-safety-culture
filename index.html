@@ -36,35 +36,35 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-[#FAF9F6] text-slate-700 min-h-screen flex flex-col font-sans">
 
     <!-- 全螢幕 Loading 提示遮罩 -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
-        <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
-            <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
-            <span id="loadingText" class="font-bold text-slate-700 text-sm">正在處理中，請稍候...</span>
+    <div id="loadingOverlay" class="fixed inset-0 bg-stone-900/30 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
+        <div class="bg-white px-6 py-4 rounded-3xl shadow-xl flex items-center gap-3 border border-stone-100">
+            <i class="fa-solid fa-spinner fa-spin text-teal-600 text-2xl"></i>
+            <span id="loadingText" class="font-bold text-stone-700 text-sm">正在處理中，請稍候...</span>
         </div>
     </div>
 
     <!-- 圖片燈箱 Modal -->
-    <div id="lightboxModal" class="fixed inset-0 bg-black/80 z-[10000] hidden flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
+    <div id="lightboxModal" class="fixed inset-0 bg-stone-900/80 z-[10000] hidden flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
         <div class="relative max-w-3xl w-full flex flex-col items-center">
-            <img id="lightboxImg" src="" class="max-h-[85vh] max-w-full rounded-lg shadow-2xl object-contain bg-white">
-            <span class="text-white text-xs mt-3 bg-black/50 px-3 py-1 rounded-full">點擊任意處關閉圖片</span>
+            <img id="lightboxImg" src="" class="max-h-[85vh] max-w-full rounded-2xl shadow-2xl object-contain bg-white">
+            <span class="text-white text-xs mt-3 bg-stone-800/60 px-3 py-1 rounded-full">點擊任意處關閉圖片</span>
         </div>
     </div>
 
-    <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+    <header class="bg-slate-700 text-white shadow-sm sticky top-0 z-50 transition-all">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
-                <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
+            <h1 class="text-base font-bold flex items-center gap-2 cursor-pointer tracking-wide" onclick="router.goHome()">
+                <i class="fa-solid fa-seedling text-teal-400"></i> 風險評估與安全守護系統
             </h1>
             <div class="flex items-center gap-2">
-                <button onclick="openQuizModal()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5" title="常態自主練習">
-                    <i class="fa-solid fa-graduation-cap"></i> 安全隨堂考
+                <button onclick="openQuizModal()" class="bg-slate-600 hover:bg-slate-500 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 shadow-sm" title="常態自主練習">
+                    <i class="fa-solid fa-graduation-cap text-amber-300"></i> 安全隨堂考
                 </button>
-                <button onclick="router.goAdmin()" class="relative bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-lock"></i> 管理後台
+                <button onclick="router.goAdmin()" class="relative bg-slate-600 hover:bg-slate-500 px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-lock text-rose-300"></i> 管理後台
                     <span id="pendingBadge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
                 </button>
             </div>
@@ -77,35 +77,35 @@
         <div id="view-home" class="space-y-4">
             
             <!-- 管理員發起活動時才會自動顯示的首頁宣傳橫幅 -->
-            <div id="activeQuizBanner" class="hidden bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div id="activeQuizBanner" class="hidden bg-gradient-to-r from-teal-600 to-emerald-600 rounded-3xl p-5 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div class="space-y-1 text-center sm:text-left">
-                    <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">全廠安全測驗活動</div>
-                    <h3 class="font-bold text-base">廠內安全知識測驗活動進行中！</h3>
-                    <p id="quizBannerTimeDesc" class="text-xs text-indigo-100">立即進行互動測驗，隨機檢驗您對設備危害與五大控制措施的掌握度。</p>
+                    <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">全廠溫馨安全活動</div>
+                    <h3 class="font-bold text-base">廠內安全知識隨堂考進行中！</h3>
+                    <p id="quizBannerTimeDesc" class="text-xs text-teal-100">輕鬆參與互動測驗，一起守護平安健康的職場環境。</p>
                 </div>
-                <button onclick="openQuizModal()" class="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex-shrink-0 flex items-center gap-2">
+                <button onclick="openQuizModal()" class="bg-white text-teal-700 hover:bg-teal-50 px-4 py-2.5 rounded-2xl font-bold text-xs shadow-sm transition flex-shrink-0 flex items-center gap-2">
                     <i class="fa-solid fa-play"></i> 立即參加測驗
                 </button>
             </div>
 
             <!-- 多部門分類卡片列 -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-2">
-                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center">
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-stone-200/60 space-y-2">
+                <div class="text-xs font-bold text-stone-500 uppercase tracking-wider flex justify-between items-center px-1">
                     <span>各部門風險檢視專區</span>
-                    <span id="departmentCountBadge" class="text-indigo-600">共 0 個部門</span>
+                    <span id="departmentCountBadge" class="text-teal-600 font-bold">共 0 個部門</span>
                 </div>
                 <div id="departmentCardsContainer" class="flex gap-2 overflow-x-auto pb-1 pt-1"></div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
+            <div class="bg-white p-4 rounded-3xl shadow-sm border border-stone-200/60 space-y-3">
                 <div class="flex flex-col sm:flex-row gap-2">
                     <div class="relative flex-grow">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-slate-400"></i>
-                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="搜尋儀器/動作名稱、危害或控制方法..." 
-                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-stone-400"></i>
+                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="輕鬆搜尋儀器/動作名稱、危害或控制方法..." 
+                            class="w-full pl-10 pr-4 py-2.5 bg-stone-50/80 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs transition">
                     </div>
                     <div class="sm:w-48">
-                        <select id="riskFilterSelect" onchange="handleSearch()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <select id="riskFilterSelect" onchange="handleSearch()" class="w-full px-3 py-2.5 bg-stone-50/80 border border-stone-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs transition">
                             <option value="">-- 篩選風險等級 --</option>
                             <option value="4">第 4 級 (極嚴重)</option>
                             <option value="3">第 3 級 (嚴重)</option>
@@ -113,29 +113,29 @@
                             <option value="1">第 1 級 (輕微)</option>
                         </select>
                     </div>
-                    <button onclick="openScanModal()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition text-sm">
-                        <i class="fa-solid fa-qrcode"></i> 掃描
+                    <button onclick="openScanModal()" class="bg-stone-700 hover:bg-stone-800 text-white px-4 py-2.5 rounded-2xl font-medium flex items-center justify-center gap-2 transition text-xs shadow-sm">
+                        <i class="fa-solid fa-qrcode"></i> 掃描 QR
                     </button>
                 </div>
                 <div class="flex flex-wrap justify-between items-center pt-2 gap-2">
-                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+                    <button onclick="openAddModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition shadow-sm">
                         <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
                     <div class="flex gap-2">
-                        <button onclick="openExportModal('csv')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-                            <i class="fa-solid fa-file-excel"></i> 匯出總表 (CSV)
+                        <button onclick="openExportModal('csv')" class="bg-slate-600 hover:bg-slate-700 text-white px-3.5 py-2 rounded-2xl text-xs font-medium flex items-center gap-1.5 transition shadow-sm no-print">
+                            <i class="fa-solid fa-file-excel"></i> 總表 (CSV)
                         </button>
-                        <button onclick="openExportModal('pdf')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-                            <i class="fa-solid fa-file-pdf"></i> 匯出 QR 標籤卡
+                        <button onclick="openExportModal('pdf')" class="bg-stone-700 hover:bg-stone-800 text-white px-3.5 py-2 rounded-2xl text-xs font-medium flex items-center gap-1.5 transition shadow-sm no-print">
+                            <i class="fa-solid fa-file-pdf"></i> 標籤 (PDF)
                         </button>
                     </div>
                 </div>
             </div>
 
             <!-- 目前檢視標題列 -->
-            <div class="flex justify-between items-center px-1">
-                <div id="currentViewTitle" class="text-sm font-bold text-slate-700">正在顯示：全部部門設備</div>
-                <button onclick="selectDepartment('')" id="resetDeptFilterBtn" class="hidden text-xs text-indigo-600 hover:underline font-medium">顯示全部部門</button>
+            <div class="flex justify-between items-center px-2">
+                <div id="currentViewTitle" class="text-xs font-bold text-stone-600">正在顯示：全部部門設備</div>
+                <button onclick="selectDepartment('')" id="resetDeptFilterBtn" class="hidden text-xs text-teal-600 hover:underline font-medium">顯示全部部門</button>
             </div>
 
             <div id="itemListContainer" class="space-y-3"></div>
@@ -145,133 +145,133 @@
         
         <!-- 詳細檢視 -->
         <div id="view-detail" class="hidden space-y-4">
-            <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
+            <button onclick="router.goHome()" class="text-teal-600 hover:text-teal-800 font-bold flex items-center gap-1 text-xs">
                 <i class="fa-solid fa-arrow-left"></i> 返回清單
             </button>
-            <div id="detailContent" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6"></div>
+            <div id="detailContent" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 space-y-6"></div>
         </div>
 
         <!-- 管理員後台 -->
         <div id="view-admin" class="hidden space-y-4">
             <div class="flex justify-between items-center">
-                <button onclick="router.goHome()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
+                <button onclick="router.goHome()" class="text-teal-600 hover:text-teal-800 font-bold flex items-center gap-1 text-xs">
                     <i class="fa-solid fa-arrow-left"></i> 返回前台
                 </button>
-                <h2 class="text-xl font-bold text-slate-800">管理員控制台</h2>
+                <h2 class="text-lg font-bold text-stone-800">管理員控制台</h2>
             </div>
             
-            <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
-                <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
-                <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼" class="w-full px-4 py-2 border rounded-lg">
-                <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
+            <div id="adminLoginCard" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 max-w-md mx-auto space-y-4">
+                <h3 class="font-bold text-base text-stone-700 text-center">請輸入管理員密碼</h3>
+                <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼" class="w-full px-4 py-2.5 border rounded-2xl text-xs bg-stone-50">
+                <button onclick="verifyAdmin()" class="w-full bg-slate-700 text-white py-2.5 rounded-2xl font-bold text-xs hover:bg-slate-800 transition shadow-sm">登入後台</button>
             </div>
 
             <div id="adminPanel" class="hidden space-y-6">
                 
                 <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                    <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 hover:shadow-md hover:border-teal-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                            <div class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm font-bold">
                                 <i class="fa-solid fa-clipboard-check"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">待審核項目</h3>
-                            <p class="text-xs text-slate-500">審核同仁自主提報、照片變更與修改申請。</p>
+                            <h3 class="font-bold text-sm text-stone-800">待審核項目</h3>
+                            <p class="text-[11px] text-stone-500">審核同仁自主提報、照片變更與修改申請。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
-                            <span id="dashboardPendingCount" class="font-bold text-indigo-600">載入中...</span>
-                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            <span id="dashboardPendingCount" class="font-bold text-teal-600">載入中...</span>
+                            <span class="text-teal-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
 
-                    <div onclick="openAdminSubView('manage')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                    <div onclick="openAdminSubView('manage')" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 hover:shadow-md hover:border-teal-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                            <div class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm font-bold">
                                 <i class="fa-solid fa-folder-open"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">現有風險評估管理</h3>
-                            <p class="text-xs text-slate-500">檢視、查閱或刪除現有的設備與動作評估。</p>
+                            <h3 class="font-bold text-sm text-stone-800">現有風險評估管理</h3>
+                            <p class="text-[11px] text-stone-500">檢視、查閱或刪除現有的設備與動作評估。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
-                            <span id="dashboardItemCount" class="font-bold text-indigo-600">載入中...</span>
-                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            <span id="dashboardItemCount" class="font-bold text-teal-600">載入中...</span>
+                            <span class="text-teal-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
 
-                    <div onclick="openAdminSubView('quiz')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                    <div onclick="openAdminSubView('quiz')" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 hover:shadow-md hover:border-teal-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                            <div class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm font-bold">
                                 <i class="fa-solid fa-graduation-cap"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">安全測驗發起與管理</h3>
-                            <p class="text-xs text-slate-500">設定測驗開放時段、發起首頁橫幅活動與題目預覽。</p>
+                            <h3 class="font-bold text-sm text-stone-800">安全測驗發起與管理</h3>
+                            <p class="text-[11px] text-stone-500">設定測驗開放時段、發起首頁橫幅活動與題目預覽。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
-                            <span id="dashboardQuizStatus" class="text-indigo-600 font-bold">狀態：未開放</span>
-                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            <span id="dashboardQuizStatus" class="text-teal-600 font-bold">狀態：未開放</span>
+                            <span class="text-teal-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
 
-                    <div onclick="openAdminSubView('password')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                    <div onclick="openAdminSubView('password')" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 hover:shadow-md hover:border-teal-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
-                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                            <div class="w-10 h-10 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center text-sm font-bold">
                                 <i class="fa-solid fa-key"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">更改管理員密碼</h3>
-                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至後端確保安全。</p>
+                            <h3 class="font-bold text-sm text-stone-800">更改管理員密碼</h3>
+                            <p class="text-[11px] text-stone-500">變更後台登入密碼，同步更新至後端確保安全。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
-                            <span class="text-slate-400">系統設定</span>
-                            <span class="text-indigo-600 font-medium">變更密碼 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                            <span class="text-stone-400">系統設定</span>
+                            <span class="text-teal-600 font-medium">變更密碼 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
                 </div>
 
                 <div id="adminSubViewContainer" class="hidden space-y-4">
-                    <button onclick="backToAdminMenu()" class="text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 text-sm">
+                    <button onclick="backToAdminMenu()" class="text-teal-600 hover:text-teal-800 font-bold flex items-center gap-1 text-xs">
                         <i class="fa-solid fa-arrow-left"></i> 返回管理選單
                     </button>
                     
-                    <div id="subView-pending" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的項目 (自主提報、照片、修改申請)</h3>
+                    <div id="subView-pending" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 space-y-4">
+                        <h3 class="font-bold text-base text-stone-700 border-b pb-2">待審核的項目 (自主提報、照片、修改申請)</h3>
                         <div id="pendingListContainer" class="space-y-3"></div>
                     </div>
 
-                    <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
+                    <div id="subView-manage" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 space-y-4">
+                        <h3 class="font-bold text-base text-stone-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
                         <div id="adminManageListContainer" class="space-y-3"></div>
                     </div>
 
-                    <div id="subView-quiz" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6">
+                    <div id="subView-quiz" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 space-y-6">
                         <div class="border-b pb-3">
-                            <h3 class="font-bold text-lg text-slate-700">全廠安全測驗活動發起與檔期設定</h3>
-                            <p class="text-xs text-slate-500 mt-1">此處設定的檔期將會連動首頁的醒目隨堂考橫幅。檔期過期後，首頁橫幅會自動隱藏。</p>
+                            <h3 class="font-bold text-base text-stone-700">全廠安全測驗活動發起與檔期設定</h3>
+                            <p class="text-xs text-stone-500 mt-1">此處設定的檔期將會連動首頁的醒目隨堂考橫幅。檔期過期後，首頁橫幅會自動隱藏。</p>
                         </div>
 
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4 max-w-lg">
+                        <div class="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-4 max-w-lg">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
-                                    <label class="block font-bold text-slate-700 mb-1">活動開始時間</label>
-                                    <input type="datetime-local" id="adminQuizStartTime" class="w-full px-3 py-2 border rounded-lg bg-white">
+                                    <label class="block font-bold text-stone-700 mb-1">活動開始時間</label>
+                                    <input type="datetime-local" id="adminQuizStartTime" class="w-full px-3 py-2 border rounded-xl bg-white">
                                 </div>
                                 <div>
-                                    <label class="block font-bold text-slate-700 mb-1">活動結束時間</label>
-                                    <input type="datetime-local" id="adminQuizEndTime" class="w-full px-3 py-2 border rounded-lg bg-white">
+                                    <label class="block font-bold text-stone-700 mb-1">活動結束時間</label>
+                                    <input type="datetime-local" id="adminQuizEndTime" class="w-full px-3 py-2 border rounded-xl bg-white">
                                 </div>
                             </div>
                             <div class="flex gap-2 pt-2">
-                                <button onclick="saveAdminQuizConfig(true)" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg font-bold text-xs shadow-sm transition">
+                                <button onclick="saveAdminQuizConfig(true)" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-sm transition">
                                     <i class="fa-solid fa-play mr-1"></i> 儲存檔期並立即發起
                                 </button>
-                                <button onclick="saveAdminQuizConfig(false)" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-bold text-xs transition">
-                                    <i class="fa-solid fa-stop mr-1"></i> 手動結束活動
+                                <button onclick="saveAdminQuizConfig(false)" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition">
+                                    <i class="fa-solid fa-stop mr-1"></i> 手動結束
                                 </button>
                             </div>
                         </div>
 
                         <div class="border-t pt-4 space-y-3">
                             <div class="flex justify-between items-center">
-                                <h4 class="font-bold text-sm text-slate-700">自動組題題目預覽與抽查</h4>
-                                <button onclick="renderAdminQuizPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                                <h4 class="font-bold text-xs text-stone-700">自動組題題目預覽與抽查</h4>
+                                <button onclick="renderAdminQuizPreview()" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
                                     <i class="fa-solid fa-rotate"></i> 重新隨機換題
                                 </button>
                             </div>
@@ -279,22 +279,22 @@
                         </div>
                     </div>
 
-                    <div id="subView-password" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md mx-auto">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">更改管理員密碼</h3>
-                        <div class="space-y-3 text-sm">
+                    <div id="subView-password" class="hidden bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 space-y-4 max-w-md mx-auto">
+                        <h3 class="font-bold text-base text-stone-700 border-b pb-2">更改管理員密碼</h3>
+                        <div class="space-y-3 text-xs">
                             <div>
-                                <label class="block text-xs font-medium mb-1">原密碼</label>
-                                <input type="password" id="oldPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入原密碼">
+                                <label class="block font-medium mb-1">原密碼</label>
+                                <input type="password" id="oldPasswordInput" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50" placeholder="請輸入原密碼">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium mb-1">新密碼</label>
-                                <input type="password" id="newPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入新密碼">
+                                <label class="block font-medium mb-1">新密碼</label>
+                                <input type="password" id="newPasswordInput" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50" placeholder="請輸入新密碼">
                             </div>
                             <div>
-                                <label class="block text-xs font-medium mb-1">確認新密碼</label>
-                                <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請再次輸入新密碼">
+                                <label class="block font-medium mb-1">確認新密碼</label>
+                                <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50" placeholder="請再次輸入新密碼">
                             </div>
-                            <button onclick="changeAdminPassword()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-medium hover:bg-slate-900">更新密碼</button>
+                            <button onclick="changeAdminPassword()" class="w-full bg-slate-700 text-white py-2.5 rounded-2xl font-bold hover:bg-slate-800 transition shadow-sm">更新密碼</button>
                         </div>
                     </div>
                 </div>
@@ -305,115 +305,115 @@
     </main>
 
     <!-- 新增 / 編輯共用 Modal -->
-    <div id="addModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+    <div id="addModal" class="fixed inset-0 bg-stone-900/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-[2px]">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-xl border border-stone-100">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 id="modalTitle" class="text-lg font-bold text-slate-800">新增儀器/動作與風險評估</h3>
-                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 id="modalTitle" class="text-base font-bold text-stone-800">新增儀器/動作與風險評估</h3>
+                <button onclick="closeAddModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
                 
                 <!-- 部門選擇與手動新增區塊 -->
-                <div class="p-4 bg-slate-50 border rounded-xl space-y-2">
+                <div class="p-4 bg-stone-50 border border-stone-200/60 rounded-2xl space-y-2">
                     <div class="flex justify-between items-center">
-                        <label class="block text-xs font-bold text-indigo-700">所屬部門 <span class="text-red-500">*</span></label>
-                        <button type="button" id="btnToggleDept" onclick="toggleDeptInputMode()" class="text-[11px] text-indigo-600 hover:underline font-medium">+ 手動輸入新部門</button>
+                        <label class="block text-xs font-bold text-teal-700">所屬部門 <span class="text-rose-500">*</span></label>
+                        <button type="button" id="btnToggleDept" onclick="toggleDeptInputMode()" class="text-[11px] text-teal-600 hover:underline font-medium">+ 手動輸入新部門</button>
                     </div>
-                    <select id="formDeptSelect" class="w-full px-3 py-2 border rounded-lg text-xs bg-white"></select>
-                    <input type="text" id="formDeptInput" class="hidden w-full px-3 py-2 border rounded-lg text-xs" placeholder="請輸入新部門名稱 (例如：品保部、產線一課)...">
+                    <select id="formDeptSelect" class="w-full px-3 py-2.5 border rounded-2xl text-xs bg-white"></select>
+                    <input type="text" id="formDeptInput" class="hidden w-full px-3 py-2.5 border rounded-2xl text-xs bg-white" placeholder="請輸入新部門名稱 (例如：品保部、產線一課)...">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">儀器 / 動作名稱 <span class="text-red-500">*</span></label>
-                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="例如：CNC 操作機台">
+                    <label class="block text-xs font-bold text-stone-700 mb-1">儀器 / 動作名稱 <span class="text-rose-500">*</span></label>
+                    <input type="text" id="formItemName" required class="w-full px-3 py-2.5 border rounded-2xl text-xs bg-stone-50" placeholder="例如：CNC 操作機台">
                 </div>
 
                 <div class="space-y-4">
                     <div class="flex justify-between items-center border-b pb-1">
-                        <h4 class="font-bold text-sm text-indigo-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 危害種類與控制措施清單</h4>
-                        <button type="button" onclick="addHazardBlock()" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2.5 py-1 rounded text-xs font-bold transition">
-                            <i class="fa-solid fa-plus mr-1"></i> 新增另一個危害種類
+                        <h4 class="font-bold text-xs text-teal-700"><i class="fa-solid fa-triangle-exclamation mr-1"></i> 危害種類與控制措施清單</h4>
+                        <button type="button" onclick="addHazardBlock()" class="bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                            <i class="fa-solid fa-plus mr-1"></i> 新增危害種類
                         </button>
                     </div>
                     <div id="hazardsContainer" class="space-y-3"></div>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2 border-t">
-                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-lg text-sm">取消</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出提報</button>
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-2xl text-xs font-medium">取消</button>
+                    <button type="submit" id="modalSubmitBtn" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold shadow-sm">送出提報</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- 進階匯出篩選 Modal (支援 CSV 與 PDF 標籤卡) -->
-    <div id="exportModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+    <div id="exportModal" class="fixed inset-0 bg-stone-900/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-[2px]">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-stone-100">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 id="exportModalTitle" class="text-lg font-bold text-slate-800">匯出設定</h3>
-                <button onclick="closeExportModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 id="exportModalTitle" class="text-base font-bold text-stone-800">匯出設定</h3>
+                <button onclick="closeExportModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="space-y-3 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">1. 選擇匯出範圍類型</label>
-                    <select id="exportScopeType" onchange="onExportScopeChange()" class="w-full px-3 py-2 border rounded-lg bg-white">
+                    <label class="block font-bold text-stone-700 mb-1">1. 選擇匯出範圍類型</label>
+                    <select id="exportScopeType" onchange="onExportScopeChange()" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50">
                         <option value="all">全部部門 (所有資料)</option>
                         <option value="dept">指定特定部門</option>
                         <option value="item">指定特定單一設備項目</option>
                     </select>
                 </div>
                 <div id="exportDeptContainer" class="hidden">
-                    <label class="block font-bold text-slate-700 mb-1">選擇目標部門</label>
-                    <select id="exportDeptSelect" class="w-full px-3 py-2 border rounded-lg bg-white"></select>
+                    <label class="block font-bold text-stone-700 mb-1">選擇目標部門</label>
+                    <select id="exportDeptSelect" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50"></select>
                 </div>
                 <div id="exportItemContainer" class="hidden">
-                    <label class="block font-bold text-slate-700 mb-1">選擇目標設備項目</label>
-                    <select id="exportItemSelect" class="w-full px-3 py-2 border rounded-lg bg-white"></select>
+                    <label class="block font-bold text-stone-700 mb-1">選擇目標設備項目</label>
+                    <select id="exportItemSelect" class="w-full px-3 py-2.5 border rounded-2xl bg-stone-50"></select>
                 </div>
             </div>
             <div class="flex justify-end gap-2 pt-3 border-t">
-                <button onclick="closeExportModal()" class="px-4 py-2 border rounded-lg text-xs">取消</button>
-                <button onclick="executeExport()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold">確認匯出</button>
+                <button onclick="closeExportModal()" class="px-4 py-2 border rounded-2xl text-xs">取消</button>
+                <button onclick="executeExport()" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold shadow-sm">確認匯出</button>
             </div>
         </div>
     </div>
 
     <!-- 管理員審核修改申請 Modal (含高亮 Diff) -->
-    <div id="diffModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[9999] p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div id="diffModal" class="fixed inset-0 bg-stone-900/60 hidden flex items-center justify-center z-[9999] p-4 backdrop-blur-[2px]">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-stone-100">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-code-compare text-indigo-600"></i> 風險評估修改申請審核 (差異比較)
+                <h3 class="text-base font-bold text-stone-800 flex items-center gap-2">
+                    <i class="fa-solid fa-code-compare text-teal-600"></i> 風險評估修改申請審核 (差異比較)
                 </h3>
-                <button onclick="closeDiffModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeDiffModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="diffModalBody" class="space-y-4 text-xs"></div>
             <div class="flex justify-end gap-2 pt-3 border-t">
-                <button onclick="handleDiffApproval(false)" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold">拒絕申請</button>
-                <button onclick="handleDiffApproval(true)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">核准修改 (覆蓋)</button>
+                <button onclick="handleDiffApproval(false)" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-xs font-bold shadow-sm">拒絕申請</button>
+                <button onclick="handleDiffApproval(true)" class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold shadow-sm">核准修改 (覆蓋)</button>
             </div>
         </div>
     </div>
 
     <!-- QR Code 掃描 Modal -->
-    <div id="scanModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+    <div id="scanModal" class="fixed inset-0 bg-stone-900/50 hidden flex items-center justify-center z-50 p-4 backdrop-blur-[2px]">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-stone-100">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold">掃描設備/動作 QR Code</h3>
-                <button onclick="closeScanModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <h3 class="text-base font-bold text-stone-800">掃描設備/動作 QR Code</h3>
+                <button onclick="closeScanModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="reader" class="w-full"></div>
         </div>
     </div>
 
     <!-- 安全知識隨堂考 Modal -->
-    <div id="quizModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[999] p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+    <div id="quizModal" class="fixed inset-0 bg-stone-900/60 hidden flex items-center justify-center z-[999] p-4 backdrop-blur-[2px]">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl border border-stone-100">
             <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-graduation-cap text-indigo-600"></i> 安全知識隨堂考
+                <h3 class="text-base font-bold text-stone-800 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-teal-600"></i> 安全知識隨堂考
                 </h3>
-                <button onclick="closeQuizModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeQuizModal()" class="text-stone-400 hover:text-stone-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div id="quizBody"></div>
         </div>
@@ -428,7 +428,7 @@
         let isEditMode = false;
         let editingItemName = null;
         let currentDiffItemName = null;
-        let currentSelectedDepartment = ""; // 空字串代表顯示全部
+        let currentSelectedDepartment = "";
         let currentExportMode = 'csv';
         
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
@@ -566,7 +566,6 @@
             renderAdminManageList();
         }
 
-        // --- 部門卡片渲染與篩選 ---
         function renderDepartmentCards() {
             const container = document.getElementById('departmentCardsContainer');
             const countBadge = document.getElementById('departmentCountBadge');
@@ -583,7 +582,7 @@
             countBadge.textContent = `共 ${depts.length} 個部門`;
 
             let html = `
-                <div onclick="selectDepartment('')" class="flex-shrink-0 px-3 py-2 rounded-xl border cursor-pointer transition text-xs font-bold ${!currentSelectedDepartment ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'}">
+                <div onclick="selectDepartment('')" class="flex-shrink-0 px-3.5 py-2 rounded-2xl border cursor-pointer transition text-xs font-bold ${!currentSelectedDepartment ? 'bg-teal-600 text-white border-teal-600 shadow-sm' : 'bg-stone-50 text-stone-600 hover:bg-stone-100 border-stone-200'}">
                     全部部門 (${globalData.items.length})
                 </div>
             `;
@@ -592,7 +591,7 @@
                 const count = deptMap[d];
                 const isSelected = currentSelectedDepartment === d;
                 html += `
-                    <div onclick="selectDepartment('${d}')" class="flex-shrink-0 px-3 py-2 rounded-xl border cursor-pointer transition text-xs font-bold ${isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'}">
+                    <div onclick="selectDepartment('${d}')" class="flex-shrink-0 px-3.5 py-2 rounded-2xl border cursor-pointer transition text-xs font-bold ${isSelected ? 'bg-teal-600 text-white border-teal-600 shadow-sm' : 'bg-stone-50 text-stone-600 hover:bg-stone-100 border-stone-200'}">
                         ${d} (${count})
                     </div>
                 `;
@@ -675,7 +674,7 @@
                     const endStr = `${end.getMonth() + 1}/${end.getDate()} ${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
                     descEl.textContent = `測驗活動進行中！預計於 ${endStr} 截止，快來挑戰！`;
                 } else {
-                    descEl.textContent = `全廠安全知識測驗活動進行中！歡迎同仁踴躍參加。`;
+                    descEl.textContent = `全廠溫馨安全知識測驗活動進行中！歡迎同仁踴躍參加。`;
                 }
             } else {
                 banner.classList.add('hidden');
@@ -739,10 +738,10 @@
                 const cfg = globalData.quizConfig;
                 if (cfg && cfg.active) {
                     quizStatusSpan.textContent = "狀態：活動進行中";
-                    quizStatusSpan.className = "text-emerald-600 font-bold";
+                    quizStatusSpan.className = "text-teal-600 font-bold";
                 } else {
                     quizStatusSpan.textContent = "狀態：未開放";
-                    quizStatusSpan.className = "text-slate-400 font-bold";
+                    quizStatusSpan.className = "text-stone-400 font-bold";
                 }
             }
         }
@@ -834,7 +833,7 @@
 
                     questions.push({
                         type: 1,
-                        question: `請問針對設備或動作「<span class="text-indigo-600 font-bold">${randItem.itemName}</span>」，下列哪一項是其主要的危害種類？`,
+                        question: `請問針對設備或動作「<span class="text-teal-700 font-bold">${randItem.itemName}</span>」，下列哪一項是其主要的危害種類？`,
                         correctAnswer: correctAnswer,
                         options: options
                     });
@@ -855,7 +854,7 @@
 
                     questions.push({
                         type: 2,
-                        question: `針對危害「<span class="text-indigo-600 font-bold">${randHazard.hazard}</span>」，下列哪一項屬於正確的「<span class="text-slate-800 font-bold">${controlLabels[targetType]}</span>」？`,
+                        question: `針對危害「<span class="text-teal-700 font-bold">${randHazard.hazard}</span>」，下列哪一項屬於正確的「<span class="text-stone-800 font-bold">${controlLabels[targetType]}</span>」？`,
                         correctAnswer: correctAnswer,
                         options: options
                     });
@@ -887,14 +886,14 @@
             const body = document.getElementById('quizBody');
             body.innerHTML = `
                 <div class="text-center space-y-4 py-6">
-                    <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                    <div class="w-16 h-16 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto text-2xl shadow-sm">
                         <i class="fa-solid fa-clipboard-question"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-base text-slate-800">歡迎參加安全知識隨堂考</h4>
-                        <p class="text-xs text-slate-500 mt-1">系統將從現有已核准的風險評估資料庫中隨機出題，檢驗您對設備危害與控制措施的了解。</p>
+                        <h4 class="font-bold text-base text-stone-800">歡迎參加溫馨安全隨堂考</h4>
+                        <p class="text-xs text-stone-500 mt-1">輕鬆檢驗您對設備危害與控制措施的了解，一起營造平安職場。</p>
                     </div>
-                    <button onclick="startQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-sm">
+                    <button onclick="startQuiz()" class="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-2xl font-bold text-xs transition shadow-sm">
                         開始測驗 (5 題)
                     </button>
                 </div>
@@ -904,7 +903,7 @@
         function startQuiz() {
             const questions = generateQuizQuestionsPool();
             if (questions.length === 0) {
-                alert('題庫資料不足，無法產生足夠的測驗題目，請先新增更多已核准的風險評估資料！');
+                alert('題庫資料不足，無法產生足夠的測驗題目！');
                 closeQuizModal();
                 return;
             }
@@ -924,33 +923,33 @@
 
             body.innerHTML = `
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+                    <div class="flex justify-between items-center text-xs font-bold text-stone-400">
                         <span>第 ${quizState.currentIndex + 1} 題 / 共 ${quizState.questions.length} 題</span>
-                        <span>得分進度</span>
+                        <span>作答進度</span>
                     </div>
-                    <div class="text-sm font-semibold text-slate-800 leading-relaxed">
+                    <div class="text-xs font-semibold text-stone-800 leading-relaxed">
                         ${q.question}
                     </div>
                     <div class="space-y-2 pt-2">
                         ${q.options.map((opt, idx) => {
                             const isSelected = quizState.userAnswers[quizState.currentIndex] === opt;
-                            const btnStyle = isSelected ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
+                            const btnStyle = isSelected ? 'bg-teal-50 border-teal-500 text-teal-800 font-bold shadow-sm' : 'bg-stone-50/80 border-stone-200 text-stone-700 hover:bg-stone-100';
                             return `
-                                <div onclick="selectQuizOption('${opt.replace(/'/g, "\\'")}')" class="p-3 border rounded-xl cursor-pointer text-xs transition flex items-center gap-3 ${btnStyle}">
-                                    <span class="w-6 h-6 rounded-full bg-white border flex items-center justify-center font-bold text-[11px] text-slate-500">${String.fromCharCode(65 + idx)}</span>
+                                <div onclick="selectQuizOption('${opt.replace(/'/g, "\\'")}')" class="p-3 border rounded-2xl cursor-pointer text-xs transition flex items-center gap-3 ${btnStyle}">
+                                    <span class="w-6 h-6 rounded-full bg-white border flex items-center justify-center font-bold text-[11px] text-stone-500 shadow-sm">${String.fromCharCode(65 + idx)}</span>
                                     <span>${opt}</span>
                                 </div>
                             `;
                         }).join('')}
                     </div>
                     <div class="flex justify-between items-center pt-4 border-t">
-                        <button onclick="prevQuizQuestion()" ${quizState.currentIndex === 0 ? 'disabled class="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-xs cursor-not-allowed"' : 'class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium"'}>
+                        <button onclick="prevQuizQuestion()" ${quizState.currentIndex === 0 ? 'disabled class="px-4 py-2 bg-stone-100 text-stone-400 rounded-2xl text-xs cursor-not-allowed"' : 'class="px-4 py-2 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-2xl text-xs font-medium"'}>
                             上一題
                         </button>
                         ${quizState.currentIndex < quizState.questions.length - 1 ? `
-                            <button onclick="nextQuizQuestion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium">下一題</button>
+                            <button onclick="nextQuizQuestion()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-2xl text-xs font-bold shadow-sm">下一題</button>
                         ` : `
-                            <button onclick="submitQuiz()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">送出測驗</button>
+                            <button onclick="submitQuiz()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-bold shadow-sm">送出測驗</button>
                         `}
                     </div>
                 </div>
@@ -986,16 +985,16 @@
 
             const score = Math.round((correctCount / quizState.questions.length) * 100);
             const body = document.getElementById('quizBody');
-            let resultColor = score >= 80 ? 'text-emerald-600 bg-emerald-50' : score >= 60 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
+            let resultColor = score >= 80 ? 'text-teal-600 bg-teal-50' : score >= 60 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
 
             body.innerHTML = `
                 <div class="text-center space-y-4 py-4">
-                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-3xl font-bold ${resultColor}">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-2xl font-bold ${resultColor} shadow-sm">
                         ${score}分
                     </div>
                     <div>
-                        <h4 class="font-bold text-base text-slate-800">測驗結果結算</h4>
-                        <p class="text-xs text-slate-500 mt-1">您總共答對 <span class="font-bold text-slate-700">${correctCount}</span> 題 / 共 ${quizState.questions.length} 題</p>
+                        <h4 class="font-bold text-base text-stone-800">隨堂考結果結算</h4>
+                        <p class="text-xs text-stone-500 mt-1">您總共答對 <span class="font-bold text-stone-700">${correctCount}</span> 題 / 共 ${quizState.questions.length} 題</p>
                     </div>
 
                     <div class="space-y-2 text-left max-h-60 overflow-y-auto pr-1 border-t pt-3">
@@ -1003,8 +1002,8 @@
                             const userAns = quizState.userAnswers[idx];
                             const isCorrect = userAns === q.correctAnswer;
                             return `
-                                <div class="p-2.5 rounded-lg border text-xs space-y-1 ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
-                                    <div class="font-bold text-slate-800">Q${idx + 1}: ${q.question}</div>
+                                <div class="p-3 rounded-2xl border text-xs space-y-1 ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
+                                    <div class="font-bold text-stone-800">Q${idx + 1}: ${q.question}</div>
                                     <div class="text-[11px] ${isCorrect ? 'text-emerald-700 font-semibold' : 'text-rose-700'}">您的作答：${userAns || '未作答'}</div>
                                     ${!isCorrect ? `<div class="text-[11px] text-emerald-700 font-semibold">正確解答：${q.correctAnswer}</div>` : ''}
                                 </div>
@@ -1013,10 +1012,10 @@
                     </div>
 
                     <div class="flex gap-2 pt-2">
-                        <button onclick="startQuiz()" class="w-1/2 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl font-medium text-xs transition">
+                        <button onclick="startQuiz()" class="w-1/2 bg-stone-700 hover:bg-stone-800 text-white py-2.5 rounded-2xl font-medium text-xs transition shadow-sm">
                             再考一次
                         </button>
-                        <button onclick="closeQuizModal()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium text-xs transition">
+                        <button onclick="closeQuizModal()" class="w-1/2 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-2xl font-bold text-xs transition shadow-sm">
                             關閉視窗
                         </button>
                     </div>
@@ -1024,7 +1023,6 @@
             `;
         }
 
-        // --- 進階匯出 Modal 控制與執行 ---
         function openExportModal(mode) {
             currentExportMode = mode;
             document.getElementById('exportModalTitle').textContent = mode === 'csv' ? '匯出風險評估總表 (CSV)' : '匯出 QR Code 標籤卡 (PDF)';
@@ -1148,21 +1146,21 @@
                 }).join('');
 
                 const cardDiv = document.createElement('div');
-                cardDiv.className = "label-card bg-white p-3 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[420px] h-[155px] mx-auto shadow-sm gap-2 overflow-hidden";
+                cardDiv.className = "label-card bg-white p-3 rounded-2xl border-2 dashed border-stone-300 flex justify-between items-center w-full max-w-[420px] h-[155px] mx-auto shadow-sm gap-2 overflow-hidden";
                 cardDiv.innerHTML = `
                     <div class="space-y-1 pr-1 overflow-hidden flex-grow flex flex-col justify-between h-full py-0.5">
                         <div>
-                            <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">${deptName} | 風險控制標籤</div>
-                            <h4 class="font-bold text-xs text-slate-900 truncate" style="max-width: 170px;" title="${item.itemName}">${item.itemName}</h4>
+                            <div class="text-[9px] text-teal-600 font-bold uppercase tracking-wider">${deptName} | 安全控制標籤</div>
+                            <h4 class="font-bold text-xs text-stone-900 truncate" style="max-width: 170px;" title="${item.itemName}">${item.itemName}</h4>
                         </div>
                         <div class="space-y-0.5 max-h-[50px] overflow-hidden">
                             ${hazardsListHtml}
                         </div>
-                        <div class="text-[8px] text-slate-400">請用手機掃描檢視五大控制措施</div>
+                        <div class="text-[8px] text-stone-400">請用手機掃描檢視五大控制措施</div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        ${hasApprovedPhoto ? `<img src="${item.photoBase64}" class="w-[85px] h-[85px] object-cover rounded border">` : ''}
-                        <div id="${cardId}" class="p-1 bg-white border rounded"></div>
+                        ${hasApprovedPhoto ? `<img src="${item.photoBase64}" class="w-[85px] h-[85px] object-cover rounded-xl border">` : ''}
+                        <div id="${cardId}" class="p-1 bg-white border rounded-xl"></div>
                     </div>
                 `;
                 container.appendChild(cardDiv);
@@ -1278,18 +1276,18 @@
 
             adminQuizQuestions = generateQuizQuestionsPool();
             if (adminQuizQuestions.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前無足夠的已核准資料可供產生測驗預覽</div>`;
+                container.innerHTML = `<div class="text-stone-400 text-xs py-4 text-center">目前無足夠的已核准資料可供產生測驗預覽</div>`;
                 return;
             }
 
             container.innerHTML = adminQuizQuestions.map((q, idx) => `
-                <div class="bg-slate-50 p-4 rounded-xl border space-y-2 text-xs">
-                    <div class="font-bold text-slate-800 text-sm">Q${idx + 1}: ${q.question}</div>
+                <div class="bg-stone-50 p-4 rounded-2xl border space-y-2 text-xs">
+                    <div class="font-bold text-stone-800 text-xs">Q${idx + 1}: ${q.question}</div>
                     <div class="space-y-1 pt-1">
                         ${q.options.map((opt, oIdx) => `
-                            <div class="p-2 rounded bg-white border flex items-center justify-between ${opt === q.correctAnswer ? 'border-emerald-500 bg-emerald-50/50 font-bold text-emerald-800' : 'text-slate-600'}">
+                            <div class="p-2.5 rounded-xl bg-white border flex items-center justify-between ${opt === q.correctAnswer ? 'border-teal-500 bg-teal-50/50 font-bold text-teal-800' : 'text-stone-600'}">
                                 <span>${String.fromCharCode(65 + oIdx)}. ${opt}</span>
-                                ${opt === q.correctAnswer ? '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">正確答案</span>' : ''}
+                                ${opt === q.correctAnswer ? '<span class="text-[10px] bg-teal-600 text-white px-2 py-0.5 rounded-full font-bold">正確答案</span>' : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -1361,58 +1359,58 @@
             let html = '';
 
             if (pendingHazards.length === 0 && pendingPhotos.length === 0 && pendingEdits.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前沒有待審核的項目</div>`;
+                container.innerHTML = `<div class="text-stone-400 text-xs py-4 text-center">目前沒有待審核的項目</div>`;
                 return;
             }
 
             if (pendingHazards.length > 0) {
-                html += `<div class="text-xs font-bold text-slate-500 mb-2 uppercase">危害與評估審核 (${pendingHazards.length})</div>`;
+                html += `<div class="text-xs font-bold text-stone-500 mb-2 uppercase tracking-wide">危害與評估審核 (${pendingHazards.length})</div>`;
                 html += pendingHazards.map(p => `
-                    <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
+                    <div id="pending-row-${p.id}" class="bg-stone-50 p-3.5 rounded-2xl border flex justify-between items-center text-xs mb-2">
                         <div>
-                            <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
+                            <span class="font-bold text-stone-900">${p.itemName}</span> - 危害: <span class="text-teal-700 font-semibold">${p.hazard}</span>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
-                            <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
-                            <button onclick="deleteItemRecord('${p.id}')" class="bg-slate-600 hover:bg-slate-700 text-white px-2.5 py-1 rounded text-xs"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-xl font-bold shadow-sm">核准</button>
+                            <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl font-bold shadow-sm">拒絕</button>
+                            <button onclick="deleteItemRecord('${p.id}')" class="bg-stone-600 hover:bg-stone-700 text-white px-2.5 py-1.5 rounded-xl"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `).join('');
             }
 
             if (pendingPhotos.length > 0) {
-                html += `<div class="text-xs font-bold text-slate-500 mt-4 mb-2 uppercase">設備照片變更申請 (${pendingPhotos.length})</div>`;
+                html += `<div class="text-xs font-bold text-stone-500 mt-4 mb-2 uppercase tracking-wide">設備照片變更申請 (${pendingPhotos.length})</div>`;
                 html += pendingPhotos.map(item => {
                     const isDeleteReq = item.photoDeleteRequested;
                     const desc = isDeleteReq ? "申請刪除照片" : "上傳新照片";
                     return `
-                    <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
+                    <div class="bg-stone-50 p-3.5 rounded-2xl border flex justify-between items-center text-xs mb-2">
                         <div class="flex items-center gap-3">
-                            ${item.photoBase64 && !isDeleteReq ? `<img src="${item.photoBase64}" class="w-12 h-12 object-cover rounded border cursor-pointer" onclick="openLightbox('${item.photoBase64}')">` : ''}
+                            ${item.photoBase64 && !isDeleteReq ? `<img src="${item.photoBase64}" class="w-12 h-12 object-cover rounded-xl border cursor-pointer" onclick="openLightbox('${item.photoBase64}')">` : ''}
                             <div>
-                                <span class="font-bold text-slate-900">${item.itemName}</span>
-                                <span class="text-xs text-amber-600 block font-semibold">${desc}</span>
+                                <span class="font-bold text-stone-900">${item.itemName}</span>
+                                <span class="text-[11px] text-amber-600 block font-semibold">${desc}</span>
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="adminApprovePhoto('${item.itemName}', true)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
-                            <button onclick="adminApprovePhoto('${item.itemName}', false)" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
+                            <button onclick="adminApprovePhoto('${item.itemName}', true)" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-xl font-bold shadow-sm">核准</button>
+                            <button onclick="adminApprovePhoto('${item.itemName}', false)" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl font-bold shadow-sm">拒絕</button>
                         </div>
                     </div>
                 `;}).join('');
             }
 
             if (pendingEdits.length > 0) {
-                html += `<div class="text-xs font-bold text-slate-500 mt-4 mb-2 uppercase">風險評估修改申請 (${pendingEdits.length})</div>`;
+                html += `<div class="text-xs font-bold text-stone-500 mt-4 mb-2 uppercase tracking-wide">風險評估修改申請 (${pendingEdits.length})</div>`;
                 html += pendingEdits.map(item => `
-                    <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
+                    <div class="bg-stone-50 p-3.5 rounded-2xl border flex justify-between items-center text-xs mb-2">
                         <div>
-                            <span class="font-bold text-slate-900">${item.itemName}</span>
-                            <span class="text-xs text-indigo-600 block font-semibold">同仁提交了內容修改申請，等待審核</span>
+                            <span class="font-bold text-stone-900">${item.itemName}</span>
+                            <span class="text-[11px] text-teal-700 block font-semibold">同仁提交了內容修改申請，等待審核</span>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="openDiffModal('${item.itemName}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
+                            <button onclick="openDiffModal('${item.itemName}')" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1.5 rounded-xl font-bold flex items-center gap-1 shadow-sm">
                                 <i class="fa-solid fa-code-compare"></i> 檢視差異並審核
                             </button>
                         </div>
@@ -1437,14 +1435,14 @@
             const modalBody = document.getElementById('diffModalBody');
 
             let html = `
-                <div class="font-bold text-sm text-slate-800 mb-2">部門：${item.department || '未分類部門'} | 設備名稱：${itemName}</div>
+                <div class="font-bold text-xs text-stone-800 mb-2">部門：${item.department || '未分類部門'} | 設備名稱：${itemName}</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-50 p-3 rounded-xl border space-y-2">
-                        <h4 class="font-bold text-slate-700 border-b pb-1 text-xs uppercase text-slate-500">修改前 (現行已核准版本)</h4>
+                    <div class="bg-stone-50 p-4 rounded-2xl border space-y-2">
+                        <h4 class="font-bold text-stone-600 border-b pb-1 text-[11px] uppercase tracking-wide">修改前 (現行已核准版本)</h4>
                         ${oldHazards.map((h, i) => renderDiffHazardBox(h, i, false)).join('')}
                     </div>
-                    <div class="bg-amber-50/40 p-3 rounded-xl border border-amber-200 space-y-2">
-                        <h4 class="font-bold text-amber-800 border-b pb-1 text-xs uppercase">修改後 (申請中新版本)</h4>
+                    <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-200 space-y-2">
+                        <h4 class="font-bold text-amber-800 border-b pb-1 text-[11px] uppercase tracking-wide">修改後 (申請中新版本)</h4>
                         ${newHazards.map((h, i) => renderDiffHazardBox(h, i, true, oldHazards[i])).join('')}
                     </div>
                 </div>
@@ -1469,8 +1467,8 @@
             const boxHighlight = isModified ? 'bg-amber-100/70 border-amber-300' : isAddedNew ? 'bg-emerald-50 border-emerald-300' : 'bg-white';
 
             return `
-                <div class="p-3 rounded-lg border text-xs space-y-2 ${boxHighlight}">
-                    <div class="font-bold text-indigo-700">#${idx + 1} 危害: ${h.hazard} ${isAddedNew ? '<span class="text-[10px] bg-emerald-600 text-white px-1.5 py-0.5 rounded">新增</span>' : ''}</div>
+                <div class="p-3.5 rounded-2xl border text-xs space-y-2 ${boxHighlight} shadow-sm">
+                    <div class="font-bold text-teal-700">#${idx + 1} 危害: ${h.hazard} ${isAddedNew ? '<span class="text-[10px] bg-teal-600 text-white px-1.5 py-0.5 rounded-full">新增</span>' : ''}</div>
                     <div>嚴重度: <span class="font-bold">${h.severity}</span> | 頻率: <span class="font-bold">${h.frequency}</span> | 風險等級: <span class="font-bold text-rose-600">${calculateRiskLevel(h.severity, h.frequency)} 級</span></div>
                     <div class="space-y-1 pt-1 border-t">
                         ${controlTypes.map(type => {
@@ -1622,20 +1620,20 @@
             if (!container) return;
 
             if (!globalData.items || globalData.items.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前尚無任何風險評估項目</div>`;
+                container.innerHTML = `<div class="text-stone-400 text-xs py-4 text-center">目前尚無任何風險評估項目</div>`;
                 return;
             }
 
             container.innerHTML = globalData.items.map(item => `
-                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                <div class="bg-stone-50 p-3.5 rounded-2xl border flex justify-between items-center text-xs shadow-sm">
                     <div>
-                        <span class="font-bold text-slate-900">${item.itemName}</span>
-                        <span class="text-xs text-indigo-600 font-semibold ml-2">[${item.department || '未分類部門'}]</span>
-                        <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
+                        <span class="font-bold text-stone-900">${item.itemName}</span>
+                        <span class="text-[11px] text-teal-700 font-semibold ml-2">[${item.department || '未分類部門'}]</span>
+                        <span class="text-[11px] text-stone-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
-                        <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-teal-50 text-teal-700 hover:bg-teal-100 px-3 py-1.5 rounded-xl font-medium transition">查看</button>
+                        <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-xl font-medium flex items-center gap-1 shadow-sm">
                             <i class="fa-solid fa-trash"></i> 刪除項目
                         </button>
                     </div>
@@ -1740,7 +1738,7 @@
         function renderItemList(items) {
             const container = document.getElementById('itemListContainer');
             if (items.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400 bg-white rounded-xl border">目前尚無符合條件的項目</div>`;
+                container.innerHTML = `<div class="text-center py-10 text-stone-400 bg-white rounded-3xl border border-stone-200/60 shadow-sm text-xs">目前尚無符合條件的項目</div>`;
                 return;
             }
 
@@ -1750,17 +1748,17 @@
                 const deptName = item.department || '未分類部門';
 
                 return `
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
-                    <div class="space-y-1">
+                <div class="bg-white p-4.5 rounded-3xl shadow-sm border border-stone-200/60 flex justify-between items-center hover:shadow-md transition">
+                    <div class="space-y-1.5">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">${deptName}</span>
-                            <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
-                            <span class="px-2.5 py-0.5 rounded text-[11px] font-bold ${badgeStyle}">風險等級: ${maxRisk}級</span>
+                            <span class="text-[11px] bg-teal-50 text-teal-800 font-bold px-2.5 py-0.5 rounded-xl border border-teal-100">${deptName}</span>
+                            <h3 class="font-bold text-sm text-stone-800">${item.itemName}</h3>
+                            <span class="px-2.5 py-0.5 rounded-xl text-[11px] font-bold ${badgeStyle}">風險等級: ${maxRisk}級</span>
                         </div>
-                        <p class="text-xs text-slate-500">已核准危害種類：${item.hazards.length} 項</p>
+                        <p class="text-[11px] text-stone-500">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
-                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
-                        查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-teal-50 text-teal-700 hover:bg-teal-100 px-3.5 py-2 rounded-2xl text-xs font-bold transition flex-shrink-0 shadow-sm">
+                        查看詳情與 QR <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i>
                     </button>
                 </div>
             `;}).join('');
@@ -1770,14 +1768,14 @@
             const lvl = parseInt(level) || 1;
             switch(lvl) {
                 case 4:
-                    return 'bg-rose-600 text-white border border-rose-700 shadow-sm animate-pulse';
+                    return 'bg-rose-500 text-white border border-rose-600 shadow-sm animate-pulse';
                 case 3:
-                    return 'bg-orange-500 text-white border border-orange-600';
+                    return 'bg-amber-500 text-white border border-amber-600';
                 case 2:
-                    return 'bg-amber-100 text-amber-800 border border-amber-300';
+                    return 'bg-yellow-100 text-yellow-800 border border-yellow-300';
                 case 1:
                 default:
-                    return 'bg-blue-50 text-blue-700 border border-blue-200';
+                    return 'bg-teal-50 text-teal-700 border border-teal-200';
             }
         }
 
@@ -1786,7 +1784,7 @@
             const container = document.getElementById('detailContent');
             
             if (!item) {
-                container.innerHTML = `<div class="text-center py-8 text-slate-400">找不到該項目「${itemName}」的詳細資料或尚未通過審核。</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-stone-400 text-xs">找不到該項目「${itemName}」的詳細資料或尚未通過審核。</div>`;
                 return;
             }
 
@@ -1804,23 +1802,23 @@
                 <div class="flex justify-between items-start border-b pb-4 gap-4">
                     <div>
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">${deptName}</span>
-                            <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
-                            <button onclick="openEditModal('${item.itemName}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                            <span class="text-xs bg-teal-50 text-teal-800 font-bold px-2.5 py-0.5 rounded-xl border border-teal-100">${deptName}</span>
+                            <h2 class="text-base font-bold text-stone-900">${item.itemName}</h2>
+                            <button onclick="openEditModal('${item.itemName}')" class="bg-teal-50 hover:bg-teal-100 text-teal-700 px-3 py-1.5 rounded-2xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
                                 <i class="fa-solid fa-pen-to-square"></i> 申請編輯風險評估
                             </button>
                         </div>
-                        <p class="text-xs text-slate-500 mt-1">完整風險評估與所有危害之五大控制措施明細</p>
-                        ${hasPendingEdit ? `<span class="inline-block mt-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">⚠️ 此設備有修改申請正在審核中</span>` : ''}
+                        <p class="text-[11px] text-stone-500 mt-1">完整風險評估與所有危害之五大控制措施明細</p>
+                        ${hasPendingEdit ? `<span class="inline-block mt-1.5 bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full">⚠️ 此設備有修改申請正在審核中</span>` : ''}
                     </div>
                     
                     <div class="flex items-center gap-3 flex-shrink-0">
                         <div class="flex flex-col items-center">
-                            <div class="text-[10px] text-slate-400 mb-1">設備照片</div>
-                            <div id="photo-box" class="w-[100px] h-[100px] bg-slate-50 border rounded-lg shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                            <div class="text-[10px] text-stone-400 mb-1">設備照片</div>
+                            <div id="photo-box" class="w-[100px] h-[100px] bg-stone-50 border rounded-2xl shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
                                 ${hasPhoto ? `
                                     <img src="${item.photoBase64}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox('${item.photoBase64}')" title="點擊放大圖片">
-                                    <button onclick="requestDeletePhoto('${item.itemName}')" class="absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center transition" title="申請刪除照片">
+                                    <button onclick="requestDeletePhoto('${item.itemName}')" class="absolute top-1 right-1 bg-stone-900/60 hover:bg-rose-500 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center transition" title="申請刪除照片">
                                         <i class="fa-solid fa-xmark"></i>
                                     </button>
                                 ` : isPhotoPending ? `
@@ -1828,8 +1826,8 @@
                                 ` : isPhotoDeleteReq ? `
                                     <span class="text-[9px] text-rose-600 text-center font-bold px-1">刪除申請審核中</span>
                                 ` : `
-                                    <label class="cursor-pointer flex flex-col items-center justify-center w-full h-full text-indigo-600 hover:bg-indigo-50 transition">
-                                        <i class="fa-solid fa-camera text-lg mb-1"></i>
+                                    <label class="cursor-pointer flex flex-col items-center justify-center w-full h-full text-teal-600 hover:bg-teal-50/50 transition">
+                                        <i class="fa-solid fa-camera text-base mb-1"></i>
                                         <span class="text-[9px] font-bold">新增相片</span>
                                         <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, '${item.itemName}')">
                                     </label>
@@ -1839,19 +1837,19 @@
 
                         ${isFullyApproved ? `
                         <div class="flex flex-col items-center">
-                            <div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>
-                            <div id="qrcode-box" class="p-1.5 bg-white border rounded-lg shadow-sm text-center w-[100px] h-[100px] flex items-center justify-center"></div>
+                            <div class="text-[10px] text-stone-400 mb-1">設備專屬 QR</div>
+                            <div id="qrcode-box" class="p-1.5 bg-white border rounded-2xl shadow-sm text-center w-[100px] h-[100px] flex items-center justify-center"></div>
                         </div>
                         ` : ''}
                     </div>
                 </div>
                 
                 ${approvedHazards.length > 0 ? `
-                <div class="flex gap-2 pb-2">
-                    <button type="button" onclick="toggleAllDetailAccordions(true)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-xs font-medium transition">
+                <div class="flex gap-2 pb-1">
+                    <button type="button" onclick="toggleAllDetailAccordions(true)" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3.5 py-1.5 rounded-2xl text-xs font-medium transition">
                         <i class="fa-solid fa-angles-down mr-1"></i> 展開全部
                     </button>
-                    <button type="button" onclick="toggleAllDetailAccordions(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-medium transition">
+                    <button type="button" onclick="toggleAllDetailAccordions(false)" class="bg-stone-100 hover:bg-stone-200 text-stone-700 px-3.5 py-1.5 rounded-2xl text-xs font-medium transition">
                         <i class="fa-solid fa-angles-up mr-1"></i> 收合全部
                     </button>
                 </div>
@@ -1862,23 +1860,23 @@
                         const badgeStyle = getRiskBadgeStyle(h.riskLevel);
                         const accordionId = `detail-accordion-${idx}`;
                         return `
-                        <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden shadow-sm detail-accordion-item">
-                            <div class="p-4 flex justify-between items-center cursor-pointer bg-slate-50 hover:bg-slate-100 transition select-none" onclick="toggleDetailAccordion('${accordionId}')">
+                        <div class="bg-stone-50/80 rounded-2xl border border-stone-200/60 overflow-hidden shadow-sm detail-accordion-item">
+                            <div class="p-4 flex justify-between items-center cursor-pointer bg-stone-50 hover:bg-stone-100/80 transition select-none" onclick="toggleDetailAccordion('${accordionId}')">
                                 <div class="flex items-center gap-2">
-                                    <i id="icon-${accordionId}" class="fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform"></i>
-                                    <span class="font-bold text-indigo-700 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
+                                    <i id="icon-${accordionId}" class="fa-solid fa-chevron-right text-teal-600 text-xs transition-transform"></i>
+                                    <span class="font-bold text-teal-800 text-xs">#${idx + 1} 危害種類：${h.hazard}</span>
                                 </div>
-                                <span class="px-2.5 py-1 rounded text-xs font-bold ${badgeStyle}">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
+                                <span class="px-3 py-1 rounded-xl text-xs font-bold ${badgeStyle}">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
                             
-                            <div id="${accordionId}" class="hidden p-4 bg-white border-t border-slate-200 space-y-3">
-                                <div class="text-xs font-bold text-slate-700">五大危害控制措施細項：</div>
+                            <div id="${accordionId}" class="hidden p-4 bg-white border-t border-stone-200/60 space-y-3">
+                                <div class="text-xs font-bold text-stone-700">五大危害控制措施細項：</div>
                                 ${controlTypes.map(type => {
                                     const methods = (h.controlHierarchy && h.controlHierarchy[type]) ? h.controlHierarchy[type] : ['無'];
                                     return `
-                                        <div class="bg-slate-50 p-2.5 rounded border border-slate-100 text-xs">
-                                            <span class="font-bold text-indigo-800 block mb-1">${controlLabels[type]}</span>
-                                            <ul class="list-disc list-inside text-slate-600 space-y-0.5">
+                                        <div class="bg-stone-50 p-3 rounded-xl border border-stone-100 text-xs">
+                                            <span class="font-bold text-teal-800 block mb-1">${controlLabels[type]}</span>
+                                            <ul class="list-disc list-inside text-stone-600 space-y-0.5">
                                                 ${methods.map(m => `<li>${m}</li>`).join('')}
                                             </ul>
                                         </div>
@@ -1907,10 +1905,10 @@
             
             if (contentEl.classList.contains('hidden')) {
                 contentEl.classList.remove('hidden');
-                iconEl.className = "fa-solid fa-chevron-down text-indigo-600 text-xs transition-transform";
+                iconEl.className = "fa-solid fa-chevron-down text-teal-600 text-xs transition-transform";
             } else {
                 contentEl.classList.add('hidden');
-                iconEl.className = "fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform";
+                iconEl.className = "fa-solid fa-chevron-right text-teal-600 text-xs transition-transform";
             }
         }
 
@@ -1923,10 +1921,10 @@
 
                 if (expand) {
                     contentEl.classList.remove('hidden');
-                    iconEl.className = "fa-solid fa-chevron-down text-indigo-600 text-xs transition-transform";
+                    iconEl.className = "fa-solid fa-chevron-down text-teal-600 text-xs transition-transform";
                 } else {
                     contentEl.classList.add('hidden');
-                    iconEl.className = "fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform";
+                    iconEl.className = "fa-solid fa-chevron-right text-teal-600 text-xs transition-transform";
                 }
             });
         }
@@ -1940,7 +1938,7 @@
             const nameInput = document.getElementById('formItemName');
             nameInput.value = '';
             nameInput.readOnly = false;
-            nameInput.className = "w-full px-3 py-2 border rounded-lg text-sm";
+            nameInput.className = "w-full px-3 py-2.5 border rounded-2xl text-xs bg-stone-50";
 
             setupDeptDropdownForModal('');
             document.getElementById('addModal').classList.remove('hidden');
@@ -1960,7 +1958,7 @@
             const nameInput = document.getElementById('formItemName');
             nameInput.value = itemName;
             nameInput.readOnly = true;
-            nameInput.className = "w-full px-3 py-2 border rounded-lg text-sm bg-slate-100 text-slate-500 cursor-not-allowed";
+            nameInput.className = "w-full px-3 py-2.5 border rounded-2xl text-xs bg-stone-100 text-stone-500 cursor-not-allowed";
 
             setupDeptDropdownForModal(item.department || '未分類部門', true);
             document.getElementById('addModal').classList.remove('hidden');
@@ -1995,11 +1993,11 @@
 
             if (isLocked) {
                 selectEl.disabled = true;
-                selectEl.className = "w-full px-3 py-2 border rounded-lg text-xs bg-slate-100 text-slate-500 cursor-not-allowed";
+                selectEl.className = "w-full px-3 py-2.5 border rounded-2xl text-xs bg-stone-100 text-stone-500 cursor-not-allowed";
                 btnEl.classList.add('hidden');
             } else {
                 selectEl.disabled = false;
-                selectEl.className = "w-full px-3 py-2 border rounded-lg text-xs bg-white";
+                selectEl.className = "w-full px-3 py-2.5 border rounded-2xl text-xs bg-white";
                 btnEl.classList.remove('hidden');
             }
         }
@@ -2043,7 +2041,7 @@
                 historicalHazardNames.map(h => `<option value="${h}" ${existingData && existingData.hazard === h ? 'selected' : ''}>${h}</option>`).join('');
 
             const div = document.createElement('div');
-            div.className = "p-4 bg-slate-50 border rounded-xl space-y-3 hazard-block transition-all shadow-sm";
+            div.className = "p-4 bg-stone-50 border border-stone-200/60 rounded-2xl space-y-3 hazard-block transition-all shadow-sm";
             div.id = blockId;
             div.setAttribute('data-expanded', 'true');
             
@@ -2052,26 +2050,26 @@
             div.innerHTML = `
                 <div class="flex justify-between items-center cursor-pointer block-header" onclick="toggleHazardBlock('${blockId}')">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-bold text-indigo-600"><i class="fa-solid fa-chevron-down mr-1 toggle-icon"></i> 危害種類區塊 (編輯中)</span>
-                        <span class="text-xs font-semibold text-slate-500 preview-title">${existingData ? `(${existingData.hazard})` : ''}</span>
+                        <span class="text-xs font-bold text-teal-700"><i class="fa-solid fa-chevron-down mr-1 toggle-icon"></i> 危害種類區塊 (編輯中)</span>
+                        <span class="text-xs font-semibold text-stone-500 preview-title">${existingData ? `(${existingData.hazard})` : ''}</span>
                     </div>
-                    <button type="button" onclick="event.stopPropagation(); document.getElementById('${blockId}').remove()" class="text-red-500 hover:text-red-700 text-xs"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
+                    <button type="button" onclick="event.stopPropagation(); document.getElementById('${blockId}').remove()" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
                 </div>
                 <div class="block-content space-y-3 pt-2">
                     <div>
                         <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-medium">危害種類 <span class="text-red-500">*</span></label>
-                            <button type="button" id="btn-toggle-hazard-${blockId}" onclick="toggleHazardInputMode('${blockId}')" class="text-[11px] text-indigo-600 hover:underline font-medium">
+                            <label class="block text-xs font-medium">危害種類 <span class="text-rose-500">*</span></label>
+                            <button type="button" id="btn-toggle-hazard-${blockId}" onclick="toggleHazardInputMode('${blockId}')" class="text-[11px] text-teal-600 hover:underline font-medium">
                                 ${isCustomHazard ? '↩️ 選回歷史詞庫' : '+ 沒有想要的？手動輸入'}
                             </button>
                         </div>
-                        <select id="hazard-select-${blockId}" onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white ${isCustomHazard ? 'hidden' : ''}">${hazardOptions}</select>
-                        <input type="text" id="hazard-input-${blockId}" value="${isCustomHazard ? existingData.hazard : ''}" oninput="onHazardInputChange('${blockId}', this.value)" class="${isCustomHazard ? '' : 'hidden'} w-full px-3 py-1.5 border rounded-lg text-xs" placeholder="請輸入自訂危害種類描述...">
+                        <select id="hazard-select-${blockId}" onchange="onHazardSelectChange('${blockId}', this.value)" class="w-full px-3 py-2 border rounded-xl text-xs bg-white ${isCustomHazard ? 'hidden' : ''}">${hazardOptions}</select>
+                        <input type="text" id="hazard-input-${blockId}" value="${isCustomHazard ? existingData.hazard : ''}" oninput="onHazardInputChange('${blockId}', this.value)" class="${isCustomHazard ? '' : 'hidden'} w-full px-3 py-2 border rounded-xl text-xs bg-white" placeholder="請輸入自訂危害種類描述...">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block text-xs font-medium mb-1">嚴重度 (1~4)</label>
-                            <select name="severity" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
+                            <select name="severity" class="w-full px-3 py-2 border rounded-xl text-xs bg-white">
                                 <option value="1" ${existingData && existingData.severity == 1 ? 'selected' : ''}>1 級 (輕微)</option>
                                 <option value="2" ${existingData && existingData.severity == 2 ? 'selected' : ''}>2 級 (中等)</option>
                                 <option value="3" ${existingData && existingData.severity == 3 ? 'selected' : ''}>3 級 (嚴重)</option>
@@ -2080,7 +2078,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium mb-1">發生頻率 (1~4)</label>
-                            <select name="frequency" class="w-full px-2 py-1.5 border rounded-lg text-xs bg-white">
+                            <select name="frequency" class="w-full px-3 py-2 border rounded-xl text-xs bg-white">
                                 <option value="1" ${existingData && existingData.frequency == 1 ? 'selected' : ''}>1 級 (極低)</option>
                                 <option value="2" ${existingData && existingData.frequency == 2 ? 'selected' : ''}>2 級 (偶發)</option>
                                 <option value="3" ${existingData && existingData.frequency == 3 ? 'selected' : ''}>3 級 (經常)</option>
@@ -2089,15 +2087,15 @@
                         </div>
                     </div>
                     <div class="space-y-2 pt-2 border-t">
-                        <div class="text-xs font-bold text-slate-700">
+                        <div class="text-xs font-bold text-stone-700">
                             五大控制措施填寫：
                             <span class="text-[11px] text-amber-600 font-semibold ml-1">(若無對應措施可直接不選，系統將自動帶入「無」)</span>
                         </div>
                         ${controlTypes.map(type => `
                             <div class="space-y-1" data-control-type="${type}">
                                 <div class="flex justify-between items-center">
-                                    <label class="text-[11px] font-semibold text-slate-600">${controlLabels[type]}</label>
-                                    <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-indigo-600 hover:underline">+ 方法</button>
+                                    <label class="text-[11px] font-semibold text-stone-600">${controlLabels[type]}</label>
+                                    <button type="button" onclick="addControlRow('${blockId}', '${type}')" class="text-[10px] text-teal-600 hover:underline">+ 方法</button>
                                 </div>
                                 <div class="sub-container-${type} space-y-1"></div>
                             </div>
@@ -2172,7 +2170,7 @@
 
             const previewSpan = block.querySelector('.preview-title');
             previewSpan.textContent = hName ? `(已填寫: ${hName})` : '(尚未填寫危害名稱)';
-            block.classList.add('bg-slate-100');
+            block.classList.add('bg-stone-100/60');
         }
 
         function expandHazardBlock(block) {
@@ -2180,7 +2178,7 @@
             block.querySelector('.block-content').classList.remove('hidden');
             block.querySelector('.toggle-icon').className = "fa-solid fa-chevron-down mr-1 toggle-icon";
             block.querySelector('.preview-title').textContent = '';
-            block.classList.remove('bg-slate-100');
+            block.classList.remove('bg-stone-100/60');
         }
 
         function onHazardSelectChange(blockId, selectedValue) {
@@ -2246,10 +2244,10 @@
             div.className = "flex gap-1 items-center";
             div.id = rowId;
             div.innerHTML = `
-                <select id="ctrl-select-${rowId}" class="control-history-select w-full px-2 py-1 border rounded text-[11px] bg-white ${isCustomDefault ? 'hidden' : ''}">${controlOptionsHtml}</select>
-                <input type="text" id="ctrl-input-${rowId}" value="${defaultValue}" placeholder="請輸入自訂控制方法..." class="${isCustomDefault ? '' : 'hidden'} w-full px-2 py-1 border rounded text-[11px]">
-                <button type="button" id="ctrl-btn-${rowId}" onclick="toggleControlInputMode('${rowId}')" class="text-[10px] text-indigo-600 hover:underline flex-shrink-0 px-1">${isCustomDefault ? '↩️選歷史' : '＋手動輸入'}</button>
-                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-500 hover:text-red-700 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
+                <select id="ctrl-select-${rowId}" class="control-history-select w-full px-2.5 py-1.5 border rounded-xl text-[11px] bg-white ${isCustomDefault ? 'hidden' : ''}">${controlOptionsHtml}</select>
+                <input type="text" id="ctrl-input-${rowId}" value="${defaultValue}" placeholder="請輸入自訂控制方法..." class="${isCustomDefault ? '' : 'hidden'} w-full px-2.5 py-1.5 border rounded-xl text-[11px] bg-white">
+                <button type="button" id="ctrl-btn-${rowId}" onclick="toggleControlInputMode('${rowId}')" class="text-[10px] text-teal-600 hover:underline flex-shrink-0 px-1 font-medium">${isCustomDefault ? '↩️選歷史' : '＋手動'}</button>
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-rose-500 hover:text-rose-700 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
             `;
             container.appendChild(div);
         }
@@ -2269,7 +2267,7 @@
                 inputEl.classList.add('hidden');
                 inputEl.value = '';
                 selectEl.classList.remove('hidden');
-                btnEl.textContent = "＋手動輸入";
+                btnEl.textContent = "＋手動";
             }
         }
 
