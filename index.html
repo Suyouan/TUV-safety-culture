@@ -157,7 +157,7 @@
                                 <i class="fa-solid fa-folder-open"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">現有風險評估管理</h3>
-                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備評估。</p>
+                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備與動作評估。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span id="dashboardItemCount" class="font-bold text-indigo-600">載入中...</span>
@@ -171,7 +171,7 @@
                                 <i class="fa-solid fa-key"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">更改管理員密碼</h3>
-                            <p class="text-xs text-slate-500">變更後台登入密碼，確保系統安全性。</p>
+                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至系統後端確保安全性。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span class="text-slate-400">系統設定</span>
@@ -191,7 +191,7 @@
                     </div>
 
                     <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理</h3>
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
                         <div id="adminManageListContainer" class="space-y-3"></div>
                     </div>
 
@@ -275,7 +275,18 @@
             ppe: '5. 個人防護具 (PPE)'
         };
 
-        window.addEventListener('DOMContentLoaded', () => {
+        // 風險矩陣對應函數：確保風險等級最大為 4 級
+        function calculateRiskLevel(severity, frequency) {
+            const s = parseInt(severity) || 1;
+            const f = parseInt(frequency) || 1;
+            const raw = s * f;
+            if (raw >= 13) return 4;
+            if (raw >= 7) return 3;
+            if (raw >= 4) return 2;
+            return 1;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
             initData();
             checkUrlParams();
         });
@@ -355,6 +366,14 @@
                 const res = await fetch(`${API_URL}?action=getData`);
                 const json = await res.json();
                 if (json.status === 'success') {
+                    // 確保前端載入時也校正風險等級最大為 4 級
+                    json.items.forEach(item => {
+                        if (item.hazards) {
+                            item.hazards.forEach(h => {
+                                h.riskLevel = calculateRiskLevel(h.severity, h.frequency);
+                            });
+                        }
+                    });
                     globalData = json;
                     sessionStorage.setItem('safety_culture_cache', JSON.stringify(json));
                     processAndRenderData();
@@ -592,7 +611,7 @@
             if (pendingHazards.length > 0) {
                 html += `<div class="text-xs font-bold text-slate-500 mb-2 uppercase">危害與評估審核 (${pendingHazards.length})</div>`;
                 html += pendingHazards.map(p => `
-                    <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
+                    <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
                         <div>
                             <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
                         </div>
@@ -628,6 +647,114 @@
             }
 
             container.innerHTML = html;
+        }
+
+        async function adminApprovePhoto(itemName, approve) {
+            showLoading("處理中...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'approvePhoto', itemName, approve })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    sessionStorage.removeItem('safety_culture_cache');
+                    fetchData(false);
+                } else {
+                    alert(json.message);
+                }
+            } catch (err) {
+                hideLoading();
+                alert('網路連線失敗');
+            }
+        }
+
+        async function requestDeletePhoto(itemName) {
+            if (!confirm('確定要提出刪除此照片的申請嗎？須等管理員審核通過後才會移除。')) return;
+            showLoading("送出申請...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'requestDeletePhoto', itemName })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    alert('已成功送出刪除照片申請，等待管理員審核！');
+                    sessionStorage.removeItem('safety_culture_cache');
+                    await fetchData(false);
+                    router.goDetail(itemName);
+                } else {
+                    alert(json.message);
+                }
+            } catch (err) {
+                hideLoading();
+                alert('網路連線失敗');
+            }
+        }
+
+        // 改善 2：優化圖片壓縮解析度與品質，避免過大導致網路連線失敗
+        function handlePhotoUpload(event, itemName) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            showLoading("正在壓縮並上傳照片...");
+            reader.onload = function(e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = async function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const MAX_WIDTH = 400;  // 降至 400 像素以符合 GAS 傳輸大小限制
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); // 品質調降至 0.5
+
+                    try {
+                        const res = await fetch(API_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'uploadPhoto',
+                                itemName: itemName,
+                                photoBase64: compressedBase64
+                            })
+                        });
+                        const json = await res.json();
+                        hideLoading();
+                        if (json.status === 'success') {
+                            alert('設備照片已成功上傳，等待管理員審核！');
+                            sessionStorage.removeItem('safety_culture_cache');
+                            await fetchData(false);
+                            router.goDetail(itemName);
+                        } else {
+                            alert(json.message || '上傳失敗');
+                        }
+                    } catch (err) {
+                        hideLoading();
+                        alert('網路連線失敗，請檢查照片檔案大小或連線狀況。');
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
         }
 
         function renderAdminManageList() {
@@ -685,136 +812,6 @@
                 console.error('更新失敗', err);
                 fetchData(false);
             }
-        }
-
-        async function adminApprovePhoto(itemName, approve) {
-            showLoading("處理中...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'approvePhoto', itemName, approve })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    sessionStorage.removeItem('safety_culture_cache');
-                    fetchData(false);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        async function adminDeletePhotoDirect(itemName) {
-            if (!confirm('確定要直接刪除此設備的照片嗎？')) return;
-            showLoading("刪除中...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'adminDeletePhoto', itemName })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(false);
-                    router.goDetail(itemName);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        async function requestDeletePhoto(itemName) {
-            if (!confirm('確定要提出刪除此照片的申請嗎？須等管理員審核通過後才會移除。')) return;
-            showLoading("送出申請...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'requestDeletePhoto', itemName })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    alert('已成功送出刪除照片申請，等待管理員審核！');
-                    sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(false);
-                    router.goDetail(itemName);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        function handlePhotoUpload(event, itemName) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            showLoading("正在壓縮並上傳照片...");
-            reader.onload = async function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = async function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 600;
-                    const MAX_HEIGHT = 600;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-                    try {
-                        const res = await fetch(API_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                action: 'uploadPhoto',
-                                itemName: itemName,
-                                photoBase64: compressedBase64
-                            })
-                        });
-                        const json = await res.json();
-                        hideLoading();
-                        if (json.status === 'success') {
-                            alert('設備照片已成功上傳，等待管理員審核！');
-                            sessionStorage.removeItem('safety_culture_cache');
-                            await fetchData(false);
-                            router.goDetail(itemName);
-                        } else {
-                            alert(json.message || '上傳失敗');
-                        }
-                    } catch (err) {
-                        hideLoading();
-                        alert('網路連線失敗');
-                    }
-                };
-            };
-            reader.readAsDataURL(file);
         }
 
         async function deleteItemRecord(id) {
@@ -1470,8 +1467,9 @@
                 hideLoading();
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
-                    closeAddModal();
+                    closeAddModal(); // 確保送出成功後關閉 Modal 視窗
                     sessionStorage.removeItem('safety_culture_cache');
+                    fetchData(false);
                 } else {
                     alert(json.message || '送出失敗');
                 }
