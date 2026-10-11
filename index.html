@@ -60,6 +60,9 @@
                 <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
             <div class="flex items-center gap-2">
+                <button onclick="openQuizModal()" class="bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-graduation-cap"></i> 安全隨堂考
+                </button>
                 <button onclick="router.goAdmin()" class="relative bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-lock"></i> 管理後台
                     <span id="pendingBadge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
@@ -262,10 +265,25 @@
         </div>
     </div>
 
+    <!-- 安全知識隨堂考 Modal -->
+    <div id="quizModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[999] p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-graduation-cap text-indigo-600"></i> 安全知識隨堂考
+                </h3>
+                <button onclick="closeQuizModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="quizBody"></div>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
         let globalData = { items: [], hazardControlHistory: {} };
         let html5QrCode = null;
+        let quizState = { questions: [], currentIndex: 0, userAnswers: [] };
+        
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
             elimination: '1. 消除 (Elimination)',
@@ -452,7 +470,6 @@
             }
         }
 
-        // 核心邏輯：動態建立歷史危害與五大控制措施詞庫
         function buildHazardControlHistory() {
             const historyMap = {};
             globalData.items.forEach(item => {
@@ -494,6 +511,248 @@
                 });
             });
         }
+
+        // --- 安全知識隨堂考功能實作 ---
+        function openQuizModal() {
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            if (approvedItems.length === 0) {
+                alert('目前系統中尚無已核准的風險評估項目可供出題！');
+                return;
+            }
+
+            document.getElementById('quizModal').classList.remove('hidden');
+            renderQuizStartScreen();
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.add('hidden');
+        }
+
+        function renderQuizStartScreen() {
+            const body = document.getElementById('quizBody');
+            body.innerHTML = `
+                <div class="text-center space-y-4 py-6">
+                    <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+                        <i class="fa-solid fa-clipboard-question"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-base text-slate-800">歡迎參加安全知識隨堂考</h4>
+                        <p class="text-xs text-slate-500 mt-1">系統將從現有已核准的風險評估資料庫中隨機出題，檢驗您對設備危害與控制措施的了解。</p>
+                    </div>
+                    <button onclick="startQuiz()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium text-sm transition shadow-sm">
+                        開始測驗 (5 題)
+                    </button>
+                </div>
+            `;
+        }
+
+        function startQuiz() {
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            // 收集所有可能的危害名稱與控制方法作為干擾項庫
+            const allHazardsPool = [];
+            const allMethodsPool = [];
+            approvedItems.forEach(item => {
+                item.hazards.forEach(h => {
+                    if (h.hazard) allHazardsPool.push(h.hazard.trim());
+                    if (h.controlHierarchy) {
+                        controlTypes.forEach(type => {
+                            if (Array.isArray(h.controlHierarchy[type])) {
+                                h.controlHierarchy[type].forEach(m => {
+                                    if (m && m !== '無') allMethodsPool.push(m.trim());
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            let questions = [];
+            // 隨機組 5 題
+            const questionCount = Math.min(5, approvedItems.length * 2);
+            
+            for (let i = 0; i < questionCount; i++) {
+                // 隨機選定一個項目與危害
+                const randItem = approvedItems[Math.floor(Math.random() * approvedItems.length)];
+                if (!randItem.hazards || randItem.hazards.length === 0) continue;
+                const randHazard = randItem.hazards[Math.floor(Math.random() * randItem.hazards.length)];
+
+                // 隨機決定題型：1. 危害辨識題 / 2. 控制措施配對題
+                const qType = Math.random() > 0.5 ? 1 : 2;
+
+                if (qType === 1) {
+                    // 題型 1：危害辨識
+                    const correctAnswer = randHazard.hazard.trim();
+                    // 嚴格過濾干擾項：排除當前正確答案，且排除該設備已有的其他危害
+                    const itemHazardNames = randItem.hazards.map(h => h.hazard.trim());
+                    const wrongPool = allHazardsPool.filter(h => h !== correctAnswer && !itemHazardNames.includes(h));
+                    
+                    if (wrongPool.length < 3) continue; // 若干擾項不足則跳過此題
+
+                    // 隨機抽 3 個錯誤選項
+                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+
+                    questions.push({
+                        type: 1,
+                        question: `請問針對設備或動作「<span class="text-indigo-600 font-bold">${randItem.itemName}</span>」，下列哪一項是其主要的危害種類？`,
+                        correctAnswer: correctAnswer,
+                        options: options
+                    });
+                } else {
+                    // 題型 2：控制措施配對題 (選出有效控制方法)
+                    let availableTypes = controlTypes.filter(t => randHazard.controlHierarchy && Array.isArray(randHazard.controlHierarchy[t]) && randHazard.controlHierarchy[t].some(m => m !== '無'));
+                    if (availableTypes.length === 0) continue;
+
+                    const targetType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                    const validMethods = randHazard.controlHierarchy[targetType].filter(m => m !== '無');
+                    if (validMethods.length === 0) continue;
+
+                    const correctAnswer = validMethods[Math.floor(Math.random() * validMethods.length)].trim();
+                    const wrongPool = allMethodsPool.filter(m => m !== correctAnswer);
+                    if (wrongPool.length < 3) continue;
+
+                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+
+                    questions.push({
+                        type: 2,
+                        question: `針對危害「<span class="text-indigo-600 font-bold">${randHazard.hazard}</span>」，下列哪一項屬於正確的「<span class="text-slate-800 font-bold">${controlLabels[targetType]}</span>」？`,
+                        correctAnswer: correctAnswer,
+                        options: options
+                    });
+                }
+            }
+
+            if (questions.length === 0) {
+                alert('題庫資料不足，無法產生足夠的測驗題目，請先新增更多已核准的風險評估資料！');
+                closeQuizModal();
+                return;
+            }
+
+            quizState = {
+                questions: questions,
+                currentIndex: 0,
+                userAnswers: new Array(questions.length).fill(null)
+            };
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const q = quizState.questions[quizState.currentIndex];
+            const body = document.getElementById('quizBody');
+
+            body.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-400">
+                        <span>第 ${quizState.currentIndex + 1} 題 / 共 ${quizState.questions.length} 題</span>
+                        <span>得分進度</span>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-800 leading-relaxed">
+                        ${q.question}
+                    </div>
+                    <div class="space-y-2 pt-2">
+                        ${q.options.map((opt, idx) => {
+                            const isSelected = quizState.userAnswers[quizState.currentIndex] === opt;
+                            const btnStyle = isSelected ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-bold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100';
+                            return `
+                                <div onclick="selectQuizOption('${opt.replace(/'/g, "\\'")}')" class="p-3 border rounded-xl cursor-pointer text-xs transition flex items-center gap-3 ${btnStyle}">
+                                    <span class="w-6 h-6 rounded-full bg-white border flex items-center justify-center font-bold text-[11px] text-slate-500">${String.fromCharCode(65 + idx)}</span>
+                                    <span>${opt}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <div class="flex justify-between items-center pt-4 border-t">
+                        <button onclick="prevQuizQuestion()" ${quizState.currentIndex === 0 ? 'disabled class="px-4 py-2 bg-slate-100 text-slate-400 rounded-lg text-xs cursor-not-allowed"' : 'class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-medium"'}>
+                            上一題
+                        </button>
+                        ${quizState.currentIndex < quizState.questions.length - 1 ? `
+                            <button onclick="nextQuizQuestion()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium">下一題</button>
+                        ` : `
+                            <button onclick="submitQuiz()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold">送出測驗</button>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectQuizOption(option) {
+            quizState.userAnswers[quizState.currentIndex] = option;
+            renderQuizQuestion();
+        }
+
+        function prevQuizQuestion() {
+            if (quizState.currentIndex > 0) {
+                quizState.currentIndex--;
+                renderQuizQuestion();
+            }
+        }
+
+        function nextQuizQuestion() {
+            if (quizState.currentIndex < quizState.questions.length - 1) {
+                quizState.currentIndex++;
+                renderQuizQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            let correctCount = 0;
+            quizState.questions.forEach((q, idx) => {
+                if (quizState.userAnswers[idx] === q.correctAnswer) {
+                    correctCount++;
+                }
+            });
+
+            const score = Math.round((correctCount / quizState.questions.length) * 100);
+            const body = document.getElementById('quizBody');
+
+            let resultColor = score >= 80 ? 'text-emerald-600 bg-emerald-50' : score >= 60 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
+
+            body.innerHTML = `
+                <div class="text-center space-y-4 py-4">
+                    <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto text-3xl font-bold ${resultColor}">
+                        ${score}分
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-base text-slate-800">測驗結果結算</h4>
+                        <p class="text-xs text-slate-500 mt-1">您總共答對 <span class="font-bold text-slate-700">${correctCount}</span> 題 / 共 ${quizState.questions.length} 題</p>
+                    </div>
+
+                    <div class="space-y-2 text-left max-h-60 overflow-y-auto pr-1 border-t pt-3">
+                        ${quizState.questions.map((q, idx) => {
+                            const userAns = quizState.userAnswers[idx];
+                            const isCorrect = userAns === q.correctAnswer;
+                            return `
+                                <div class="p-2.5 rounded-lg border text-xs space-y-1 ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
+                                    <div class="font-bold text-slate-800">Q${idx + 1}:${q.question}</div>
+                                    <div class="text-[11px] ${isCorrect ? 'text-emerald-700 font-semibold' : 'text-rose-700'}">您的作答：${userAns || '未作答'}</div>
+                                    ${!isCorrect ? `<div class="text-[11px] text-emerald-700 font-semibold">正確解答：${q.correctAnswer}</div>` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="startQuiz()" class="w-1/2 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-xl font-medium text-xs transition">
+                            再考一次
+                        </button>
+                        <button onclick="closeQuizModal()" class="w-1/2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 rounded-xl font-medium text-xs transition">
+                            關閉視窗
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        // --- 隨堂考功能結束 ---
 
         async function verifyAdmin() {
             const password = document.getElementById('adminPasswordInput').value;
@@ -1160,7 +1419,6 @@
             document.getElementById('addModal').classList.add('hidden');
         }
 
-        // 從動態歷史累積 (hazardControlHistory) 中撈取危害名稱選項
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
@@ -1170,7 +1428,6 @@
                 collapseHazardBlock(b);
             });
 
-            // 自動撈取所有人曾經輸入過的所有危害名稱累積選單
             const historicalHazardNames = Object.keys(globalData.hazardControlHistory || {});
             const hazardOptions = `<option value="">-- 從歷史常用危害詞庫選擇 --</option>` +
                 historicalHazardNames.map(h => `<option value="${h}">${h}</option>`).join('');
@@ -1477,7 +1734,7 @@
                 }
             } catch (err) {
                 hideLoading();
-                alert('網路連線失敗，請稍後再試。');
+                alert('網路連線失敗請稍後再試。');
             }
         }
 
