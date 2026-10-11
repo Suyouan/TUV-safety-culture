@@ -264,7 +264,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyP_Jv5s1OVin_8Q5bgl44InNAVNyyjNkzcYH9UdnTsZG6Zs0JMQZT7f5SeY2P1X3BF/exec";
-        let globalData = { items: [], masterHazards: [], hazardControlHistory: {} };
+        let globalData = { items: [], hazardControlHistory: {} };
         let html5QrCode = null;
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
@@ -452,6 +452,7 @@
             }
         }
 
+        // 核心邏輯：動態建立歷史危害與五大控制措施詞庫
         function buildHazardControlHistory() {
             const historyMap = {};
             globalData.items.forEach(item => {
@@ -1159,7 +1160,7 @@
             document.getElementById('addModal').classList.add('hidden');
         }
 
-        // 核心修復：完整保留歷史常用危害詞庫下拉選單與區塊邏輯
+        // 從動態歷史累積 (hazardControlHistory) 中撈取危害名稱選項
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
@@ -1169,8 +1170,10 @@
                 collapseHazardBlock(b);
             });
 
+            // 自動撈取所有人曾經輸入過的所有危害名稱累積選單
+            const historicalHazardNames = Object.keys(globalData.hazardControlHistory || {});
             const hazardOptions = `<option value="">-- 從歷史常用危害詞庫選擇 --</option>` +
-                (globalData.masterHazards ? globalData.masterHazards.map(h => `<option value="${h}">${h}</option>`).join('') : '');
+                historicalHazardNames.map(h => `<option value="${h}">${h}</option>`).join('');
 
             const div = document.createElement('div');
             div.className = "p-4 bg-slate-50 border rounded-xl space-y-3 hazard-block transition-all shadow-sm";
