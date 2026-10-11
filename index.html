@@ -492,7 +492,6 @@
             renderAdminManageList();
         }
 
-        // --- 首頁宣傳橫幅檔期判斷與動態顯示 ---
         function checkAndRenderQuizBanner() {
             const banner = document.getElementById('activeQuizBanner');
             const descEl = document.getElementById('quizBannerTimeDesc');
@@ -626,7 +625,6 @@
             });
         }
 
-        // --- 核心組題產生器 ---
         function generateQuizQuestionsPool() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -702,7 +700,6 @@
             return questions;
         }
 
-        // --- 安全知識隨堂考 Modal ---
         function openQuizModal() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -843,7 +840,7 @@
                             const isCorrect = userAns === q.correctAnswer;
                             return `
                                 <div class="p-2.5 rounded-lg border text-xs space-y-1 ${isCorrect ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'}">
-                                    <div class="font-bold text-slate-800">Q${idx + 1}: ${q.question}</div>
+                                    <div class="font-bold text-slate-800">Q${idx + 1}:${q.question}</div>
                                     <div class="text-[11px] ${isCorrect ? 'text-emerald-700 font-semibold' : 'text-rose-700'}">您的作答：${userAns || '未作答'}</div>
                                     ${!isCorrect ? `<div class="text-[11px] text-emerald-700 font-semibold">正確解答：${q.correctAnswer}</div>` : ''}
                                 </div>
@@ -905,6 +902,89 @@
             document.body.removeChild(a);
         }
 
+        // --- 匯出 QR Code 標籤卡 (已優化：呈現全部危害種類與風險等級) ---
+        function exportLabelsPdf() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const riskFilter = document.getElementById('riskFilterSelect').value;
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            const targetItems = approvedItems.filter(item => {
+                const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
+                if (riskFilter && maxRisk.toString() !== riskFilter) return false;
+
+                if (!keyword) return true;
+                const matchName = item.itemName.toLowerCase().includes(keyword);
+                const matchSub = item.hazards.some(h => {
+                    if (h.hazard.toLowerCase().includes(keyword)) return true;
+                    return Object.values(h.controlHierarchy).some(methods => 
+                        methods.some(m => m.toLowerCase().includes(keyword))
+                    );
+                });
+                return matchName || matchSub;
+            });
+
+            if (targetItems.length === 0) {
+                alert('目前沒有符合條件的項目可供匯出標籤！');
+                return;
+            }
+
+            const container = document.getElementById('print-labels-container');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            targetItems.forEach((item, index) => {
+                const cardId = `label-qr-${index}`;
+                const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
+                const hasApprovedPhoto = item.photoBase64 && item.photoStatus === 'Approved';
+                
+                // 動態組合全部的危害種類與風險等級清單
+                const hazardsListHtml = item.hazards.map(h => {
+                    let badgeColor = 'text-blue-600';
+                    const lvl = parseInt(h.riskLevel) || 1;
+                    if (lvl === 4) badgeColor = 'text-rose-600 font-bold';
+                    else if (lvl === 3) badgeColor = 'text-orange-500 font-bold';
+                    else if (lvl === 2) badgeColor = 'text-amber-600';
+
+                    return `<div class="truncate text-[9px] leading-tight">• ${h.hazard} <span class="${badgeColor}">(${h.riskLevel}級)</span></div>`;
+                }).join('');
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = "label-card bg-white p-3 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[420px] h-[155px] mx-auto shadow-sm gap-2 overflow-hidden";
+                cardDiv.innerHTML = `
+                    <div class="space-y-1 pr-1 overflow-hidden flex-grow flex flex-col justify-between h-full py-0.5">
+                        <div>
+                            <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
+                            <h4 class="font-bold text-xs text-slate-900 truncate" style="max-width: 170px;" title="${item.itemName}">${item.itemName}</h4>
+                        </div>
+                        <div class="space-y-0.5 max-h-[50px] overflow-hidden">
+                            ${hazardsListHtml}
+                        </div>
+                        <div class="text-[8px] text-slate-400">請用手機掃描檢視五大控制措施</div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        ${hasApprovedPhoto ? `<img src="${item.photoBase64}" class="w-[85px] h-[85px] object-cover rounded border">` : ''}
+                        <div id="${cardId}" class="p-1 bg-white border rounded"></div>
+                    </div>
+                `;
+                container.appendChild(cardDiv);
+
+                new QRCode(document.getElementById(cardId), {
+                    text: currentUrl,
+                    width: 78,
+                    height: 78
+                });
+            });
+
+            setTimeout(() => {
+                window.print();
+                container.classList.add('hidden');
+                container.innerHTML = '';
+            }, 500);
+        }
+
         async function verifyAdmin() {
             const password = document.getElementById('adminPasswordInput').value;
             if (!password) {
@@ -958,7 +1038,6 @@
             updateDashboardCounts();
         }
 
-        // --- 管理員後台：測驗檔期與預覽設定 ---
         function initAdminQuizConfigFields() {
             const cfg = globalData.quizConfig;
             if (cfg) {
@@ -1345,73 +1424,6 @@
                 console.error('刪除失敗', err);
                 fetchData(false);
             }
-        }
-
-        function exportLabelsPdf() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const riskFilter = document.getElementById('riskFilterSelect').value;
-            const approvedItems = globalData.items.map(item => {
-                const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                return { ...item, hazards: validHazards };
-            }).filter(item => item.hazards.length > 0);
-
-            const targetItems = approvedItems.filter(item => {
-                const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
-                if (riskFilter && maxRisk.toString() !== riskFilter) return false;
-
-                if (!keyword) return true;
-                const matchName = item.itemName.toLowerCase().includes(keyword);
-                const matchSub = item.hazards.some(h => {
-                    if (h.hazard.toLowerCase().includes(keyword)) return true;
-                    return Object.values(h.controlHierarchy).some(methods => 
-                        methods.some(m => m.toLowerCase().includes(keyword))
-                    );
-                });
-                return matchName || matchSub;
-            });
-
-            if (targetItems.length === 0) {
-                alert('目前沒有符合條件的項目可供匯出標籤！');
-                return;
-            }
-
-            const container = document.getElementById('print-labels-container');
-            container.innerHTML = '';
-            container.classList.remove('hidden');
-
-            targetItems.forEach((item, index) => {
-                const cardId = `label-qr-${index}`;
-                const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
-                const hasApprovedPhoto = item.photoBase64 && item.photoStatus === 'Approved';
-                
-                const cardDiv = document.createElement('div');
-                cardDiv.className = "label-card bg-white p-3 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[420px] h-[150px] mx-auto shadow-sm gap-2";
-                cardDiv.innerHTML = `
-                    <div class="space-y-0.5 pr-1 overflow-hidden flex-grow">
-                        <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
-                        <h4 class="font-bold text-sm text-slate-900 truncate" style="max-width: 150px;" title="${item.itemName}">${item.itemName}</h4>
-                        <p class="text-[10px] text-slate-500">已核准危害：${item.hazards.length} 項</p>
-                        <p class="text-[9px] text-slate-400">請用手機掃描以檢視五大控制措施</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        ${hasApprovedPhoto ? `<img src="${item.photoBase64}" class="w-[85px] h-[85px] object-cover rounded border">` : ''}
-                        <div id="${cardId}" class="p-1 bg-white border rounded"></div>
-                    </div>
-                `;
-                container.appendChild(cardDiv);
-
-                new QRCode(document.getElementById(cardId), {
-                    text: currentUrl,
-                    width: 80,
-                    height: 80
-                });
-            });
-
-            setTimeout(() => {
-                window.print();
-                container.classList.add('hidden');
-                container.innerHTML = '';
-            }, 500);
         }
 
         function handleSearch() {
