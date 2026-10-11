@@ -38,7 +38,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 全螢幕 Loading 提示遮罩 -->
+    <!-- 全螢幕 Loading 提示遮罩 (僅在初次無快取或關鍵異動時顯示) -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
         <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
             <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
@@ -266,7 +266,7 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            fetchData();
+            initData();
             checkUrlParams();
         });
 
@@ -284,7 +284,8 @@
                 document.getElementById('view-home').classList.remove('hidden');
                 document.getElementById('view-detail').classList.add('hidden');
                 document.getElementById('view-admin').classList.add('hidden');
-                fetchData();
+                // 每次返回首頁時，直接以快取秒開，並在背景靜默更新
+                fetchData(false);
             },
             goDetail(itemName) {
                 document.getElementById('view-home').classList.add('hidden');
@@ -314,29 +315,63 @@
             }
         }
 
-        async function fetchData() {
-            showLoading("正在載入風險評估資料，請稍候...");
+        // 初始化資料：優先讀取 sessionStorage 快取達到秒開，同時背景拉取最新資料
+        function initData() {
+            const cached = sessionStorage.getItem('safety_culture_cache');
+            if (cached) {
+                try {
+                    globalData = JSON.parse(cached);
+                    processAndRenderData();
+                } catch (e) {
+                    console.error("快取解析失敗", e);
+                }
+            }
+            // 無論是否有快取，都在背景靜默更新一次確保跨裝置即時同步
+            fetchData(!cached);
+        }
+
+        // fetchData 支援 showLoader 參數：若為 false 則完全在背景執行不擋畫面
+        async function fetchData(showLoader = true) {
+            if (showLoader) {
+                showLoading("正在載入風險評估資料，請稍候...");
+            }
             try {
                 const res = await fetch(`${API_URL}?action=getData`);
                 const json = await res.json();
                 if (json.status === 'success') {
                     globalData = json;
-                    buildHazardControlHistory();
-                    updatePendingBadgeCount();
-                    updateDashboardCounts();
-
-                    const approvedItems = globalData.items.map(item => {
-                        const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                        return { ...item, hazards: validHazards };
-                    }).filter(item => item.hazards.length > 0);
-
-                    renderItemList(approvedItems);
+                    // 將最新資料存入 sessionStorage 供下次秒開使用
+                    sessionStorage.setItem('safety_culture_cache', JSON.stringify(json));
+                    processAndRenderData();
                 }
             } catch (err) {
                 console.error("資料載入失敗", err);
-                alert("資料載入失敗，請檢查網路連線或稍後再試。");
+                if (showLoader) {
+                    alert("資料載入失敗，請檢查網路連線或稍後再試。");
+                }
             } finally {
-                hideLoading();
+                if (showLoader) {
+                    hideLoading();
+                }
+            }
+        }
+
+        function processAndRenderData() {
+            buildHazardControlHistory();
+            updatePendingBadgeCount();
+            updateDashboardCounts();
+
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            renderItemList(approvedItems);
+            
+            // 如果目前人在管理後台審核頁或管理頁，順便更新清單
+            if (!document.getElementById('view-admin').classList.contains('hidden')) {
+                renderAdminPendingList();
+                renderAdminManageList();
             }
         }
 
@@ -568,11 +603,9 @@
                 const json = await res.json();
                 hideLoading();
                 if (json.status === 'success') {
-                    fetchData().then(() => {
-                        updateDashboardCounts();
-                        renderAdminPendingList();
-                        renderAdminManageList();
-                    });
+                    // 異動後清除快取並強制抓取最新資料
+                    sessionStorage.removeItem('safety_culture_cache');
+                    await fetchData(true);
                 } else {
                     alert(json.message);
                 }
@@ -593,11 +626,8 @@
                 const json = await res.json();
                 hideLoading();
                 if (json.status === 'success') {
-                    fetchData().then(() => {
-                        updateDashboardCounts();
-                        renderAdminPendingList();
-                        renderAdminManageList();
-                    });
+                    sessionStorage.removeItem('safety_culture_cache');
+                    await fetchData(true);
                 } else {
                     alert(json.message);
                 }
@@ -619,11 +649,8 @@
                 hideLoading();
                 if (json.status === 'success') {
                     alert('項目刪除成功！');
-                    fetchData().then(() => {
-                        updateDashboardCounts();
-                        renderAdminPendingList();
-                        renderAdminManageList();
-                    });
+                    sessionStorage.removeItem('safety_culture_cache');
+                    await fetchData(true);
                 } else {
                     alert(json.message);
                 }
@@ -732,19 +759,18 @@
             `).join('');
         }
         
-        // 根據風險等級 (1~4) 產生對應的漸進式強烈警示配色
         function getRiskBadgeStyle(level) {
             const lvl = parseInt(level) || 1;
             switch(lvl) {
                 case 4:
-                    return 'bg-rose-600 text-white border border-rose-700 shadow-sm animate-pulse'; // 第4級：鮮紅閃爍強烈警示
+                    return 'bg-rose-600 text-white border border-rose-700 shadow-sm animate-pulse';
                 case 3:
-                    return 'bg-orange-500 text-white border border-orange-600'; // 第3級：鮮明橘色警示
+                    return 'bg-orange-500 text-white border border-orange-600';
                 case 2:
-                    return 'bg-amber-100 text-amber-800 border border-amber-300'; // 第2級：黃/琥珀色注意
+                    return 'bg-amber-100 text-amber-800 border border-amber-300';
                 case 1:
                 default:
-                    return 'bg-blue-50 text-blue-700 border border-blue-200'; // 第1級：柔和藍色低風險
+                    return 'bg-blue-50 text-blue-700 border border-blue-200';
             }
         }
 
@@ -1053,6 +1079,8 @@
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
+                    // 新增後清除快取並重新抓取最新資料
+                    sessionStorage.removeItem('safety_culture_cache');
                     router.goHome();
                 } else {
                     alert(json.message || '送出失敗');
