@@ -296,7 +296,6 @@
                 document.getElementById('view-home').classList.add('hidden');
                 document.getElementById('view-detail').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
-                // 每次回到後台時重置回選單首頁
                 backToAdminMenu();
             }
         };
@@ -439,7 +438,7 @@
                     document.getElementById('adminLoginCard').classList.add('hidden');
                     document.getElementById('adminPanel').classList.remove('hidden');
                     updateDashboardCounts();
-                    renderAdminPendingList();
+                    renderAdminPendingList(); // 補回渲染待審核清單
                     renderAdminManageList();
                 } else {
                     alert(json.message || '密碼錯誤');
@@ -450,7 +449,6 @@
             }
         }
 
-        // 卡片點擊切換進入子功能頁面
         function openAdminSubView(viewType) {
             document.getElementById('adminDashboardMenu').classList.add('hidden');
             document.getElementById('adminSubViewContainer').classList.remove('hidden');
@@ -462,7 +460,6 @@
             document.getElementById(`subView-${viewType}`).classList.remove('hidden');
         }
 
-        // 返回管理選單儀表板
         function backToAdminMenu() {
             document.getElementById('adminDashboardMenu').classList.remove('hidden');
             document.getElementById('adminSubViewContainer').classList.add('hidden');
