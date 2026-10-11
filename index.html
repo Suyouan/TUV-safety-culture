@@ -276,7 +276,8 @@
         };
 
         window.addEventListener('DOMContentLoaded', async () => {
-            await initDataAsync();
+            initData();
+            checkUrlParams();
         });
 
         function showLoading(text = "正在處理中，請稍候...") {
@@ -319,7 +320,21 @@
             }
         };
 
-        async function initDataAsync() {
+        function checkUrlParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const itemName = urlParams.get('item');
+            if (itemName) {
+                const decodedName = decodeURIComponent(itemName);
+                const checkInterval = setInterval(() => {
+                    if (globalData.items && globalData.items.length > 0) {
+                        clearInterval(checkInterval);
+                        router.goDetail(decodedName);
+                    }
+                }, 100);
+            }
+        }
+
+        function initData() {
             const cached = sessionStorage.getItem('safety_culture_cache');
             if (cached) {
                 try {
@@ -329,21 +344,7 @@
                     console.error("快取解析失敗", e);
                 }
             }
-            await fetchData(true);
-            checkUrlParamsAfterLoad();
-        }
-
-        function checkUrlParamsAfterLoad() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const itemName = urlParams.get('item');
-            if (itemName) {
-                const decodedName = decodeURIComponent(itemName);
-                router.goDetail(decodedName);
-            }
-        }
-
-        function initData() {
-            initDataAsync();
+            fetchData(!cached);
         }
 
         async function fetchData(showLoader = true) {
