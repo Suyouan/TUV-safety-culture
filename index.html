@@ -935,21 +935,18 @@
             controlTypes.forEach(type => addControlRow(blockId, type));
         }
 
-        // 危害種類選單與自訂輸入動態切換
         function toggleHazardInputMode(blockId) {
             const selectEl = document.getElementById(`hazard-select-${blockId}`);
             const inputEl = document.getElementById(`hazard-input-${blockId}`);
             const btnEl = document.getElementById(`btn-toggle-hazard-${blockId}`);
 
             if (inputEl.classList.contains('hidden')) {
-                // 切換為手動輸入模式
                 selectEl.classList.add('hidden');
                 selectEl.value = '';
                 inputEl.classList.remove('hidden');
                 inputEl.focus();
                 btnEl.textContent = "↩️ 選回歷史詞庫";
             } else {
-                // 切換為下拉選單模式
                 inputEl.classList.add('hidden');
                 inputEl.value = '';
                 selectEl.classList.remove('hidden');
@@ -1064,7 +1061,6 @@
             container.appendChild(div);
         }
 
-        // 控制方法選單與自訂輸入動態切換
         function toggleControlInputMode(rowId) {
             const selectEl = document.getElementById(`ctrl-select-${rowId}`);
             const inputEl = document.getElementById(`ctrl-input-${rowId}`);
@@ -1168,8 +1164,7 @@
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
-                    sessionStorage.removeItem('safety_culture_cache');
-                    router.goHome();
+                    // 最佳化：送出後直接關閉彈窗並留在當前頁面，不再強制重新載入整站資料
                 } else {
                     alert(json.message || '送出失敗');
                 }
