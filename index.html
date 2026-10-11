@@ -71,7 +71,7 @@
         </div>
     </header>
 
-    <main class="max-w-4xl w-full mx-auto p-4 flex-grow">
+    <main class="max-w-4xl w-full mx-auto p-4 flex-grow space-y-4">
         
         <!-- 首頁列表 -->
         <div id="view-home" class="space-y-4">
@@ -86,6 +86,15 @@
                 <button onclick="openQuizModal()" class="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex-shrink-0 flex items-center gap-2">
                     <i class="fa-solid fa-play"></i> 立即參加測驗
                 </button>
+            </div>
+
+            <!-- 多部門分類卡片列 -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-2">
+                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center">
+                    <span>各部門風險檢視專區</span>
+                    <span id="departmentCountBadge" class="text-indigo-600">共 0 個部門</span>
+                </div>
+                <div id="departmentCardsContainer" class="flex gap-2 overflow-x-auto pb-1 pt-1"></div>
             </div>
 
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
@@ -113,14 +122,20 @@
                         <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
                     <div class="flex gap-2">
-                        <button onclick="exportRiskReportCsv()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-                            <i class="fa-solid fa-file-excel"></i> 匯出風險評估總表 (CSV)
+                        <button onclick="openExportModal('csv')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+                            <i class="fa-solid fa-file-excel"></i> 匯出總表 (CSV)
                         </button>
-                        <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-                            <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
+                        <button onclick="openExportModal('pdf')" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+                            <i class="fa-solid fa-file-pdf"></i> 匯出 QR 標籤卡
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- 目前檢視標題列 -->
+            <div class="flex justify-between items-center px-1">
+                <div id="currentViewTitle" class="text-sm font-bold text-slate-700">正在顯示：全部部門設備</div>
+                <button onclick="selectDepartment('')" id="resetDeptFilterBtn" class="hidden text-xs text-indigo-600 hover:underline font-medium">顯示全部部門</button>
             </div>
 
             <div id="itemListContainer" class="space-y-3"></div>
@@ -145,14 +160,12 @@
                 <h2 class="text-xl font-bold text-slate-800">管理員控制台</h2>
             </div>
             
-            <!-- 登入卡片 -->
             <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
                 <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
                 <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼" class="w-full px-4 py-2 border rounded-lg">
                 <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
-            <!-- 管理員後台主面板 -->
             <div id="adminPanel" class="hidden space-y-6">
                 
                 <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -299,9 +312,20 @@
                 <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <form id="addItemForm" onsubmit="submitItemForm(event)" class="space-y-4">
+                
+                <!-- 部門選擇與手動新增區塊 -->
+                <div class="p-4 bg-slate-50 border rounded-xl space-y-2">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-xs font-bold text-indigo-700">所屬部門 <span class="text-red-500">*</span></label>
+                        <button type="button" id="btnToggleDept" onclick="toggleDeptInputMode()" class="text-[11px] text-indigo-600 hover:underline font-medium">+ 手動輸入新部門</button>
+                    </div>
+                    <select id="formDeptSelect" class="w-full px-3 py-2 border rounded-lg text-xs bg-white"></select>
+                    <input type="text" id="formDeptInput" class="hidden w-full px-3 py-2 border rounded-lg text-xs" placeholder="請輸入新部門名稱 (例如：品保部、產線一課)...">
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium mb-1">儀器 / 動作名稱 <span class="text-red-500">*</span></label>
-                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg text-sm bg-slate-50" placeholder="例如：CNC 操作機台">
+                    <input type="text" id="formItemName" required class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="例如：CNC 操作機台">
                 </div>
 
                 <div class="space-y-4">
@@ -319,6 +343,38 @@
                     <button type="submit" id="modalSubmitBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">送出提報</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 進階匯出篩選 Modal (支援 CSV 與 PDF 標籤卡) -->
+    <div id="exportModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 id="exportModalTitle" class="text-lg font-bold text-slate-800">匯出設定</h3>
+                <button onclick="closeExportModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">1. 選擇匯出範圍類型</label>
+                    <select id="exportScopeType" onchange="onExportScopeChange()" class="w-full px-3 py-2 border rounded-lg bg-white">
+                        <option value="all">全部部門 (所有資料)</option>
+                        <option value="dept">指定特定部門</option>
+                        <option value="item">指定特定單一設備項目</option>
+                    </select>
+                </div>
+                <div id="exportDeptContainer" class="hidden">
+                    <label class="block font-bold text-slate-700 mb-1">選擇目標部門</label>
+                    <select id="exportDeptSelect" class="w-full px-3 py-2 border rounded-lg bg-white"></select>
+                </div>
+                <div id="exportItemContainer" class="hidden">
+                    <label class="block font-bold text-slate-700 mb-1">選擇目標設備項目</label>
+                    <select id="exportItemSelect" class="w-full px-3 py-2 border rounded-lg bg-white"></select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t">
+                <button onclick="closeExportModal()" class="px-4 py-2 border rounded-lg text-xs">取消</button>
+                <button onclick="executeExport()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold">確認匯出</button>
+            </div>
         </div>
     </div>
 
@@ -372,6 +428,8 @@
         let isEditMode = false;
         let editingItemName = null;
         let currentDiffItemName = null;
+        let currentSelectedDepartment = ""; // 空字串代表顯示全部
+        let currentExportMode = 'csv';
         
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
@@ -500,15 +558,96 @@
             updatePendingBadgeCount();
             updateDashboardCounts();
             checkAndRenderQuizBanner();
+            renderDepartmentCards();
+
+            const approvedItems = getFilteredAndSearchedItems();
+            renderItemList(approvedItems);
+            renderAdminPendingList();
+            renderAdminManageList();
+        }
+
+        // --- 部門卡片渲染與篩選 ---
+        function renderDepartmentCards() {
+            const container = document.getElementById('departmentCardsContainer');
+            const countBadge = document.getElementById('departmentCountBadge');
+            if (!container) return;
+
+            const deptMap = {};
+            globalData.items.forEach(item => {
+                const d = item.department || '未分類部門';
+                if (!deptMap[d]) deptMap[d] = 0;
+                deptMap[d]++;
+            });
+
+            const depts = Object.keys(deptMap);
+            countBadge.textContent = `共 ${depts.length} 個部門`;
+
+            let html = `
+                <div onclick="selectDepartment('')" class="flex-shrink-0 px-3 py-2 rounded-xl border cursor-pointer transition text-xs font-bold ${!currentSelectedDepartment ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'}">
+                    全部部門 (${globalData.items.length})
+                </div>
+            `;
+
+            depts.forEach(d => {
+                const count = deptMap[d];
+                const isSelected = currentSelectedDepartment === d;
+                html += `
+                    <div onclick="selectDepartment('${d}')" class="flex-shrink-0 px-3 py-2 rounded-xl border cursor-pointer transition text-xs font-bold ${isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border-slate-200'}">
+                        ${d} (${count})
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectDepartment(deptName) {
+            currentSelectedDepartment = deptName;
+            const titleEl = document.getElementById('currentViewTitle');
+            const resetBtn = document.getElementById('resetDeptFilterBtn');
+
+            if (deptName) {
+                titleEl.textContent = `正在顯示：【${deptName}】部門設備`;
+                resetBtn.classList.remove('hidden');
+            } else {
+                titleEl.textContent = `正在顯示：全部部門設備`;
+                resetBtn.classList.add('hidden');
+            }
+
+            renderDepartmentCards();
+            const approvedItems = getFilteredAndSearchedItems();
+            renderItemList(approvedItems);
+        }
+
+        function getFilteredAndSearchedItems() {
+            const keyword = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+            const riskFilter = document.getElementById('riskFilterSelect') ? document.getElementById('riskFilterSelect').value : '';
 
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
                 return { ...item, hazards: validHazards };
             }).filter(item => item.hazards.length > 0);
 
-            renderItemList(approvedItems);
-            renderAdminPendingList();
-            renderAdminManageList();
+            return approvedItems.filter(item => {
+                if (currentSelectedDepartment && item.department !== currentSelectedDepartment) {
+                    return false;
+                }
+
+                const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
+                if (riskFilter && maxRisk.toString() !== riskFilter) {
+                    return false;
+                }
+
+                if (!keyword) return true;
+                const matchName = item.itemName.toLowerCase().includes(keyword);
+                const matchSub = item.hazards.some(h => {
+                    if (h.hazard.toLowerCase().includes(keyword)) return true;
+                    return Object.values(h.controlHierarchy).some(methods => 
+                        methods.some(m => m.toLowerCase().includes(keyword))
+                    );
+                });
+                return matchName || matchSub;
+            });
         }
 
         function checkAndRenderQuizBanner() {
@@ -885,20 +1024,81 @@
             `;
         }
 
-        function exportRiskReportCsv() {
+        // --- 進階匯出 Modal 控制與執行 ---
+        function openExportModal(mode) {
+            currentExportMode = mode;
+            document.getElementById('exportModalTitle').textContent = mode === 'csv' ? '匯出風險評估總表 (CSV)' : '匯出 QR Code 標籤卡 (PDF)';
+            
+            const deptSelect = document.getElementById('exportDeptSelect');
+            const itemSelect = document.getElementById('exportItemSelect');
+
+            const depts = Array.from(new Set(globalData.items.map(i => i.department || '未分類部門')));
+            deptSelect.innerHTML = depts.map(d => `<option value="${d}">${d}</option>`).join('');
+
+            const approvedItems = globalData.items.filter(i => i.hazards.some(h => h.status === 'Approved'));
+            itemSelect.innerHTML = approvedItems.map(i => `<option value="${i.itemName}">${i.itemName} (${i.department || '未分類部門'})</option>`).join('');
+
+            document.getElementById('exportScopeType').value = 'all';
+            onExportScopeChange();
+
+            document.getElementById('exportModal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+        }
+
+        function onExportScopeChange() {
+            const scope = document.getElementById('exportScopeType').value;
+            const deptContainer = document.getElementById('exportDeptContainer');
+            const itemContainer = document.getElementById('exportItemContainer');
+
+            deptContainer.classList.add('hidden');
+            itemContainer.classList.add('hidden');
+
+            if (scope === 'dept') {
+                deptContainer.classList.remove('hidden');
+            } else if (scope === 'item') {
+                itemContainer.classList.remove('hidden');
+            }
+        }
+
+        function executeExport() {
+            const scope = document.getElementById('exportScopeType').value;
+            const targetDept = document.getElementById('exportDeptSelect').value;
+            const targetItemName = document.getElementById('exportItemSelect').value;
+
+            closeExportModal();
+
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
                 return { ...item, hazards: validHazards };
             }).filter(item => item.hazards.length > 0);
 
-            if (approvedItems.length === 0) {
-                alert('目前沒有已核准的風險評估資料可供匯出！');
+            let targetItems = approvedItems;
+            if (scope === 'dept') {
+                targetItems = approvedItems.filter(i => (i.department || '未分類部門') === targetDept);
+            } else if (scope === 'item') {
+                targetItems = approvedItems.filter(i => i.itemName === targetItemName);
+            }
+
+            if (targetItems.length === 0) {
+                alert('沒有找到符合匯出條件的資料！');
                 return;
             }
 
-            let csvContent = "\uFEFF設備/動作名稱,危害種類,嚴重度,頻率,風險等級,消除,取代,工程控制,管理控制,個人防護具(PPE)\n";
+            if (currentExportMode === 'csv') {
+                exportCsvFile(targetItems);
+            } else {
+                exportLabelsPdfFile(targetItems);
+            }
+        }
 
-            approvedItems.forEach(item => {
+        function exportCsvFile(targetItems) {
+            let csvContent = "\uFEFF部門,設備/動作名稱,危害種類,嚴重度,頻率,風險等級,消除,取代,工程控制,管理控制,個人防護具(PPE)\n";
+
+            targetItems.forEach(item => {
+                const dept = `"${(item.department || '未分類部門').replace(/"/g, '""')}"`;
                 item.hazards.forEach(h => {
                     const itemName = `"${item.itemName.replace(/"/g, '""')}"`;
                     const hazard = `"${h.hazard.replace(/"/g, '""')}"`;
@@ -912,7 +1112,7 @@
                     const adm = h.controlHierarchy && h.controlHierarchy.administrative ? `"${h.controlHierarchy.administrative.join('; ').replace(/"/g, '""')}"` : '"無"';
                     const ppe = h.controlHierarchy && h.controlHierarchy.ppe ? `"${h.controlHierarchy.ppe.join('; ').replace(/"/g, '""')}"` : '"無"';
 
-                    csvContent += `${itemName},${hazard},${severity},${frequency},${riskLevel},${elim},${subs},${eng},${adm},${ppe}\n`;
+                    csvContent += `${dept},${itemName},${hazard},${severity},${frequency},${riskLevel},${elim},${subs},${eng},${adm},${ppe}\n`;
                 });
             });
 
@@ -920,40 +1120,13 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('href', url);
-            a.setAttribute('download', `風險評估與控制措施總表_${new Date().toISOString().slice(0, 10)}.csv`);
+            a.setAttribute('download', `風險評估總表_${new Date().toISOString().slice(0, 10)}.csv`);
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
 
-        function exportLabelsPdf() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const riskFilter = document.getElementById('riskFilterSelect').value;
-            const approvedItems = globalData.items.map(item => {
-                const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                return { ...item, hazards: validHazards };
-            }).filter(item => item.hazards.length > 0);
-
-            const targetItems = approvedItems.filter(item => {
-                const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
-                if (riskFilter && maxRisk.toString() !== riskFilter) return false;
-
-                if (!keyword) return true;
-                const matchName = item.itemName.toLowerCase().includes(keyword);
-                const matchSub = item.hazards.some(h => {
-                    if (h.hazard.toLowerCase().includes(keyword)) return true;
-                    return Object.values(h.controlHierarchy).some(methods => 
-                        methods.some(m => m.toLowerCase().includes(keyword))
-                    );
-                });
-                return matchName || matchSub;
-            });
-
-            if (targetItems.length === 0) {
-                alert('目前沒有符合條件的項目可供匯出標籤！');
-                return;
-            }
-
+        function exportLabelsPdfFile(targetItems) {
             const container = document.getElementById('print-labels-container');
             container.innerHTML = '';
             container.classList.remove('hidden');
@@ -962,6 +1135,7 @@
                 const cardId = `label-qr-${index}`;
                 const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
                 const hasApprovedPhoto = item.photoBase64 && item.photoStatus === 'Approved';
+                const deptName = item.department || '未分類部門';
                 
                 const hazardsListHtml = item.hazards.map(h => {
                     let badgeColor = 'text-blue-600';
@@ -978,7 +1152,7 @@
                 cardDiv.innerHTML = `
                     <div class="space-y-1 pr-1 overflow-hidden flex-grow flex flex-col justify-between h-full py-0.5">
                         <div>
-                            <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
+                            <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">${deptName} | 風險控制標籤</div>
                             <h4 class="font-bold text-xs text-slate-900 truncate" style="max-width: 170px;" title="${item.itemName}">${item.itemName}</h4>
                         </div>
                         <div class="space-y-0.5 max-h-[50px] overflow-hidden">
@@ -1114,7 +1288,8 @@
                     <div class="space-y-1 pt-1">
                         ${q.options.map((opt, oIdx) => `
                             <div class="p-2 rounded bg-white border flex items-center justify-between ${opt === q.correctAnswer ? 'border-emerald-500 bg-emerald-50/50 font-bold text-emerald-800' : 'text-slate-600'}">
-                                <span>${String.fromCharCode(65 + oIdx)}. ${opt}</span>${opt === q.correctAnswer ? '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">正確答案</span>' : ''}
+                                <span>${String.fromCharCode(65 + oIdx)}. ${opt}</span>
+                                ${opt === q.correctAnswer ? '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">正確答案</span>' : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -1248,7 +1423,6 @@
             container.innerHTML = html;
         }
 
-        // --- 差異比較 (Diff) 彈窗渲染 ---
         function openDiffModal(itemName) {
             currentDiffItemName = itemName;
             const item = globalData.items.find(i => i.itemName === itemName);
@@ -1263,7 +1437,7 @@
             const modalBody = document.getElementById('diffModalBody');
 
             let html = `
-                <div class="font-bold text-sm text-slate-800 mb-2">設備名稱：${itemName}</div>
+                <div class="font-bold text-sm text-slate-800 mb-2">部門：${item.department || '未分類部門'} | 設備名稱：${itemName}</div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-slate-50 p-3 rounded-xl border space-y-2">
                         <h4 class="font-bold text-slate-700 border-b pb-1 text-xs uppercase text-slate-500">修改前 (現行已核准版本)</h4>
@@ -1456,6 +1630,7 @@
                 <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
                     <div>
                         <span class="font-bold text-slate-900">${item.itemName}</span>
+                        <span class="text-xs text-indigo-600 font-semibold ml-2">[${item.department || '未分類部門'}]</span>
                         <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
                     </div>
                     <div class="flex gap-2">
@@ -1558,31 +1733,8 @@
         }
 
         function handleSearch() {
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            const riskFilter = document.getElementById('riskFilterSelect').value;
-
-            const approvedItems = globalData.items.map(item => {
-                const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                return { ...item, hazards: validHazards };
-            }).filter(item => item.hazards.length > 0);
-
-            const filtered = approvedItems.filter(item => {
-                const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
-                if (riskFilter && maxRisk.toString() !== riskFilter) {
-                    return false;
-                }
-
-                if (!keyword) return true;
-                const matchName = item.itemName.toLowerCase().includes(keyword);
-                const matchSub = item.hazards.some(h => {
-                    if (h.hazard.toLowerCase().includes(keyword)) return true;
-                    return Object.values(h.controlHierarchy).some(methods => 
-                        methods.some(m => m.toLowerCase().includes(keyword))
-                    );
-                });
-                return matchName || matchSub;
-            });
-            renderItemList(filtered);
+            const approvedItems = getFilteredAndSearchedItems();
+            renderItemList(approvedItems);
         }
 
         function renderItemList(items) {
@@ -1595,11 +1747,13 @@
             container.innerHTML = items.map(item => {
                 const maxRisk = item.hazards.length > 0 ? Math.max(...item.hazards.map(h => parseInt(h.riskLevel) || 1)) : 1;
                 const badgeStyle = getRiskBadgeStyle(maxRisk);
+                const deptName = item.department || '未分類部門';
 
                 return `
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex justify-between items-center hover:shadow-md transition">
                     <div class="space-y-1">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">${deptName}</span>
                             <h3 class="font-bold text-base text-slate-800">${item.itemName}</h3>
                             <span class="px-2.5 py-0.5 rounded text-[11px] font-bold ${badgeStyle}">風險等級: ${maxRisk}級</span>
                         </div>
@@ -1644,11 +1798,13 @@
             const isPhotoPending = item.photoStatus === 'Pending';
             const isPhotoDeleteReq = item.photoDeleteRequested;
             const hasPendingEdit = Boolean(item.pendingEditJson);
+            const deptName = item.department || '未分類部門';
 
             container.innerHTML = `
                 <div class="flex justify-between items-start border-b pb-4 gap-4">
                     <div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-xs bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-100">${deptName}</span>
                             <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
                             <button onclick="openEditModal('${item.itemName}')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
                                 <i class="fa-solid fa-pen-to-square"></i> 申請編輯風險評估
@@ -1780,17 +1936,18 @@
             editingItemName = null;
             document.getElementById('modalTitle').textContent = '新增儀器/動作與風險評估';
             document.getElementById('modalSubmitBtn').textContent = '送出提報';
+            
             const nameInput = document.getElementById('formItemName');
             nameInput.value = '';
             nameInput.readOnly = false;
             nameInput.className = "w-full px-3 py-2 border rounded-lg text-sm";
 
+            setupDeptDropdownForModal('');
             document.getElementById('addModal').classList.remove('hidden');
             document.getElementById('hazardsContainer').innerHTML = '';
             addHazardBlock();
         }
 
-        // ---開啟編輯 Modal (帶入原資料)---
         function openEditModal(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             if (!item) return;
@@ -1805,6 +1962,7 @@
             nameInput.readOnly = true;
             nameInput.className = "w-full px-3 py-2 border rounded-lg text-sm bg-slate-100 text-slate-500 cursor-not-allowed";
 
+            setupDeptDropdownForModal(item.department || '未分類部門', true);
             document.getElementById('addModal').classList.remove('hidden');
             const container = document.getElementById('hazardsContainer');
             container.innerHTML = '';
@@ -1818,6 +1976,51 @@
             approvedHazards.forEach(h => {
                 addHazardBlock(h);
             });
+        }
+
+        function setupDeptDropdownForModal(selectedDept = '', isLocked = false) {
+            const selectEl = document.getElementById('formDeptSelect');
+            const inputEl = document.getElementById('formDeptInput');
+            const btnEl = document.getElementById('btnToggleDept');
+
+            const depts = Array.from(new Set(globalData.items.map(i => i.department || '未分類部門')));
+            if (!depts.includes('未分類部門')) depts.push('未分類部門');
+
+            selectEl.innerHTML = depts.map(d => `<option value="${d}" ${d === selectedDept ? 'selected' : ''}>${d}</option>`).join('');
+            
+            selectEl.classList.remove('hidden');
+            inputEl.classList.add('hidden');
+            inputEl.value = '';
+            btnEl.textContent = "+ 手動輸入新部門";
+
+            if (isLocked) {
+                selectEl.disabled = true;
+                selectEl.className = "w-full px-3 py-2 border rounded-lg text-xs bg-slate-100 text-slate-500 cursor-not-allowed";
+                btnEl.classList.add('hidden');
+            } else {
+                selectEl.disabled = false;
+                selectEl.className = "w-full px-3 py-2 border rounded-lg text-xs bg-white";
+                btnEl.classList.remove('hidden');
+            }
+        }
+
+        function toggleDeptInputMode() {
+            const selectEl = document.getElementById('formDeptSelect');
+            const inputEl = document.getElementById('formDeptInput');
+            const btnEl = document.getElementById('btnToggleDept');
+
+            if (inputEl.classList.contains('hidden')) {
+                selectEl.classList.add('hidden');
+                selectEl.value = '';
+                inputEl.classList.remove('hidden');
+                inputEl.focus();
+                btnEl.textContent = "↩️ 選擇現有部門";
+            } else {
+                inputEl.classList.add('hidden');
+                inputEl.value = '';
+                selectEl.classList.remove('hidden');
+                btnEl.textContent = "+ 手動輸入新部門";
+            }
         }
 
         function closeAddModal() {
@@ -1905,7 +2108,6 @@
             
             container.prepend(div);
 
-            const activeHazardName = existingData ? existingData.hazard : '';
             controlTypes.forEach(type => {
                 if (existingData && existingData.controlHierarchy && Array.isArray(existingData.controlHierarchy[type])) {
                     const methods = existingData.controlHierarchy[type].filter(m => m !== '無');
@@ -2073,6 +2275,17 @@
 
         async function submitItemForm(event) {
             event.preventDefault();
+
+            const deptSelect = document.getElementById('formDeptSelect');
+            const deptInput = document.getElementById('formDeptInput');
+            let department = '';
+            if (deptInput && !deptInput.classList.contains('hidden')) {
+                department = deptInput.value.trim();
+            } else if (deptSelect) {
+                department = deptSelect.value.trim();
+            }
+            if (!department) department = '未分類部門';
+
             const itemName = document.getElementById('formItemName').value.trim();
             const hazardBlocks = document.querySelectorAll('.hazard-block');
 
@@ -2173,6 +2386,7 @@
                         body: JSON.stringify({
                             action: 'addItem',
                             itemName,
+                            department,
                             hazardsList,
                             isUserSubmit: true
                         })
