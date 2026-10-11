@@ -38,7 +38,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 全螢幕 Loading 提示遮罩 -->
+    <!-- 全螢幕 Loading 提示遮罩 (僅保留於初次載入或關鍵動作) -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
         <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
             <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
@@ -553,7 +553,7 @@
             }
 
             container.innerHTML = pendingItems.map(p => `
-                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
                     <div>
                         <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
                     </div>
@@ -580,7 +580,7 @@
                         <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
                         <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
                             <i class="fa-solid fa-trash"></i> 刪除項目
                         </button>
@@ -589,69 +589,96 @@
             `).join('');
         }
 
+        // 優化：背景靜默更新狀態，不跳出 Loading 遮罩，操作瞬間完成
         async function updateStatus(id, status) {
-            showLoading("更新狀態中...");
+            // 本地記憶體即時更新與畫面移除，創造秒反應體驗
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        if (h.id === id) h.status = status;
+                    });
+                }
+            });
+            
+            // 立即局部更新介面與紅點
+            renderAdminPendingList();
+            updatePendingBadgeCount();
+            updateDashboardCounts();
+
+            // 背景默默發送 API 寫入後端
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'updateItemStatus', id, status })
                 });
                 const json = await res.json();
-                hideLoading();
                 if (json.status === 'success') {
                     sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(true);
+                    fetchData(false); // 背景默默拉取最新資料同步
                 } else {
                     alert(json.message);
+                    fetchData(false); // 失敗時回補同步
                 }
             } catch (err) {
-                hideLoading();
-                alert('更新失敗');
+                console.error('更新失敗', err);
+                fetchData(false);
             }
         }
 
         async function deleteItemRecord(id) {
             if (!confirm('確定要刪除此筆評估紀錄嗎？')) return;
-            showLoading("刪除中...");
+            
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards = item.hazards.filter(h => h.id !== id);
+                }
+            });
+            renderAdminPendingList();
+            updatePendingBadgeCount();
+            updateDashboardCounts();
+
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'deleteItem', id })
                 });
                 const json = await res.json();
-                hideLoading();
                 if (json.status === 'success') {
                     sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(true);
+                    fetchData(false);
                 } else {
                     alert(json.message);
+                    fetchData(false);
                 }
             } catch (err) {
-                hideLoading();
-                alert('刪除失敗');
+                console.error('刪除失敗', err);
+                fetchData(false);
             }
         }
 
         async function deleteEntireItem(itemName) {
             if (!confirm(`確定要完整刪除「${itemName}」及其所有相關危害評估項目嗎？此操作無法復原！`)) return;
-            showLoading("刪除項目中...");
+            
+            globalData.items = globalData.items.filter(item => item.itemName !== itemName);
+            renderAdminManageList();
+            updateDashboardCounts();
+
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ action: 'deleteItem', itemName })
                 });
                 const json = await res.json();
-                hideLoading();
                 if (json.status === 'success') {
-                    alert('項目刪除成功！');
                     sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(true);
+                    fetchData(false);
                 } else {
                     alert(json.message);
+                    fetchData(false);
                 }
             } catch (err) {
-                hideLoading();
-                alert('刪除失敗');
+                console.error('刪除失敗', err);
+                fetchData(false);
             }
         }
 
@@ -1164,7 +1191,6 @@
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
-                    // 最佳化：送出後直接關閉彈窗並留在當前頁面，不再強制重新載入整站資料
                 } else {
                     alert(json.message || '送出失敗');
                 }
