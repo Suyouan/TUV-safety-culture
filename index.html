@@ -366,7 +366,6 @@
                 const res = await fetch(`${API_URL}?action=getData`);
                 const json = await res.json();
                 if (json.status === 'success') {
-                    // 確保前端載入時也校正風險等級最大為 4 級
                     json.items.forEach(item => {
                         if (item.hazards) {
                             item.hazards.forEach(h => {
@@ -694,7 +693,6 @@
             }
         }
 
-        // 改善 2：優化圖片壓縮解析度與品質，避免過大導致網路連線失敗
         function handlePhotoUpload(event, itemName) {
             const file = event.target.files[0];
             if (!file) return;
@@ -707,7 +705,7 @@
                 img.onload = async function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 400;  // 降至 400 像素以符合 GAS 傳輸大小限制
+                    const MAX_WIDTH = 400;
                     const MAX_HEIGHT = 400;
                     let width = img.width;
                     let height = img.height;
@@ -727,7 +725,7 @@
                     canvas.width = width;
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5); // 品質調降至 0.5
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
 
                     try {
                         const res = await fetch(API_URL, {
@@ -1161,6 +1159,7 @@
             document.getElementById('addModal').classList.add('hidden');
         }
 
+        // 核心修復：完整保留歷史常用危害詞庫下拉選單與區塊邏輯
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
@@ -1467,7 +1466,7 @@
                 hideLoading();
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
-                    closeAddModal(); // 確保送出成功後關閉 Modal 視窗
+                    closeAddModal();
                     sessionStorage.removeItem('safety_culture_cache');
                     fetchData(false);
                 } else {
