@@ -75,6 +75,19 @@
         
         <!-- 首頁列表 -->
         <div id="view-home" class="space-y-4">
+            
+            <!-- 首頁醒目隨堂考宣傳橫幅 -->
+            <div class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="space-y-1 text-center sm:text-left">
+                    <div class="inline-block bg-white/20 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">安全文化挑戰</div>
+                    <h3 class="font-bold text-base">廠內安全知識隨堂考上線囉！</h3>
+                    <p class="text-xs text-indigo-100">立即進行互動測驗，隨機檢驗您對設備危害與五大控制措施的掌握度。</p>
+                </div>
+                <button onclick="openQuizModal()" class="bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm transition flex-shrink-0 flex items-center gap-2">
+                    <i class="fa-solid fa-play"></i> 開始隨堂考挑戰
+                </button>
+            </div>
+
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-3">
                 <div class="flex flex-col sm:flex-row gap-2">
                     <div class="relative flex-grow">
@@ -96,13 +109,18 @@
                         <i class="fa-solid fa-qrcode"></i> 掃描
                     </button>
                 </div>
-                <div class="flex justify-between items-center pt-2">
+                <div class="flex flex-wrap justify-between items-center pt-2 gap-2">
                     <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
                         <i class="fa-solid fa-plus"></i> 自主提報風險評估
                     </button>
-                    <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
-                        <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportRiskReportCsv()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+                            <i class="fa-solid fa-file-excel"></i> 匯出風險評估總表 (CSV)
+                        </button>
+                        <button onclick="exportLabelsPdf()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition no-print">
+                            <i class="fa-solid fa-file-pdf"></i> 匯出 QR Code 標籤卡
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -139,14 +157,14 @@
             <!-- 管理員後台主面板 -->
             <div id="adminPanel" class="hidden space-y-6">
                 
-                <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
                                 <i class="fa-solid fa-clipboard-check"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">待審核項目 (危害與照片)</h3>
-                            <p class="text-xs text-slate-500">審核同仁自主提報的風險評估與設備照片變更申請。</p>
+                            <h3 class="font-bold text-base text-slate-800">待審核項目</h3>
+                            <p class="text-xs text-slate-500">審核同仁自主提報與設備照片變更申請。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span id="dashboardPendingCount" class="font-bold text-indigo-600">載入中...</span>
@@ -160,10 +178,24 @@
                                 <i class="fa-solid fa-folder-open"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">現有風險評估管理</h3>
-                            <p class="text-xs text-slate-500">檢視、查閱或刪除系統中現有的所有設備與動作評估。</p>
+                            <p class="text-xs text-slate-500">檢視、查閱或刪除現有的設備與動作評估。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span id="dashboardItemCount" class="font-bold text-indigo-600">載入中...</span>
+                            <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
+                        </div>
+                    </div>
+
+                    <div onclick="openAdminSubView('quiz')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-300 transition cursor-pointer flex flex-col justify-between space-y-4">
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <h3 class="font-bold text-base text-slate-800">安全測驗管理</h3>
+                            <p class="text-xs text-slate-500">抽查與預覽系統自動組題內容，確保題庫正確性。</p>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t text-xs">
+                            <span class="text-indigo-600 font-bold">自動組題預覽</span>
                             <span class="text-indigo-600 font-medium">進入管理 <i class="fa-solid fa-chevron-right ml-1"></i></span>
                         </div>
                     </div>
@@ -174,7 +206,7 @@
                                 <i class="fa-solid fa-key"></i>
                             </div>
                             <h3 class="font-bold text-base text-slate-800">更改管理員密碼</h3>
-                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至系統後端確保安全性。</p>
+                            <p class="text-xs text-slate-500">變更後台登入密碼，同步更新至後端確保安全。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span class="text-slate-400">系統設定</span>
@@ -196,6 +228,18 @@
                     <div id="subView-manage" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
                         <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
                         <div id="adminManageListContainer" class="space-y-3"></div>
+                    </div>
+
+                    <!-- 管理員專用：安全測驗管理預覽分頁 -->
+                    <div id="subView-quiz" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <h3 class="font-bold text-lg text-slate-700">安全測驗題目自動組題預覽</h3>
+                            <button onclick="renderAdminQuizPreview()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-rotate"></i> 重新隨機換題
+                            </button>
+                        </div>
+                        <p class="text-xs text-slate-500">此處顯示系統根據目前所有已核准資料自動產生的隨堂考題庫，供管理員抽查正確性。若發現題目有誤，可至「現有風險評估管理」進行修正。</p>
+                        <div id="adminQuizPreviewContainer" class="space-y-3"></div>
                     </div>
 
                     <div id="subView-password" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md mx-auto">
@@ -283,6 +327,7 @@
         let globalData = { items: [], hazardControlHistory: {} };
         let html5QrCode = null;
         let quizState = { questions: [], currentIndex: 0, userAnswers: [] };
+        let adminQuizQuestions = [];
         
         const controlTypes = ['elimination', 'substitution', 'engineering', 'administrative', 'ppe'];
         const controlLabels = {
@@ -293,7 +338,6 @@
             ppe: '5. 個人防護具 (PPE)'
         };
 
-        // 風險矩陣對應函數：確保風險等級最大為 4 級
         function calculateRiskLevel(severity, frequency) {
             const s = parseInt(severity) || 1;
             const f = parseInt(frequency) || 1;
@@ -418,7 +462,6 @@
             }).filter(item => item.hazards.length > 0);
 
             renderItemList(approvedItems);
-            
             renderAdminPendingList();
             renderAdminManageList();
         }
@@ -512,7 +555,83 @@
             });
         }
 
-        // --- 安全知識隨堂考功能實作 ---
+        // --- 核心組題產生器 (支援嚴格過濾與唯一性檢查) ---
+        function generateQuizQuestionsPool() {
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            const allHazardsPool = [];
+            const allMethodsPool = [];
+            approvedItems.forEach(item => {
+                item.hazards.forEach(h => {
+                    if (h.hazard) allHazardsPool.push(h.hazard.trim());
+                    if (h.controlHierarchy) {
+                        controlTypes.forEach(type => {
+                            if (Array.isArray(h.controlHierarchy[type])) {
+                                h.controlHierarchy[type].forEach(m => {
+                                    if (m && m !== '無') allMethodsPool.push(m.trim());
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            let questions = [];
+            const questionCount = Math.min(5, approvedItems.length * 2);
+            
+            for (let i = 0; i < questionCount; i++) {
+                const randItem = approvedItems[Math.floor(Math.random() * approvedItems.length)];
+                if (!randItem.hazards || randItem.hazards.length === 0) continue;
+                const randHazard = randItem.hazards[Math.floor(Math.random() * randItem.hazards.length)];
+
+                const qType = Math.random() > 0.5 ? 1 : 2;
+
+                if (qType === 1) {
+                    const correctAnswer = randHazard.hazard.trim();
+                    const itemHazardNames = randItem.hazards.map(h => h.hazard.trim());
+                    const wrongPool = allHazardsPool.filter(h => h !== correctAnswer && !itemHazardNames.includes(h));
+                    
+                    if (wrongPool.length < 3) continue;
+
+                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+
+                    questions.push({
+                        type: 1,
+                        question: `請問針對設備或動作「<span class="text-indigo-600 font-bold">${randItem.itemName}</span>」，下列哪一項是其主要的危害種類？`,
+                        correctAnswer: correctAnswer,
+                        options: options
+                    });
+                } else {
+                    let availableTypes = controlTypes.filter(t => randHazard.controlHierarchy && Array.isArray(randHazard.controlHierarchy[t]) && randHazard.controlHierarchy[t].some(m => m !== '無'));
+                    if (availableTypes.length === 0) continue;
+
+                    const targetType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                    const validMethods = randHazard.controlHierarchy[targetType].filter(m => m !== '無');
+                    if (validMethods.length === 0) continue;
+
+                    const correctAnswer = validMethods[Math.floor(Math.random() * validMethods.length)].trim();
+                    const wrongPool = allMethodsPool.filter(m => m !== correctAnswer);
+                    if (wrongPool.length < 3) continue;
+
+                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+
+                    questions.push({
+                        type: 2,
+                        question: `針對危害「<span class="text-indigo-600 font-bold">${randHazard.hazard}</span>」，下列哪一項屬於正確的「<span class="text-slate-800 font-bold">${controlLabels[targetType]}</span>」？`,
+                        correctAnswer: correctAnswer,
+                        options: options
+                    });
+                }
+            }
+            return questions;
+        }
+
+        // --- 安全知識隨堂考 Modal ---
         function openQuizModal() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
@@ -551,86 +670,7 @@
         }
 
         function startQuiz() {
-            const approvedItems = globalData.items.map(item => {
-                const validHazards = item.hazards.filter(h => h.status === 'Approved');
-                return { ...item, hazards: validHazards };
-            }).filter(item => item.hazards.length > 0);
-
-            // 收集所有可能的危害名稱與控制方法作為干擾項庫
-            const allHazardsPool = [];
-            const allMethodsPool = [];
-            approvedItems.forEach(item => {
-                item.hazards.forEach(h => {
-                    if (h.hazard) allHazardsPool.push(h.hazard.trim());
-                    if (h.controlHierarchy) {
-                        controlTypes.forEach(type => {
-                            if (Array.isArray(h.controlHierarchy[type])) {
-                                h.controlHierarchy[type].forEach(m => {
-                                    if (m && m !== '無') allMethodsPool.push(m.trim());
-                                });
-                            }
-                        });
-                    }
-                });
-            });
-
-            let questions = [];
-            // 隨機組 5 題
-            const questionCount = Math.min(5, approvedItems.length * 2);
-            
-            for (let i = 0; i < questionCount; i++) {
-                // 隨機選定一個項目與危害
-                const randItem = approvedItems[Math.floor(Math.random() * approvedItems.length)];
-                if (!randItem.hazards || randItem.hazards.length === 0) continue;
-                const randHazard = randItem.hazards[Math.floor(Math.random() * randItem.hazards.length)];
-
-                // 隨機決定題型：1. 危害辨識題 / 2. 控制措施配對題
-                const qType = Math.random() > 0.5 ? 1 : 2;
-
-                if (qType === 1) {
-                    // 題型 1：危害辨識
-                    const correctAnswer = randHazard.hazard.trim();
-                    // 嚴格過濾干擾項：排除當前正確答案，且排除該設備已有的其他危害
-                    const itemHazardNames = randItem.hazards.map(h => h.hazard.trim());
-                    const wrongPool = allHazardsPool.filter(h => h !== correctAnswer && !itemHazardNames.includes(h));
-                    
-                    if (wrongPool.length < 3) continue; // 若干擾項不足則跳過此題
-
-                    // 隨機抽 3 個錯誤選項
-                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
-                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
-
-                    questions.push({
-                        type: 1,
-                        question: `請問針對設備或動作「<span class="text-indigo-600 font-bold">${randItem.itemName}</span>」，下列哪一項是其主要的危害種類？`,
-                        correctAnswer: correctAnswer,
-                        options: options
-                    });
-                } else {
-                    // 題型 2：控制措施配對題 (選出有效控制方法)
-                    let availableTypes = controlTypes.filter(t => randHazard.controlHierarchy && Array.isArray(randHazard.controlHierarchy[t]) && randHazard.controlHierarchy[t].some(m => m !== '無'));
-                    if (availableTypes.length === 0) continue;
-
-                    const targetType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-                    const validMethods = randHazard.controlHierarchy[targetType].filter(m => m !== '無');
-                    if (validMethods.length === 0) continue;
-
-                    const correctAnswer = validMethods[Math.floor(Math.random() * validMethods.length)].trim();
-                    const wrongPool = allMethodsPool.filter(m => m !== correctAnswer);
-                    if (wrongPool.length < 3) continue;
-
-                    const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
-                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
-
-                    questions.push({
-                        type: 2,
-                        question: `針對危害「<span class="text-indigo-600 font-bold">${randHazard.hazard}</span>」，下列哪一項屬於正確的「<span class="text-slate-800 font-bold">${controlLabels[targetType]}</span>」？`,
-                        correctAnswer: correctAnswer,
-                        options: options
-                    });
-                }
-            }
-
+            const questions = generateQuizQuestionsPool();
             if (questions.length === 0) {
                 alert('題庫資料不足，無法產生足夠的測驗題目，請先新增更多已核准的風險評估資料！');
                 closeQuizModal();
@@ -714,7 +754,6 @@
 
             const score = Math.round((correctCount / quizState.questions.length) * 100);
             const body = document.getElementById('quizBody');
-
             let resultColor = score >= 80 ? 'text-emerald-600 bg-emerald-50' : score >= 60 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
 
             body.innerHTML = `
@@ -752,7 +791,48 @@
                 </div>
             `;
         }
-        // --- 隨堂考功能結束 ---
+
+        // --- 新增功能：匯出風險評估總表 (CSV) ---
+        function exportRiskReportCsv() {
+            const approvedItems = globalData.items.map(item => {
+                const validHazards = item.hazards.filter(h => h.status === 'Approved');
+                return { ...item, hazards: validHazards };
+            }).filter(item => item.hazards.length > 0);
+
+            if (approvedItems.length === 0) {
+                alert('目前沒有已核准的風險評估資料可供匯出！');
+                return;
+            }
+
+            let csvContent = "\uFEFF設備/動作名稱,危害種類,嚴重度,頻率,風險等級,消除,取代,工程控制,管理控制,個人防護具(PPE)\n";
+
+            approvedItems.forEach(item => {
+                item.hazards.forEach(h => {
+                    const itemName = `"${item.itemName.replace(/"/g, '""')}"`;
+                    const hazard = `"${h.hazard.replace(/"/g, '""')}"`;
+                    const severity = h.severity;
+                    const frequency = h.frequency;
+                    const riskLevel = h.riskLevel;
+
+                    const elim = h.controlHierarchy && h.controlHierarchy.elimination ? `"${h.controlHierarchy.elimination.join('; ').replace(/"/g, '""')}"` : '"無"';
+                    const subs = h.controlHierarchy && h.controlHierarchy.substitution ? `"${h.controlHierarchy.substitution.join('; ').replace(/"/g, '""')}"` : '"無"';
+                    const eng = h.controlHierarchy && h.controlHierarchy.engineering ? `"${h.controlHierarchy.engineering.join('; ').replace(/"/g, '""')}"` : '"無"';
+                    const adm = h.controlHierarchy && h.controlHierarchy.administrative ? `"${h.controlHierarchy.administrative.join('; ').replace(/"/g, '""')}"` : '"無"';
+                    const ppe = h.controlHierarchy && h.controlHierarchy.ppe ? `"${h.controlHierarchy.ppe.join('; ').replace(/"/g, '""')}"` : '"無"';
+
+                    csvContent += `${itemName},${hazard},${severity},${frequency},${riskLevel},${elim},${subs},${eng},${adm},${ppe}\n`;
+                });
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `風險評估與控制措施總表_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
 
         async function verifyAdmin() {
             const password = document.getElementById('adminPasswordInput').value;
@@ -786,6 +866,7 @@
 
             document.getElementById('subView-pending').classList.add('hidden');
             document.getElementById('subView-manage').classList.add('hidden');
+            document.getElementById('subView-quiz').classList.add('hidden');
             document.getElementById('subView-password').classList.add('hidden');
 
             document.getElementById(`subView-${viewType}`).classList.remove('hidden');
@@ -794,6 +875,8 @@
                 renderAdminPendingList();
             } else if (viewType === 'manage') {
                 renderAdminManageList();
+            } else if (viewType === 'quiz') {
+                renderAdminQuizPreview();
             }
         }
 
@@ -801,6 +884,31 @@
             document.getElementById('adminDashboardMenu').classList.remove('hidden');
             document.getElementById('adminSubViewContainer').classList.add('hidden');
             updateDashboardCounts();
+        }
+
+        // --- 管理員後台：安全測驗管理預覽渲染 ---
+        function renderAdminQuizPreview() {
+            const container = document.getElementById('adminQuizPreviewContainer');
+            if (!container) return;
+
+            adminQuizQuestions = generateQuizQuestionsPool();
+            if (adminQuizQuestions.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前無足夠的已核准資料可供產生測驗預覽</div>`;
+                return;
+            }
+
+            container.innerHTML = adminQuizQuestions.map((q, idx) => `
+                <div class="bg-slate-50 p-4 rounded-xl border space-y-2 text-xs">
+                    <div class="font-bold text-slate-800 text-sm">Q${idx + 1}: ${q.question}</div>
+                    <div class="space-y-1 pt-1">
+                        ${q.options.map((opt, oIdx) => `
+                            <div class="p-2 rounded bg-white border flex items-center justify-between ${opt === q.correctAnswer ? 'border-emerald-500 bg-emerald-50/50 font-bold text-emerald-800' : 'text-slate-600'}">
+                                <span>${String.fromCharCode(65 + oIdx)}. ${opt}</span>${opt === q.correctAnswer ? '<span class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">正確答案</span>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function changeAdminPassword() {
@@ -1734,7 +1842,7 @@
                 }
             } catch (err) {
                 hideLoading();
-                alert('網路連線失敗請稍後再試。');
+                alert('網路連線失敗，請稍後再試。');
             }
         }
 
