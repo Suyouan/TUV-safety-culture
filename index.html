@@ -798,7 +798,7 @@
                         </div>
                         <p class="text-xs text-slate-500">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
-                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
                         查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
@@ -994,9 +994,9 @@
                         </div>
                     </div>
                     <div class="space-y-2 pt-2 border-t">
-                        <div class="flex items-baseline justify-between">
-                            <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
-                            <span class="text-[11px] text-slate-400 font-normal">*(若無對應措施可直接不選，系統將自動帶入「無」)*</span>
+                        <div class="text-xs font-bold text-slate-700">
+                            五大控制措施填寫：
+                            <span class="text-[11px] text-amber-600 font-semibold ml-1">(若無對應措施可直接不選，系統將自動帶入「無」)</span>
                         </div>
                         ${controlTypes.map(type => `
                             <div class="space-y-1" data-control-type="${type}">
