@@ -46,14 +46,6 @@
         </div>
     </div>
 
-    <!-- 圖片燈箱 Modal -->
-    <div id="lightboxModal" class="fixed inset-0 bg-black/80 z-[10000] hidden flex items-center justify-center p-4 cursor-pointer" onclick="closeLightbox()">
-        <div class="relative max-w-3xl w-full flex flex-col items-center">
-            <img id="lightboxImg" src="" class="max-h-[85vh] max-w-full rounded-lg shadow-2xl object-contain bg-white">
-            <span class="text-white text-xs mt-3 bg-black/50 px-3 py-1 rounded-full">點擊任意處關閉圖片</span>
-        </div>
-    </div>
-
     <header class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-lg font-bold flex items-center gap-2 cursor-pointer" onclick="router.goHome()">
@@ -142,8 +134,8 @@
                             <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold">
                                 <i class="fa-solid fa-clipboard-check"></i>
                             </div>
-                            <h3 class="font-bold text-base text-slate-800">待審核項目 (危害與照片)</h3>
-                            <p class="text-xs text-slate-500">審核同仁自主提報的風險評估與設備照片變更申請。</p>
+                            <h3 class="font-bold text-base text-slate-800">待審核的自主提報</h3>
+                            <p class="text-xs text-slate-500">審核同仁自主提報且尚未核准的風險評估項目。</p>
                         </div>
                         <div class="flex justify-between items-center pt-2 border-t text-xs">
                             <span id="dashboardPendingCount" class="font-bold text-indigo-600">載入中...</span>
@@ -186,7 +178,7 @@
                     </button>
                     
                     <div id="subView-pending" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目與照片申請</h3>
+                        <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
                         <div id="pendingListContainer" class="space-y-3"></div>
                     </div>
 
@@ -275,7 +267,7 @@
             ppe: '5. 個人防護具 (PPE)'
         };
 
-        window.addEventListener('DOMContentLoaded', async () => {
+        window.addEventListener('DOMContentLoaded', () => {
             initData();
             checkUrlParams();
         });
@@ -287,15 +279,6 @@
 
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        function openLightbox(imgSrc) {
-            document.getElementById('lightboxImg').src = imgSrc;
-            document.getElementById('lightboxModal').classList.remove('hidden');
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightboxModal').classList.add('hidden');
         }
 
         const router = {
@@ -395,9 +378,6 @@
                         if (h.status === 'Pending') pendingCount++;
                     });
                 }
-                if (item.photoStatus === 'Pending' || item.photoDeleteRequested) {
-                    pendingCount++;
-                }
             });
 
             const badge = document.getElementById('pendingBadge');
@@ -416,9 +396,6 @@
                     item.hazards.forEach(h => {
                         if (h.status === 'Pending') pendingCount++;
                     });
-                }
-                if (item.photoStatus === 'Pending' || item.photoDeleteRequested) {
-                    pendingCount++;
                 }
             });
 
@@ -566,175 +543,34 @@
             const container = document.getElementById('pendingListContainer');
             if (!container) return;
 
-            let pendingHazards = [];
-            let pendingPhotos = [];
-
+            let pendingItems = [];
             globalData.items.forEach(item => {
                 if (item.hazards) {
                     item.hazards.forEach(h => {
                         if (h.status === 'Pending') {
-                            pendingHazards.push({ itemName: item.itemName, ...h });
+                            pendingItems.push({ itemName: item.itemName, ...h });
                         }
                     });
                 }
-                if (item.photoStatus === 'Pending' || item.photoDeleteRequested) {
-                    pendingPhotos.push(item);
-                }
             });
 
-            let html = '';
-
-            if (pendingHazards.length === 0 && pendingPhotos.length === 0) {
+            if (pendingItems.length === 0) {
                 container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前沒有待審核的項目</div>`;
                 return;
             }
 
-            if (pendingHazards.length > 0) {
-                html += `<div class="text-xs font-bold text-slate-500 mb-2 uppercase">危害與評估審核 (${pendingHazards.length})</div>`;
-                html += pendingHazards.map(p => `
-                    <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
-                        <div>
-                            <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
-                            <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
-                            <button onclick="deleteItemRecord('${p.id}')" class="bg-slate-600 hover:bg-slate-700 text-white px-2.5 py-1 rounded text-xs"><i class="fa-solid fa-trash"></i></button>
-                        </div>
+            container.innerHTML = pendingItems.map(p => `
+                <div id="pending-row-${p.id}" class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                    <div>
+                        <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
                     </div>
-                `).join('');
-            }
-
-            if (pendingPhotos.length > 0) {
-                html += `<div class="text-xs font-bold text-slate-500 mt-4 mb-2 uppercase">設備照片變更申請 (${pendingPhotos.length})</div>`;
-                html += pendingPhotos.map(item => {
-                    const isDeleteReq = item.photoDeleteRequested;
-                    const desc = isDeleteReq ? "申請刪除照片" : "上傳新照片";
-                    return `
-                    <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm mb-2">
-                        <div class="flex items-center gap-3">
-                            ${item.photoBase64 && !isDeleteReq ? `<img src="${item.photoBase64}" class="w-12 h-12 object-cover rounded border cursor-pointer" onclick="openLightbox('${item.photoBase64}')">` : ''}
-                            <div>
-                                <span class="font-bold text-slate-900">${item.itemName}</span>
-                                <span class="text-xs text-amber-600 block font-semibold">${desc}</span>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="adminApprovePhoto('${item.itemName}', true)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
-                            <button onclick="adminApprovePhoto('${item.itemName}', false)" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
-                        </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
+                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
+                        <button onclick="deleteItemRecord('${p.id}')" class="bg-slate-600 hover:bg-slate-700 text-white px-2.5 py-1 rounded text-xs"><i class="fa-solid fa-trash"></i></button>
                     </div>
-                `;}).join('');
-            }
-
-            container.innerHTML = html;
-        }
-
-        async function adminApprovePhoto(itemName, approve) {
-            showLoading("處理中...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'approvePhoto', itemName, approve })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    sessionStorage.removeItem('safety_culture_cache');
-                    fetchData(false);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        async function requestDeletePhoto(itemName) {
-            if (!confirm('確定要提出刪除此照片的申請嗎？須等管理員審核通過後才會移除。')) return;
-            showLoading("送出申請...");
-            try {
-                const res = await fetch(API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'requestDeletePhoto', itemName })
-                });
-                const json = await res.json();
-                hideLoading();
-                if (json.status === 'success') {
-                    alert('已成功送出刪除照片申請，等待管理員審核！');
-                    sessionStorage.removeItem('safety_culture_cache');
-                    await fetchData(false);
-                    router.goDetail(itemName);
-                } else {
-                    alert(json.message);
-                }
-            } catch (err) {
-                hideLoading();
-                alert('網路連線失敗');
-            }
-        }
-
-        function handlePhotoUpload(event, itemName) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            showLoading("正在壓縮並上傳照片...");
-            reader.onload = async function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = async function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const MAX_WIDTH = 600;
-                    const MAX_HEIGHT = 600;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-                    try {
-                        const res = await fetch(API_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                action: 'uploadPhoto',
-                                itemName: itemName,
-                                photoBase64: compressedBase64
-                            })
-                        });
-                        const json = await res.json();
-                        hideLoading();
-                        if (json.status === 'success') {
-                            alert('設備照片已成功上傳，等待管理員審核！');
-                            sessionStorage.removeItem('safety_culture_cache');
-                            await fetchData(false);
-                            router.goDetail(itemName);
-                        } else {
-                            alert(json.message || '上傳失敗');
-                        }
-                    } catch (err) {
-                        hideLoading();
-                        alert('網路連線失敗');
-                    }
-                };
-            };
-            reader.readAsDataURL(file);
+                </div>
+            `).join('');
         }
 
         function renderAdminManageList() {
@@ -886,28 +722,24 @@
             targetItems.forEach((item, index) => {
                 const cardId = `label-qr-${index}`;
                 const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(item.itemName)}`;
-                const hasApprovedPhoto = item.photoBase64 && item.photoStatus === 'Approved';
                 
                 const cardDiv = document.createElement('div');
-                cardDiv.className = "label-card bg-white p-3 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[420px] h-[150px] mx-auto shadow-sm gap-2";
+                cardDiv.className = "label-card bg-white p-4 rounded-lg border-2 dashed border-slate-300 flex justify-between items-center w-full max-w-[380px] h-[160px] mx-auto shadow-sm";
                 cardDiv.innerHTML = `
-                    <div class="space-y-0.5 pr-1 overflow-hidden flex-grow">
-                        <div class="text-[9px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
-                        <h4 class="font-bold text-sm text-slate-900 truncate" style="max-width: 150px;" title="${item.itemName}">${item.itemName}</h4>
-                        <p class="text-[10px] text-slate-500">已核准危害：${item.hazards.length} 項</p>
+                    <div class="space-y-1 pr-2 overflow-hidden">
+                        <div class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">風險控制標籤</div>
+                        <h4 class="font-bold text-base text-slate-900 truncate" style="max-width: 180px;" title="${item.itemName}">${item.itemName}</h4>
+                        <p class="text-[11px] text-slate-500">已核准危害：${item.hazards.length} 項</p>
                         <p class="text-[9px] text-slate-400">請用手機掃描以檢視五大控制措施</p>
                     </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        ${hasApprovedPhoto ? `<img src="${item.photoBase64}" class="w-[85px] h-[85px] object-cover rounded border">` : ''}
-                        <div id="${cardId}" class="p-1 bg-white border rounded"></div>
-                    </div>
+                    <div id="${cardId}" class="p-1 bg-white border rounded flex-shrink-0"></div>
                 `;
                 container.appendChild(cardDiv);
 
                 new QRCode(document.getElementById(cardId), {
                     text: currentUrl,
-                    width: 80,
-                    height: 80
+                    width: 90,
+                    height: 90
                 });
             });
 
@@ -966,7 +798,7 @@
                         </div>
                         <p class="text-xs text-slate-500">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
-                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
                         查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
@@ -1001,49 +833,13 @@
             const isFullyApproved = approvedHazards.length > 0;
             const currentUrl = `${window.location.origin}${window.location.pathname}?item=${encodeURIComponent(itemName)}`;
 
-            const hasPhoto = item.photoBase64 && item.photoStatus === 'Approved';
-            const isPhotoPending = item.photoStatus === 'Pending';
-            const isPhotoDeleteReq = item.photoDeleteRequested;
-
             container.innerHTML = `
-                <div class="flex justify-between items-start border-b pb-4 gap-4">
+                <div class="flex justify-between items-start border-b pb-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900">${item.itemName}</h2>
                         <p class="text-xs text-slate-500 mt-1">完整風險評估與所有危害之五大控制措施明細</p>
                     </div>
-                    
-                    <div class="flex items-center gap-3 flex-shrink-0">
-                        <!-- 照片區塊 -->
-                        <div class="flex flex-col items-center">
-                            <div class="text-[10px] text-slate-400 mb-1">設備照片</div>
-                            <div id="photo-box" class="w-[100px] h-[100px] bg-slate-50 border rounded-lg shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
-                                ${hasPhoto ? `
-                                    <img src="${item.photoBase64}" class="w-full h-full object-cover cursor-pointer" onclick="openLightbox('${item.photoBase64}')" title="點擊放大圖片">
-                                    <button onclick="requestDeletePhoto('${item.itemName}')" class="absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white w-5 h-5 rounded-full text-[10px] flex items-center justify-center transition" title="申請刪除照片">
-                                        <i class="fa-solid fa-xmark"></i>
-                                    </button>
-                                ` : isPhotoPending ? `
-                                    <span class="text-[10px] text-amber-600 text-center font-bold px-1">照片審核中...</span>
-                                ` : isPhotoDeleteReq ? `
-                                    <span class="text-[9px] text-rose-600 text-center font-bold px-1">刪除申請審核中</span>
-                                ` : `
-                                    <label class="cursor-pointer flex flex-col items-center justify-center w-full h-full text-indigo-600 hover:bg-indigo-50 transition">
-                                        <i class="fa-solid fa-camera text-lg mb-1"></i>
-                                        <span class="text-[9px] font-bold">新增相片</span>
-                                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event, '${item.itemName}')">
-                                    </label>
-                                `}
-                            </div>
-                        </div>
-
-                        <!-- QR Code 區塊 -->
-                        ${isFullyApproved ? `
-                        <div class="flex flex-col items-center">
-                            <div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>
-                            <div id="qrcode-box" class="p-1.5 bg-white border rounded-lg shadow-sm text-center w-[100px] h-[100px] flex items-center justify-center"></div>
-                        </div>
-                        ` : ''}
-                    </div>
+                    ${isFullyApproved ? `<div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm text-center"><div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div></div>` : `<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded text-xs font-bold">尚未核准，無 QR Code</span>`}
                 </div>
                 
                 ${approvedHazards.length > 0 ? `
@@ -1092,11 +888,11 @@
 
             if (isFullyApproved) {
                 const qrBox = document.getElementById("qrcode-box");
-                qrBox.innerHTML = '';
+                qrBox.innerHTML = '<div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div>';
                 new QRCode(qrBox, {
                     text: currentUrl,
-                    width: 88,
-                    height: 88
+                    width: 100,
+                    height: 100
                 });
             }
         }
