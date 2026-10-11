@@ -38,7 +38,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 全螢幕 Loading 提示遮罩 (防止重複操作並提示正在等待什麼) -->
+    <!-- 全螢幕 Loading 提示遮罩 -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
         <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
             <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
@@ -52,7 +52,6 @@
                 <i class="fa-solid fa-shield-halved"></i> 風險評估與控制管理
             </h1>
             <div class="flex items-center gap-2">
-                <!-- 待審核數量徽章按鈕 (紅圈處) -->
                 <button onclick="router.goAdmin()" class="relative bg-indigo-700 hover:bg-indigo-800 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1.5">
                     <i class="fa-solid fa-lock"></i> 管理後台
                     <span id="pendingBadge" class="hidden absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
@@ -111,14 +110,41 @@
             
             <div id="adminLoginCard" class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-md mx-auto space-y-4">
                 <h3 class="font-bold text-lg text-center">請輸入管理員密碼</h3>
-                <input type="password" id="adminPasswordInput" placeholder="預設密碼: 8888" class="w-full px-4 py-2 border rounded-lg">
+                <input type="password" id="adminPasswordInput" placeholder="請輸入管理員密碼" class="w-full px-4 py-2 border rounded-lg">
                 <button onclick="verifyAdmin()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-medium hover:bg-indigo-700">登入後台</button>
             </div>
 
             <div id="adminPanel" class="hidden space-y-6">
+                <!-- 待審核項目區塊 -->
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
                     <h3 class="font-bold text-lg text-slate-700 border-b pb-2">待審核的自主提報項目</h3>
                     <div id="pendingListContainer" class="space-y-3"></div>
+                </div>
+
+                <!-- 已核准項目管理與刪除區塊 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4">
+                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">現有風險評估項目管理 (刪除)</h3>
+                    <div id="adminManageListContainer" class="space-y-3"></div>
+                </div>
+
+                <!-- 更改密碼區塊 -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-4 max-w-md">
+                    <h3 class="font-bold text-lg text-slate-700 border-b pb-2">更改管理員密碼</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <label class="block text-xs font-medium mb-1">原密碼</label>
+                            <input type="password" id="oldPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入原密碼">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1">新密碼</label>
+                            <input type="password" id="newPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請輸入新密碼">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium mb-1">確認新密碼</label>
+                            <input type="password" id="confirmPasswordInput" class="w-full px-3 py-2 border rounded-lg" placeholder="請再次輸入新密碼">
+                        </div>
+                        <button onclick="changeAdminPassword()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-medium hover:bg-slate-900">更新密碼</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,13 +211,11 @@
             checkUrlParams();
         });
 
-        // 顯示載入提示
         function showLoading(text = "正在處理中，請稍候...") {
             document.getElementById('loadingText').textContent = text;
             document.getElementById('loadingOverlay').classList.remove('hidden');
         }
 
-        // 隱藏載入提示
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
@@ -314,6 +338,194 @@
                     globalData.hazardControlHistory[hName][type] = Array.from(historyMap[hName][type]);
                 });
             });
+        }
+
+        async function verifyAdmin() {
+            const password = document.getElementById('adminPasswordInput').value;
+            if (!password) {
+                alert('請輸入管理員密碼');
+                return;
+            }
+            showLoading("驗證中...");
+            try {
+                const res = await fetch(`${API_URL}?action=verifyAdmin&password=${encodeURIComponent(password)}`);
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success' && json.authorized) {
+                    document.getElementById('adminLoginCard').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    renderAdminPendingList();
+                    renderAdminManageList();
+                } else {
+                    alert(json.message || '密碼錯誤');
+                }
+            } catch (err) {
+                hideLoading();
+                alert('驗證連線失敗');
+            }
+        }
+
+        async function changeAdminPassword() {
+            const oldPassword = document.getElementById('oldPasswordInput').value;
+            const newPassword = document.getElementById('newPasswordInput').value;
+            const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+            if (!oldPassword || !newPassword || !confirmPassword) {
+                alert('請完整填寫原密碼與新密碼欄位');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                alert('新密碼與確認新密碼不相符！');
+                return;
+            }
+
+            showLoading("正在更新密碼...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updatePassword', oldPassword, newPassword })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    alert('管理員密碼已成功更新！');
+                    document.getElementById('oldPasswordInput').value = '';
+                    document.getElementById('newPasswordInput').value = '';
+                    document.getElementById('confirmPasswordInput').value = '';
+                } else {
+                    alert(json.message || '更新失敗');
+                }
+            } catch (err) {
+                hideLoading();
+                alert('網路連線錯誤');
+            }
+        }
+
+        function renderAdminPendingList() {
+            const container = document.getElementById('pendingListContainer');
+            let pendingItems = [];
+            globalData.items.forEach(item => {
+                if (item.hazards) {
+                    item.hazards.forEach(h => {
+                        if (h.status === 'Pending') {
+                            pendingItems.push({ itemName: item.itemName, ...h });
+                        }
+                    });
+                }
+            });
+
+            if (pendingItems.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-sm py-2">目前沒有待審核的項目</div>`;
+                return;
+            }
+
+            container.innerHTML = pendingItems.map(p => `
+                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                    <div>
+                        <span class="font-bold text-slate-900">${p.itemName}</span> - 危害: <span class="text-indigo-600">${p.hazard}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-xs font-bold">核准</button>
+                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-bold">拒絕</button>
+                        <button onclick="deleteItemRecord('${p.id}')" class="bg-slate-600 hover:bg-slate-700 text-white px-2.5 py-1 rounded text-xs"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminManageList() {
+            const container = document.getElementById('adminManageListContainer');
+            if (!globalData.items || globalData.items.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-sm py-2">目前尚無任何風險評估項目</div>`;
+                return;
+            }
+
+            container.innerHTML = globalData.items.map(item => `
+                <div class="bg-slate-50 p-3 rounded-lg border flex justify-between items-center text-sm">
+                    <div>
+                        <span class="font-bold text-slate-900">${item.itemName}</span>
+                        <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
+                        <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-trash"></i> 刪除項目
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateStatus(id, status) {
+            showLoading("更新狀態中...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'updateItemStatus', id, status })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    fetchData().then(() => {
+                        renderAdminPendingList();
+                        renderAdminManageList();
+                    });
+                } else {
+                    alert(json.message);
+                }
+            } catch (err) {
+                hideLoading();
+                alert('更新失敗');
+            }
+        }
+
+        async function deleteItemRecord(id) {
+            if (!confirm('確定要刪除此筆評估紀錄嗎？')) return;
+            showLoading("刪除中...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'deleteItem', id })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    fetchData().then(() => {
+                        renderAdminPendingList();
+                        renderAdminManageList();
+                    });
+                } else {
+                    alert(json.message);
+                }
+            } catch (err) {
+                hideLoading();
+                alert('刪除失敗');
+            }
+        }
+
+        async function deleteEntireItem(itemName) {
+            if (!confirm(`確定要完整刪除「${itemName}」及其所有相關危害評估項目嗎？此操作無法復原！`)) return;
+            showLoading("刪除項目中...");
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'deleteItem', itemName })
+                });
+                const json = await res.json();
+                hideLoading();
+                if (json.status === 'success') {
+                    alert('項目刪除成功！');
+                    fetchData().then(() => {
+                        renderAdminPendingList();
+                        renderAdminManageList();
+                    });
+                } else {
+                    alert(json.message);
+                }
+            } catch (err) {
+                hideLoading();
+                alert('刪除失敗');
+            }
         }
 
         function exportLabelsPdf() {
@@ -475,6 +687,16 @@
             }
         }
 
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            document.getElementById('hazardsContainer').innerHTML = '';
+            addHazardBlock();
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
         function addHazardBlock() {
             const container = document.getElementById('hazardsContainer');
             const blockId = 'hazard-block-' + Date.now();
@@ -588,7 +810,6 @@
 
         function updateControlDropdownsForBlock(blockId, hazardName) {
             const block = document.getElementById(blockId);
-            
             controlTypes.forEach(type => {
                 const subContainer = block.querySelector(`.sub-container-${type}`);
                 if (!subContainer) return;
@@ -625,79 +846,97 @@
                 availableMethods = globalData.hazardControlHistory[currentHazard][type];
             }
 
-            const controlOptions = `<option value="">-- 歷史詞庫 --</option>` +
+            const controlOptionsHtml = `<option value="">-- 歷史詞庫 --</option>` +
                 availableMethods.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            const row = document.createElement('div');
-            row.className = "flex gap-1 items-center";
-            row.innerHTML = `
-                <select onchange="this.nextElementSibling.value = this.value" class="control-history-select w-1/3 px-1 py-1 border rounded text-[11px] bg-white">${controlOptions}</select>
-                <input type="text" value="${defaultValue}" required class="flex-grow px-2 py-1 border rounded text-[11px]" placeholder="控制方法">
-                <button type="button" onclick="this.parentElement.remove()" class="text-red-400 hover:text-red-600 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
+            const rowId = 'ctrl-row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+            const div = document.createElement('div');
+            div.className = "flex gap-1 items-center";
+            div.id = rowId;
+            div.innerHTML = `
+                <select onchange="onControlSelectChange('${rowId}')" class="control-history-select w-1/3 px-2 py-1 border rounded text-[11px] bg-white">${controlOptionsHtml}</select>
+                <input type="text" name="controlMethod_${type}" value="${defaultValue}" placeholder="請輸入控制方法..." class="flex-grow px-2 py-1 border rounded text-[11px]">
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-500 hover:text-red-700 px-1 text-xs"><i class="fa-solid fa-xmark"></i></button>
             `;
-            container.appendChild(row);
+            container.appendChild(div);
         }
 
-        function openAddModal() { 
-            document.getElementById('addModal').classList.remove('hidden');
-            document.getElementById('hazardsContainer').innerHTML = '';
-            addHazardBlock();
+        function onControlSelectChange(rowId) {
+            const row = document.getElementById(rowId);
+            const select = row.querySelector('select');
+            const input = row.querySelector('input');
+            if (select.value) {
+                input.value = select.value;
+            }
         }
 
-        function closeAddModal() { 
-            document.getElementById('addModal').classList.add('hidden'); 
-            document.getElementById('addItemForm').reset();
-        }
-
-        async function submitItemForm(e) {
-            e.preventDefault();
-            const itemName = document.getElementById('formItemName').value;
+        async function submitItemForm(event) {
+            event.preventDefault();
+            const itemName = document.getElementById('formItemName').value.trim();
             const hazardBlocks = document.querySelectorAll('.hazard-block');
-            
+
+            if (!itemName) {
+                alert('請填寫儀器或動作名稱');
+                return;
+            }
             if (hazardBlocks.length === 0) {
-                alert('請至少新增一個危害種類！');
+                alert('請至少新增一個危害與控制措施區塊');
                 return;
             }
 
-            const hazardsList = [];
-            hazardBlocks.forEach(block => {
-                const hazard = block.querySelector('input[name="hazardName"]').value;
+            let hazardsList = [];
+            for (let block of hazardBlocks) {
+                const hazardName = block.querySelector('input[name="hazardName"]').value.trim();
+                if (!hazardName) {
+                    alert('尚有危害種類未填寫名稱！');
+                    expandHazardBlock(block);
+                    return;
+                }
                 const severity = block.querySelector('select[name="severity"]').value;
                 const frequency = block.querySelector('select[name="frequency"]').value;
-                
-                const controlHierarchy = {};
-                controlTypes.forEach(type => {
-                    const inputs = block.querySelectorAll(`[data-control-type="${type}"] input`);
-                    controlHierarchy[type] = Array.from(inputs).map(i => i.value).filter(Boolean);
-                    if (controlHierarchy[type].length === 0) controlHierarchy[type] = ['無'];
+
+                let controlHierarchy = {};
+                for (let type of controlTypes) {
+                    const subContainer = block.querySelector(`.sub-container-${type}`);
+                    const inputs = subContainer.querySelectorAll(`input[name="controlMethod_${type}"]`);
+                    let methods = [];
+                    inputs.forEach(inp => {
+                        if (inp.value.trim()) methods.push(inp.value.trim());
+                    });
+                    controlHierarchy[type] = methods.length > 0 ? methods : ['無'];
+                }
+
+                hazardsList.push({
+                    hazard: hazardName,
+                    severity,
+                    frequency,
+                    controlHierarchy
                 });
+            }
 
-                hazardsList.push({ hazard, severity, frequency, controlHierarchy });
-            });
-
-            showLoading("正在送出自主提報資料，請稍候...");
+            showLoading("正在送出自主提報...");
             try {
-                const payload = {
-                    action: 'addItem',
-                    itemName: itemName,
-                    hazardsList: hazardsList,
-                    isUserSubmit: true
-                };
-
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'addItem',
+                        itemName,
+                        hazardsList,
+                        isUserSubmit: true
+                    })
+                });
                 const json = await res.json();
+                hideLoading();
                 if (json.status === 'success') {
-                    alert('已成功送出自主提報！將等待管理員審核。');
+                    alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
-                    fetchData();
+                    router.goHome();
                 } else {
-                    alert('送出失敗，請稍後再試。');
+                    alert(json.message || '送出失敗');
                 }
             } catch (err) {
-                console.error(err);
-                alert('送出發生錯誤，請檢查網路連線。');
-            } finally {
                 hideLoading();
+                alert('網路連線失敗，請稍後再試。');
             }
         }
 
@@ -707,120 +946,35 @@
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 250 } },
-                decodedText => { 
-                    closeScanModal(); 
-                    window.location.href = decodedText; 
+                decodedText => {
+                    closeScanModal();
+                    try {
+                        const url = new URL(decodedText);
+                        const itemParam = url.searchParams.get('item');
+                        if (itemParam) {
+                            router.goDetail(decodeURIComponent(itemParam));
+                        } else {
+                            alert("掃描到的 QR Code 不包含合法的設備參數。");
+                        }
+                    } catch (e) {
+                        alert("掃描結果非有效網址格式：" + decodedText);
+                    }
                 },
-                error => {}
-            ).catch(err => console.error(err));
+                errorMessage => {}
+            ).catch(err => {
+                alert("無法啟動相機權限：" + err);
+            });
         }
 
         function closeScanModal() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => document.getElementById('scanModal').classList.add('hidden'));
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('scanModal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('scanModal').classList.add('hidden');
+                });
             } else {
                 document.getElementById('scanModal').classList.add('hidden');
-            }
-        }
-
-        async function verifyAdmin() {
-            const pass = document.getElementById('adminPasswordInput').value;
-            showLoading("正在驗證管理員密碼...");
-            try {
-                const res = await fetch(`${API_URL}?action=verifyAdmin&password=${encodeURIComponent(pass)}`);
-                const json = await res.json();
-                if (json.authorized) {
-                    document.getElementById('adminLoginCard').classList.add('hidden');
-                    document.getElementById('adminPanel').classList.remove('hidden');
-                    loadPendingItems();
-                } else {
-                    alert('密碼錯誤！');
-                }
-            } catch (err) {
-                console.error(err);
-                alert("驗證發生錯誤，請稍後再試。");
-            } finally {
-                hideLoading();
-            }
-        }
-
-        function loadPendingItems() {
-            const container = document.getElementById('pendingListContainer');
-            const pendingItems = [];
-            globalData.items.forEach(item => {
-                item.hazards.forEach(h => {
-                    if (h.status === 'Pending') pendingItems.push({ ...h, itemName: item.itemName });
-                });
-            });
-
-            if (pendingItems.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-400">目前沒有待審核的項目。</p>`;
-                return;
-            }
-
-            container.innerHTML = pendingItems.map(p => `
-                <div class="p-4 border rounded-lg bg-slate-50 space-y-3">
-                    <div class="flex justify-between items-start border-b pb-2">
-                        <div>
-                            <div class="font-bold text-sm text-indigo-600">儀器/動作：${p.itemName}</div>
-                            <div class="text-xs text-slate-700 font-semibold mt-1">危害種類：${p.hazard}</div>
-                        </div>
-                        <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-xs font-bold">風險等級: ${p.riskLevel} 級 (嚴重:${p.severity} / 頻率:${p.frequency})</span>
-                    </div>
-
-                    <div class="space-y-1.5 pt-1">
-                        <div class="text-[11px] font-bold text-slate-600">五大危害控制措施細項：</div>
-                        ${controlTypes.map(type => {
-                            const methods = (p.controlHierarchy && p.controlHierarchy[type]) ? p.controlHierarchy[type] : ['無'];
-                            return `
-                                <div class="bg-white p-2 rounded border border-slate-200 text-xs">
-                                    <span class="font-bold text-indigo-800 block mb-0.5">${controlLabels[type]}</span>
-                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-                                        ${methods.map(m => `<li>${m}</li>`).join('')}
-                                    </ul>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-
-                    <div class="flex justify-end gap-2 pt-2 border-t">
-                        <button onclick="updateStatus('${p.id}', 'Approved')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">核准</button>
-                        <button onclick="updateStatus('${p.id}', 'Rejected')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded text-xs font-medium transition">拒絕</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function updateStatus(id, status) {
-            const actionText = status === 'Approved' ? '核准' : '拒絕';
-            showLoading(`正在${actionText}該筆審核項目，請稍候...`);
-
-            globalData.items.forEach(item => {
-                item.hazards.forEach(h => {
-                    if (h.id === id) {
-                        h.status = status;
-                    }
-                });
-            });
-
-            loadPendingItems();
-            updatePendingBadgeCount();
-
-            try {
-                const res = await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ action: 'updateItemStatus', id, status }) 
-                });
-                const json = await res.json();
-                if (json.status !== 'success') {
-                    alert('後端狀態更新失敗，請重新整理。');
-                    fetchData();
-                }
-            } catch (err) {
-                console.error("更新狀態發生錯誤", err);
-                alert('更新狀態發生網路錯誤。');
-            } finally {
-                hideLoading();
             }
         }
     </script>
