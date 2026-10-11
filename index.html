@@ -38,7 +38,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- 全螢幕 Loading 提示遮罩 (僅保留於初次載入或關鍵動作) -->
+    <!-- 全螢幕 Loading 提示遮罩 -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/40 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-[2px]">
         <div class="bg-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-100">
             <i class="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
@@ -299,6 +299,8 @@
                 document.getElementById('view-detail').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
                 backToAdminMenu();
+                // 背景靜默向雲端同步最新審核資料
+                fetchData(false);
             }
         };
 
@@ -365,10 +367,9 @@
 
             renderItemList(approvedItems);
             
-            if (!document.getElementById('view-admin').classList.contains('hidden')) {
-                renderAdminPendingList();
-                renderAdminManageList();
-            }
+            // 隨時更新後台目前的兩個子頁面（待審核與現有管理清單）
+            renderAdminPendingList();
+            renderAdminManageList();
         }
 
         function updatePendingBadgeCount() {
@@ -480,6 +481,7 @@
             }
         }
 
+        // 修復的核心：切換子頁面時，強制呼叫最新的資料渲染函式
         function openAdminSubView(viewType) {
             document.getElementById('adminDashboardMenu').classList.add('hidden');
             document.getElementById('adminSubViewContainer').classList.remove('hidden');
@@ -489,6 +491,12 @@
             document.getElementById('subView-password').classList.add('hidden');
 
             document.getElementById(`subView-${viewType}`).classList.remove('hidden');
+
+            if (viewType === 'pending') {
+                renderAdminPendingList();
+            } else if (viewType === 'manage') {
+                renderAdminManageList();
+            }
         }
 
         function backToAdminMenu() {
@@ -536,6 +544,8 @@
 
         function renderAdminPendingList() {
             const container = document.getElementById('pendingListContainer');
+            if (!container) return;
+
             let pendingItems = [];
             globalData.items.forEach(item => {
                 if (item.hazards) {
@@ -568,6 +578,8 @@
 
         function renderAdminManageList() {
             const container = document.getElementById('adminManageListContainer');
+            if (!container) return;
+
             if (!globalData.items || globalData.items.length === 0) {
                 container.innerHTML = `<div class="text-slate-400 text-sm py-4 text-center">目前尚無任何風險評估項目</div>`;
                 return;
@@ -580,7 +592,7 @@
                         <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
                         <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
                             <i class="fa-solid fa-trash"></i> 刪除項目
                         </button>
@@ -589,9 +601,7 @@
             `).join('');
         }
 
-        // 優化：背景靜默更新狀態，不跳出 Loading 遮罩，操作瞬間完成
         async function updateStatus(id, status) {
-            // 本地記憶體即時更新與畫面移除，創造秒反應體驗
             globalData.items.forEach(item => {
                 if (item.hazards) {
                     item.hazards.forEach(h => {
@@ -600,12 +610,10 @@
                 }
             });
             
-            // 立即局部更新介面與紅點
             renderAdminPendingList();
             updatePendingBadgeCount();
             updateDashboardCounts();
 
-            // 背景默默發送 API 寫入後端
             try {
                 const res = await fetch(API_URL, {
                     method: 'POST',
@@ -614,10 +622,10 @@
                 const json = await res.json();
                 if (json.status === 'success') {
                     sessionStorage.removeItem('safety_culture_cache');
-                    fetchData(false); // 背景默默拉取最新資料同步
+                    fetchData(false);
                 } else {
                     alert(json.message);
-                    fetchData(false); // 失敗時回補同步
+                    fetchData(false);
                 }
             } catch (err) {
                 console.error('更新失敗', err);
@@ -848,7 +856,7 @@
                             </div>
                             
                             <div class="space-y-2 pt-1">
-                                <div class="text-xs font-bold text-slate-700">五大危害控制措施細項：</div>
+                                <div class="text-xs font-bold text-slate-700">五大控制措施細項：</div>
                                 ${controlTypes.map(type => {
                                     const methods = (h.controlHierarchy && h.controlHierarchy[type]) ? h.controlHierarchy[type] : ['無'];
                                     return `
@@ -1191,6 +1199,8 @@
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
+                    // 新增完畢後清空舊快取，確保管理員或使用者重新整理時抓到最新資料
+                    sessionStorage.removeItem('safety_culture_cache');
                 } else {
                     alert(json.message || '送出失敗');
                 }
