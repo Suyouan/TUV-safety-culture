@@ -798,7 +798,7 @@
                         </div>
                         <p class="text-xs text-slate-500">已核准危害種類：${item.hazards.length} 項</p>
                     </div>
-                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
+                    <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-sm font-medium transition flex-shrink-0">
                         查看詳情與 QR Code <i class="fa-solid fa-chevron-right ml-1 text-xs"></i>
                     </button>
                 </div>
@@ -820,6 +820,7 @@
             }
         }
 
+        // 詳細檢視頁面：改為全數預設折疊的手風琴式（Accordion）設計
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
@@ -897,6 +898,7 @@
             }
         }
 
+        // 單一詳細檢視手風琴收合與展開切換
         function toggleDetailAccordion(accordionId) {
             const contentEl = document.getElementById(accordionId);
             const iconEl = document.getElementById(`icon-${accordionId}`);
@@ -910,6 +912,7 @@
             }
         }
 
+        // 一鍵展開或收合全部詳細檢視項目
         function toggleAllDetailAccordions(expand) {
             const items = document.querySelectorAll('.detail-accordion-item');
             items.forEach((item, idx) => {
@@ -994,10 +997,7 @@
                         </div>
                     </div>
                     <div class="space-y-2 pt-2 border-t">
-                        <div class="text-xs font-bold text-slate-700">
-                            五大控制措施填寫：
-                            <span class="text-[11px] text-amber-600 font-semibold ml-1">(若無對應措施可直接不選，系統將自動帶入「無」)</span>
-                        </div>
+                        <div class="text-xs font-bold text-slate-700">五大控制措施填寫：</div>
                         ${controlTypes.map(type => `
                             <div class="space-y-1" data-control-type="${type}">
                                 <div class="flex justify-between items-center">
