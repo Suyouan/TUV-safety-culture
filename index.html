@@ -299,7 +299,6 @@
                 document.getElementById('view-detail').classList.add('hidden');
                 document.getElementById('view-admin').classList.remove('hidden');
                 backToAdminMenu();
-                // 背景靜默向雲端同步最新審核資料
                 fetchData(false);
             }
         };
@@ -367,7 +366,6 @@
 
             renderItemList(approvedItems);
             
-            // 隨時更新後台目前的兩個子頁面（待審核與現有管理清單）
             renderAdminPendingList();
             renderAdminManageList();
         }
@@ -481,7 +479,6 @@
             }
         }
 
-        // 修復的核心：切換子頁面時，強制呼叫最新的資料渲染函式
         function openAdminSubView(viewType) {
             document.getElementById('adminDashboardMenu').classList.add('hidden');
             document.getElementById('adminSubViewContainer').classList.remove('hidden');
@@ -592,7 +589,7 @@
                         <span class="text-xs text-slate-500 ml-2">(${item.hazards.length} 項危害紀錄)</span>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
+                        <button onclick="router.goDetail('${item.itemName}')" class="bg-indigo-50 text-indigo-600 hover:text-indigo-100 px-3 py-1 rounded text-xs font-medium">查看</button>
                         <button onclick="deleteEntireItem('${item.itemName}')" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1 rounded text-xs font-medium flex items-center gap-1">
                             <i class="fa-solid fa-trash"></i> 刪除項目
                         </button>
@@ -823,6 +820,7 @@
             }
         }
 
+        // 詳細檢視頁面：改為全數預設折疊的手風琴式（Accordion）設計
         function renderDetailView(itemName) {
             const item = globalData.items.find(i => i.itemName === itemName);
             const container = document.getElementById('detailContent');
@@ -845,22 +843,37 @@
                     ${isFullyApproved ? `<div id="qrcode-box" class="p-2 bg-white border rounded-lg shadow-sm text-center"><div class="text-[10px] text-slate-400 mb-1">設備專屬 QR Code</div></div>` : `<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded text-xs font-bold">尚未核准，無 QR Code</span>`}
                 </div>
                 
-                <div class="space-y-6">
+                ${approvedHazards.length > 0 ? `
+                <div class="flex gap-2 pb-2">
+                    <button type="button" onclick="toggleAllDetailAccordions(true)" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-xs font-medium transition">
+                        <i class="fa-solid fa-angles-down mr-1"></i> 展開全部
+                    </button>
+                    <button type="button" onclick="toggleAllDetailAccordions(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1 rounded-lg text-xs font-medium transition">
+                        <i class="fa-solid fa-angles-up mr-1"></i> 收合全部
+                    </button>
+                </div>
+                ` : ''}
+
+                <div class="space-y-3">
                     ${approvedHazards.map((h, idx) => {
                         const badgeStyle = getRiskBadgeStyle(h.riskLevel);
+                        const accordionId = `detail-accordion-${idx}`;
                         return `
-                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
-                            <div class="flex justify-between items-center border-b pb-2">
-                                <span class="font-bold text-indigo-600 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
+                        <div class="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden shadow-sm detail-accordion-item">
+                            <div class="p-4 flex justify-between items-center cursor-pointer bg-slate-50 hover:bg-slate-100 transition select-none" onclick="toggleDetailAccordion('${accordionId}')">
+                                <div class="flex items-center gap-2">
+                                    <i id="icon-${accordionId}" class="fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform"></i>
+                                    <span class="font-bold text-indigo-700 text-sm">#${idx + 1} 危害種類：${h.hazard}</span>
+                                </div>
                                 <span class="px-2.5 py-1 rounded text-xs font-bold ${badgeStyle}">風險等級: ${h.riskLevel} 級 (嚴重:${h.severity} / 頻率:${h.frequency})</span>
                             </div>
                             
-                            <div class="space-y-2 pt-1">
-                                <div class="text-xs font-bold text-slate-700">五大控制措施細項：</div>
+                            <div id="${accordionId}" class="hidden p-4 bg-white border-t border-slate-200 space-y-3">
+                                <div class="text-xs font-bold text-slate-700">五大危害控制措施細項：</div>
                                 ${controlTypes.map(type => {
                                     const methods = (h.controlHierarchy && h.controlHierarchy[type]) ? h.controlHierarchy[type] : ['無'];
                                     return `
-                                        <div class="bg-white p-2.5 rounded border border-slate-100 text-xs">
+                                        <div class="bg-slate-50 p-2.5 rounded border border-slate-100 text-xs">
                                             <span class="font-bold text-indigo-800 block mb-1">${controlLabels[type]}</span>
                                             <ul class="list-disc list-inside text-slate-600 space-y-0.5">
                                                 ${methods.map(m => `<li>${m}</li>`).join('')}
@@ -883,6 +896,38 @@
                     height: 100
                 });
             }
+        }
+
+        // 單一詳細檢視手風琴收合與展開切換
+        function toggleDetailAccordion(accordionId) {
+            const contentEl = document.getElementById(accordionId);
+            const iconEl = document.getElementById(`icon-${accordionId}`);
+            
+            if (contentEl.classList.contains('hidden')) {
+                contentEl.classList.remove('hidden');
+                iconEl.className = "fa-solid fa-chevron-down text-indigo-600 text-xs transition-transform";
+            } else {
+                contentEl.classList.add('hidden');
+                iconEl.className = "fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform";
+            }
+        }
+
+        // 一鍵展開或收合全部詳細檢視項目
+        function toggleAllDetailAccordions(expand) {
+            const items = document.querySelectorAll('.detail-accordion-item');
+            items.forEach((item, idx) => {
+                const contentEl = document.getElementById(`detail-accordion-${idx}`);
+                const iconEl = document.getElementById(`icon-detail-accordion-${idx}`);
+                if (!contentEl || !iconEl) return;
+
+                if (expand) {
+                    contentEl.classList.remove('hidden');
+                    iconEl.className = "fa-solid fa-chevron-down text-indigo-600 text-xs transition-transform";
+                } else {
+                    contentEl.classList.add('hidden');
+                    iconEl.className = "fa-solid fa-chevron-right text-indigo-600 text-xs transition-transform";
+                }
+            });
         }
 
         function openAddModal() {
@@ -1199,7 +1244,6 @@
                 if (json.status === 'success') {
                     alert('自主提報已成功送出，等待管理員審核！');
                     closeAddModal();
-                    // 新增完畢後清空舊快取，確保管理員或使用者重新整理時抓到最新資料
                     sessionStorage.removeItem('safety_culture_cache');
                 } else {
                     alert(json.message || '送出失敗');
