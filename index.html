@@ -900,28 +900,28 @@
             });
         }
 
+        /* 方案 1：動態選項數與全池去重邏輯 */
         function generateQuizQuestionsPool() {
             const approvedItems = globalData.items.map(item => {
                 const validHazards = item.hazards.filter(h => h.status === 'Approved');
                 return { ...item, hazards: validHazards };
             }).filter(item => item.hazards.length > 0);
 
-            const allHazardsPool = [];
-            const allMethodsPool = [];
-            approvedItems.forEach(item => {
-                item.hazards.forEach(h => {
-                    if (h.hazard) allHazardsPool.push(h.hazard.trim());
-                    if (h.controlHierarchy) {
-                        controlTypes.forEach(type => {
-                            if (Array.isArray(h.controlHierarchy[type])) {
-                                h.controlHierarchy[type].forEach(m => {
-                                    if (m && m !== '無') allMethodsPool.push(m.trim());
-                                });
-                            }
-                        });
-                    }
-                });
-            });
+            // 使用 Set 確保全廠危害與控制措施池絕對去重
+            const allHazardsPool = Array.from(new Set(
+                approvedItems.flatMap(item => item.hazards.map(h => h.hazard ? h.hazard.trim() : '')).filter(Boolean)
+            ));
+
+            const allMethodsPool = Array.from(new Set(
+                approvedItems.flatMap(item => item.hazards.flatMap(h => {
+                    if (!h.controlHierarchy) return [];
+                    return controlTypes.flatMap(type => 
+                        Array.isArray(h.controlHierarchy[type]) 
+                            ? h.controlHierarchy[type].map(m => m && m !== '無' ? m.trim() : '').filter(Boolean)
+                            : []
+                    );
+                }))
+            ));
 
             let questions = [];
             const questionCount = Math.min(5, approvedItems.length * 2);
@@ -936,12 +936,14 @@
                 if (qType === 1) {
                     const correctAnswer = randHazard.hazard.trim();
                     const itemHazardNames = randItem.hazards.map(h => h.hazard.trim());
+                    // 排除正確答案與該設備已有的危害種類
                     const wrongPool = allHazardsPool.filter(h => h !== correctAnswer && !itemHazardNames.includes(h));
                     
-                    if (wrongPool.length < 3) continue;
-
+                    // 最多取 3 個錯誤選項，若不足 3 個則有多少取多少（動態調整）
                     const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
-                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+                    const options = Array.from(new Set([correctAnswer, ...shuffledWrong])).sort(() => 0.5 - Math.random());
+
+                    if (options.length < 2) continue; // 至少要形成 2 選 1 才有測驗意義
 
                     questions.push({
                         type: 1,
@@ -959,10 +961,11 @@
 
                     const correctAnswer = validMethods[Math.floor(Math.random() * validMethods.length)].trim();
                     const wrongPool = allMethodsPool.filter(m => m !== correctAnswer);
-                    if (wrongPool.length < 3) continue;
-
+                    
                     const shuffledWrong = wrongPool.sort(() => 0.5 - Math.random()).slice(0, 3);
-                    const options = [correctAnswer, ...shuffledWrong].sort(() => 0.5 - Math.random());
+                    const options = Array.from(new Set([correctAnswer, ...shuffledWrong])).sort(() => 0.5 - Math.random());
+
+                    if (options.length < 2) continue;
 
                     questions.push({
                         type: 2,
