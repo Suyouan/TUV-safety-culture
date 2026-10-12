@@ -88,6 +88,50 @@
                 </button>
             </div>
 
+            <!-- 使用者端：圖文並茂溫馨操作指南 (可收合) -->
+            <div class="bg-white rounded-3xl shadow-sm border border-stone-200/60 overflow-hidden">
+                <div onclick="toggleUserGuide()" class="p-4 bg-teal-50/60 hover:bg-teal-50 transition cursor-pointer flex justify-between items-center select-none">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-xs shadow-sm">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-xs text-teal-900">💡 系統使用小幫手 (點擊展開操作指引)</h3>
+                            <p class="text-[11px] text-teal-700/80">新手上路與自主提報快速導覽</p>
+                        </div>
+                    </div>
+                    <i id="userGuideChevron" class="fa-solid fa-chevron-down text-teal-600 text-xs transition-transform"></i>
+                </div>
+                <div id="userGuideContent" class="hidden p-5 border-t border-stone-100 space-y-4 text-xs text-stone-600 bg-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                            <div class="font-bold text-teal-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-magnifying-glass text-teal-600"></i> 1. 快速檢視與搜尋
+                            </div>
+                            <p class="text-[11px] text-stone-500 leading-relaxed">點擊上方「各部門卡片」可快速過濾部門設備；或利用搜尋欄輸入名稱、危害與控制方法，即時掌握防護資訊。</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                            <div class="font-bold text-teal-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus text-teal-600"></i> 2. 自主提報風險評估
+                            </div>
+                            <p class="text-[11px] text-stone-500 leading-relaxed">發現新設備或作業動作時，點擊「自主提報風險評估」，填寫危害種類與五大控制措施，送出後等待管理員審核。</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                            <div class="font-bold text-teal-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-camera text-teal-600"></i> 3. 設備照片與修改申請
+                            </div>
+                            <p class="text-[11px] text-stone-500 leading-relaxed">進入設備詳情頁可隨時上傳照片或提出刪除申請；若評估內容需變更，可點擊「申請編輯風險評估」進行送審。</p>
+                        </div>
+                        <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                            <div class="font-bold text-teal-800 flex items-center gap-1.5">
+                                <i class="fa-solid fa-graduation-cap text-teal-600"></i> 4. 安全知識隨堂考
+                            </div>
+                            <p class="text-[11px] text-stone-500 leading-relaxed">點擊右上角「安全隨堂考」或首頁活動橫幅，輕鬆參與互動答題測驗，強化全廠同仁的安全防護觀念。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- 多部門分類卡片列 -->
             <div class="bg-white p-4 rounded-3xl shadow-sm border border-stone-200/60 space-y-2">
                 <div class="text-xs font-bold text-stone-500 uppercase tracking-wider flex justify-between items-center px-1">
@@ -168,6 +212,50 @@
 
             <div id="adminPanel" class="hidden space-y-6">
                 
+                <!-- 管理者端：圖文並茂管理員專屬使用指南 (可收合) -->
+                <div class="bg-white rounded-3xl shadow-sm border border-stone-200/60 overflow-hidden">
+                    <div onclick="toggleAdminGuide()" class="p-4 bg-slate-100 hover:bg-slate-200/70 transition cursor-pointer flex justify-between items-center select-none">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-2xl bg-slate-700 text-white flex items-center justify-center text-xs shadow-sm">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-xs text-slate-800">🛡️ 管理員後台維護說明 (點擊展開指引)</h3>
+                                <p class="text-[11px] text-slate-500">待辦審核、項目管理、測驗檔期與系統設定導覽</p>
+                            </div>
+                        </div>
+                        <i id="adminGuideChevron" class="fa-solid fa-chevron-down text-slate-600 text-xs transition-transform"></i>
+                    </div>
+                    <div id="adminGuideContent" class="hidden p-5 border-t border-stone-100 space-y-4 text-xs text-stone-600 bg-white">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-clipboard-check text-teal-600"></i> 1. 待審核項目 (審核區)
+                                </div>
+                                <p class="text-[11px] text-stone-500 leading-relaxed">統一審核同仁提報的新危害、照片上傳/刪除申請，以及修改申請。修改申請提供高對比 Diff 差異左右對照，一鍵輕鬆核准或拒絕。</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-folder-open text-teal-600"></i> 2. 風險評估項目管理 (管理區)
+                                </div>
+                                <p class="text-[11px] text-stone-500 leading-relaxed">檢視或完整刪除現有的設備與動作評估清單，當設備淘汰或異動時可在此處維護，確保資料庫與試算表隨時同步。</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-graduation-cap text-teal-600"></i> 3. 安全測驗檔期發起 (測驗區)
+                                </div>
+                                <p class="text-[11px] text-stone-500 leading-relaxed">設定隨堂考的活動起訖時間，點擊儲存即可連動首頁宣傳橫幅。活動過期自動隱藏，並可隨時預覽自動抽查組題內容。</p>
+                            </div>
+                            <div class="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 space-y-1.5">
+                                <div class="font-bold text-slate-800 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-key text-teal-600"></i> 4. 更改管理員密碼 (設定區)
+                                </div>
+                                <p class="text-[11px] text-stone-500 leading-relaxed">隨時變更後台登入密碼，系統會自動同步更新至後端設定分頁，確保系統存取安全性。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="adminDashboardMenu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div onclick="openAdminSubView('pending')" class="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 hover:shadow-md hover:border-teal-300 transition cursor-pointer flex flex-col justify-between space-y-4">
                         <div class="space-y-2">
@@ -462,6 +550,30 @@
 
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function toggleUserGuide() {
+            const content = document.getElementById('userGuideContent');
+            const chevron = document.getElementById('userGuideChevron');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.className = "fa-solid fa-chevron-up text-teal-600 text-xs transition-transform";
+            } else {
+                content.classList.add('hidden');
+                chevron.className = "fa-solid fa-chevron-down text-teal-600 text-xs transition-transform";
+            }
+        }
+
+        function toggleAdminGuide() {
+            const content = document.getElementById('adminGuideContent');
+            const chevron = document.getElementById('adminGuideChevron');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.className = "fa-solid fa-chevron-up text-slate-600 text-xs transition-transform";
+            } else {
+                content.classList.add('hidden');
+                chevron.className = "fa-solid fa-chevron-down text-slate-600 text-xs transition-transform";
+            }
         }
 
         function openLightbox(imgSrc) {
@@ -1473,7 +1585,7 @@
                     <div class="space-y-1 pt-1 border-t">
                         ${controlTypes.map(type => {
                             const methods = (h.controlHierarchy && h.controlHierarchy[type]) ? h.controlHierarchy[type] : ['無'];
-                            return `<div class="text-[11px]"><span class="font-semibold">${controlLabels[type]}:</span>${methods.join(', ')}</div>`;
+                            return `<div class="text-[11px]"><span class="font-semibold">${controlLabels[type]}:</span> ${methods.join(', ')}</div>`;
                         }).join('')}
                     </div>
                 </div>
